@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torchvision.transforms import transforms
 
-from data.sg_sequoia import SequoiaDataset
+from data.sequoia import SequoiaDataset
 
 WORKERS = multiprocessing.cpu_count()
 BATCH_SIZE = 256
