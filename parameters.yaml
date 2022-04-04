@@ -1,16 +1,16 @@
 experiment: Try
 
 train_params:
-  max_epochs: 1,
-  initial_lr: 3e-4,
-  optimizer: "Adam",
+  max_epochs: 1
+  initial_lr: 3e-4
+  optimizer: Adam
   loss:
-    name: CELoss
+    name: cross_entropy
     params:
       weight: [0.0273, 1.0, 4.3802]
-  ema: True,
+  ema: True
   zero_weight_decay_on_bias_and_bn: True
-  metric_to_watch: "JaccardIndex"
+  metric_to_watch: JaccardIndex
 
 metrics:
   jaccard:

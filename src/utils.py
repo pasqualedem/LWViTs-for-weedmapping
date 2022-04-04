@@ -1,7 +1,9 @@
 import os
 import subprocess
+from typing import Any, Optional, Mapping
 
 import mlflow
+import torch
 from mlflow.tracking import MlflowClient
 
 
@@ -29,3 +31,34 @@ def mlflow_server():
     child = subprocess.Popen(
         cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE,
     )
+
+
+class MLRun(MlflowClient):
+    def __init__(self, exp_name: str):
+        super().__init__()
+        exp_id = setup_mlflow(exp_name)
+        self.run = self.create_run(experiment_id=exp_id)
+
+    def log_params(self, params: Mapping):
+        for k, v in params.items():
+            self.log_param(k, v)
+
+    def log_metrics(self, metrics: Mapping):
+        for k, v in metrics.items():
+            self.log_metric(k, v)
+
+    def log_param(self, key: str, value: Any, run_id: str = None) -> None:
+        if run_id is None:
+            run_id = self.run.info.run_id
+        super().log_param(run_id, key, value)
+
+    def log_metric(self, key: str, value: Any, run_id: str = None,
+                   timestamp: Optional[int] = None,
+                   step: Optional[int] = None) -> None:
+
+        value = value.item() if type(value) == torch.Tensor else value
+
+        if run_id is None:
+            run_id = self.run.info.run_id
+        super().log_metric(run_id, key, value)
+

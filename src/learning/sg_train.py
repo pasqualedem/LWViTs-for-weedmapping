@@ -19,7 +19,7 @@ from data.sg_sequoia import SequoiaDatasetInterface
 
 from loss import LOSSES as LOSSES_DICT
 from metrics import METRICS as METRICS_DICT
-from utils import setup_mlflow
+from utils import setup_mlflow, MLRun
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -32,25 +32,27 @@ EXP_NAME = 'Try'
 
 def parse_params(params: dict) -> (dict, dict, dict):
     # Instantiate loss
-    loss_params = params.pop('loss')
+    input_train_params = params['train_params']
+    loss_params = params['train_params'].pop('loss')
     loss = LOSSES_DICT[loss_params['name']](**loss_params['params'])
 
     # metrics
-    metrics_params = params.pop('metrics')
+    metrics_params = params['metrics']
     metrics = [
         METRICS_DICT[name](**params)
         for name, params in metrics_params.items()
     ]
 
     # dataset params
-    dataset_params = params.pop('dataset')
+    dataset_params = params['dataset']
 
     train_params = {
         "greater_metric_to_watch_is_better": True,
         "train_metrics_list": metrics,
         "valid_metrics_list": metrics,
         "loss_logging_items_names": ["loss"],
-        "loss": loss
+        "loss": loss,
+        **input_train_params
     }
 
     test_params = {
@@ -67,18 +69,16 @@ def experiment(param_path: str = 'parameters.yaml'):
     train_params, test_params, dataset_params = parse_params(params)
 
     # Mlflow
-    exp_id = setup_mlflow(EXP_NAME)
-    mlclient = MlflowClient()
-    run = mlclient.create_run(experiment_id=exp_id)
+    mlclient = MLRun(EXP_NAME)
 
-    sg_model = SgModel(experiment_name='SegNetTry3', ckpt_root_dir=run.info.artifact_uri)
+    sg_model = SgModel(experiment_name='SegNetTry3', ckpt_root_dir=mlclient.run.info.artifact_uri)
     dataset = SequoiaDatasetInterface(dataset_params, channels='CIR')
     sg_model.connect_dataset_interface(dataset, data_loader_num_workers=0)
 
     # Callbacks
     cbcks = [
-        MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, run=run, client=mlclient, params=train_params),
-        MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, run=run, client=mlclient),
+        MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=train_params),
+        MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
         SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
                                           freq=5,
                                           last_img_idx_in_batch=4,
@@ -93,11 +93,11 @@ def experiment(param_path: str = 'parameters.yaml'):
     sg_model.build_model(model)
     sg_model.train(train_params)
     test_metrics = sg_model.test(**test_params)
-    # loss = test_metrics[0]
-    # for metric in test_metrics[1:]:
 
-    # TODO Metric list names
-    print()
+    # log test metrics
+    metric_names = params['metrics'].keys()
+    mlclient.log_metrics(
+        {'test_loss': test_metrics[0], **{name: value for 'test_' + name, value in zip(metric_names, test_metrics[1:])}})
 
 
 if __name__ == '__main__':

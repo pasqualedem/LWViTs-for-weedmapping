@@ -8,6 +8,8 @@ from mlflow.tracking import MlflowClient
 from super_gradients.training.utils.callbacks import PhaseCallback, Phase, PhaseContext
 from torchvision.utils import draw_segmentation_masks
 
+from utils import MLRun
+
 
 class SegmentationVisualizationCallback(PhaseCallback):
     """
@@ -118,8 +120,7 @@ class MlflowCallback(PhaseCallback):
     """
 
     def __init__(self, phase: Phase, freq: int,
-                 client: MlflowClient,
-                 run,
+                 client: MLRun,
                  params: Mapping = None
                  ):
         """
@@ -138,11 +139,9 @@ class MlflowCallback(PhaseCallback):
         super(MlflowCallback, self).__init__(phase)
         self.freq = freq
         self.client = client
-        self.run = run
 
         if params:
-            for k, v in params.items():
-                self.client.log_param(self.run.info.run_id, k, v)
+            self.client.log_params(params)
 
     def __call__(self, context: PhaseContext):
         """
@@ -150,6 +149,4 @@ class MlflowCallback(PhaseCallback):
             param context: context of the current phase
         """
         if context.epoch % self.freq == 0:
-            for k, v in context.metrics_dict.items():
-                v = v.item() if type(v) == torch.Tensor else v
-                self.client.log_metric(self.run.info.run_id, self.prefix + k, v, step=context.epoch)
+            self.client.log_metrics({self.prefix + k: v for k, v in context.metrics_dict.items()})
