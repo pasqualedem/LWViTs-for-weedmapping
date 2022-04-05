@@ -42,7 +42,7 @@ parameters:
   dataset:
     root: ["dataset/processed/Sequoia"]
 #    channels: ['CIR']
-    channels: [['R', 'G', 'RE']]
+    channels: ['CIR', ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
     batch_size: [6, 12]
     val_batch_size: [12]
     test_batch_size: [12]
