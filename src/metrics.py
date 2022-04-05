@@ -1,5 +1,7 @@
-from torchmetrics import JaccardIndex
+from torchmetrics import JaccardIndex, AUROC
+
 
 METRICS = {
-    'jaccard': JaccardIndex
+    'jaccard': JaccardIndex,
+    'auc': AUROC
 }

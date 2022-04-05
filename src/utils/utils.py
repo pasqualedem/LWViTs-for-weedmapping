@@ -7,7 +7,7 @@ import torch
 from mlflow.tracking import MlflowClient
 
 
-def setup_mlflow(exp_name: str):
+def setup_mlflow(exp_name: str, description: str) -> str:
     """
     Setup mlflow tracking server and experiment
     """
@@ -17,7 +17,8 @@ def setup_mlflow(exp_name: str):
     print('URI set!')
     client = MlflowClient()
     exp_info = client.get_experiment_by_name(exp_name)
-    exp_id = exp_info.experiment_id if exp_info else MlflowClient().create_experiment(exp_name)
+    exp_id = exp_info.experiment_id if exp_info else \
+        MlflowClient().create_experiment(exp_name, tags={'mlflow.note.content': description})
     print('Experiment set')
     return exp_id
 
@@ -34,9 +35,9 @@ def mlflow_server():
 
 
 class MLRun(MlflowClient):
-    def __init__(self, exp_name: str):
+    def __init__(self, exp_name: str, description: str):
         super().__init__()
-        exp_id = setup_mlflow(exp_name)
+        exp_id = setup_mlflow(exp_name, description)
         self.run = self.create_run(experiment_id=exp_id)
 
     def log_params(self, params: Mapping):

@@ -1,24 +1,50 @@
-experiment: Try
 
-train_params:
-  max_epochs: 1
-  initial_lr: 3e-4
-  optimizer: Adam
-  loss:
-    name: cross_entropy
+experiment: [First experiment]
+description: [This is the first experiment]
+
+parameters:
+  train_params:
+    max_epochs: [500]
+    initial_lr: [0.001]
+    optimizer: [SGD]
+    optimizer_params:
+      momentum: [0.9]
+      weight_decay: [0.0005]
+    loss:
+      name: [cross_entropy]
+      params:
+        weight: [[0.0273, 1.0, 4.3802]]
+    # ema: True
+    seed: [42]
+    zero_weight_decay_on_bias_and_bn: [True]
+    metric_to_watch: [JaccardIndex]
+
+  early_stopping:
+    enabled: [True]
     params:
-      weight: [0.0273, 1.0, 4.3802]
-  ema: True
-  zero_weight_decay_on_bias_and_bn: True
-  metric_to_watch: JaccardIndex
+      patience: [5]
+      monitor: [loss]
+      mode: [min]
 
-metrics:
-  jaccard:
-      num_classes: 3
+  train_metrics:
+    jaccard:
+      num_classes: [3]
+  test_metrics:
+    jaccard:
+      num_classes: [3]
+    auc:
+      num_classes: [3]
 
-dataset:
-  root: "dataset/processed/Sequoia"
-  batch_size: 6
-  val_batch_size: 12
-  test_batch_size: 12
-  num_workers: 4
+  model:
+    name: [segnet]
+    params: [{}]
+
+  dataset:
+    root: ["dataset/processed/Sequoia"]
+#    channels: ['CIR']
+    channels: [['R', 'G', 'RE']]
+    batch_size: [6, 12]
+    val_batch_size: [12]
+    test_batch_size: [12]
+    num_workers: [0]
+    num_classes: [3]

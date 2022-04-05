@@ -1,8 +1,13 @@
+import os
+import numbers
+
 import torch
 from torch import Tensor
 from torch.nn.functional import one_hot
 from torchvision.utils import _log_api_usage_once
 from torchvision.transforms import functional as F
+
+from PIL import ImageOps
 
 
 class PairRandomCrop:
@@ -21,15 +26,6 @@ class PairRandomCrop:
     image_crop_position = {}
 
     def __init__(self, size, padding=0):
-        import random
-        import os
-        import numbers
-
-        from PIL import ImageOps
-
-        self.os = os
-        self.random = random
-        self.ImageOps = ImageOps
 
         if isinstance(size, numbers.Number):
             self.size = (int(size), int(size))
@@ -45,7 +41,7 @@ class PairRandomCrop:
             PIL.Image: Cropped image.
         """
         if self.padding > 0:
-            img = self.ImageOps.expand(img, border=self.padding, fill=0)
+            img = ImageOps.expand(img, border=self.padding, fill=0)
 
         w, h = img.size
         th, tw = self.size
@@ -56,10 +52,54 @@ class PairRandomCrop:
         if pid in self.image_crop_position:
             x1, y1 = self.image_crop_position.pop(pid)
         else:
-            x1 = self.random.randint(0, w - tw)
-            y1 = self.random.randint(0, h - th)
+            x1 = torch.randint(0, w - tw)
+            y1 = torch.randint(0, h - th)
             self.image_crop_position[pid] = (x1, y1)
         return img.crop((x1, y1, x1 + tw, y1 + th))
+
+
+class PairRandomFlip(torch.nn.Module):
+    """Flip the given image randomly with a given probability.
+    If the image is torch Tensor, it is expected
+    to have [..., H, W] shape, where ... means an arbitrary number of leading
+    dimensions
+
+    Args:
+        p (float): probability of the image being flipped. Default value is 0.5
+    """
+
+    def __init__(self, p=0.5, orientation='horizontal'):
+        super().__init__()
+        _log_api_usage_once(self)
+        self.p = p
+        if orientation == 'horizontal':
+            self.flip = F.hflip
+        elif orientation == 'vertical':
+            self.flip = F.vflip
+        else:
+            raise ValueError(f'Unknown orientation: {orientation}')
+        self.image_flip = {}
+
+    def forward(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be flipped.
+
+        Returns:
+            PIL Image or Tensor: Randomly flipped image.
+        """
+        pid = os.getpid()
+        if pid in self.image_flip:
+            value = self.image_flip.pop(pid)
+        else:
+            value = torch.rand(1)
+            self.image_flip[pid] = value
+        if value < self.p:
+            return self.flip(img)
+        return img
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(p={self.p})"
 
 
 class ToLong:
@@ -125,3 +165,7 @@ class Denormalize(torch.nn.Module):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
+
+
+def squeeze0(x):
+    return torch.squeeze(x, dim=0)

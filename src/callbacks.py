@@ -8,7 +8,7 @@ from mlflow.tracking import MlflowClient
 from super_gradients.training.utils.callbacks import PhaseCallback, Phase, PhaseContext
 from torchvision.utils import draw_segmentation_masks
 
-from utils import MLRun
+from utils.utils import MLRun
 
 
 class SegmentationVisualizationCallback(PhaseCallback):

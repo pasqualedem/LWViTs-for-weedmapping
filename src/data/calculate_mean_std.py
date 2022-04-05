@@ -20,7 +20,11 @@ def calculate():
     augs = transforms.Compose([
                       transforms.ToTensor()])
 
-    sq = SequoiaDataset("./dataset/processed/Sequoia", transform=augs, target_transform=augs)
+    sq = SequoiaDataset("./dataset/processed/Sequoia",
+                        transform=augs,
+                        target_transform=augs,
+                        channels=['R', 'G', 'NIR', 'RE']
+                        )
     count = len(sq) * WIDTH * HEIGHT
 
     try:
@@ -28,12 +32,12 @@ def calculate():
         image_loader = DataLoader(sq,
                                   batch_size=BATCH_SIZE,
                                   shuffle=False,
-                                  num_workers=WORKERS,
+                                  num_workers=0,
                                   pin_memory=True)
 
         # placeholders
-        psum = torch.tensor([0.0, 0.0, 0.0])
-        psum_sq = torch.tensor([0.0, 0.0, 0.0])
+        psum = torch.tensor([0.0, 0.0, 0.0, 0.0])
+        psum_sq = torch.tensor([0.0, 0.0, 0.0, 0.0])
 
         # loop through images
         for input, _ in tqdm(image_loader):
