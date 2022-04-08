@@ -64,6 +64,11 @@ class SegmentationVisualization:
 
         # SWITCH BETWEEN BLUE AND RED IF WE SAVE THE IMAGE ON THE DISC AS OTHERWISE WE CHANGE CHANNEL ORDERING
         colors = ['green', 'red', 'blue']
+        image_np = image_np[:3, :, :]  # Take only 3 bands if there are more
+        if image_np.shape[0] < 3:
+            image_np = torch.vstack([image_np,
+                                     torch.zeros((3 - image_np.shape[0], *image_np.shape[1:]), dtype=torch.uint8)])
+
         res_image = draw_segmentation_masks(image_np, overlay, colors=colors, alpha=0.4).detach().numpy()
         res_image = np.concatenate([res_image[ch, :, :, np.newaxis] for ch in range(3)], 2)
         res_image = cv2.resize(res_image.astype(np.uint8), (0, 0), fx=image_scale, fy=image_scale,

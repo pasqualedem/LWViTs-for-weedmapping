@@ -50,7 +50,7 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         transform_train = transforms.Compose([
             PairRandomFlip(orientation="horizontal"),
-            PairRandomFlip(orientation="vertical"),
+            # PairRandomFlip(orientation="vertical"),
             transforms.ToTensor(),
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
         ])
@@ -62,7 +62,7 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         target_transform = transforms.Compose([
             PairRandomFlip(orientation="horizontal"),
-            PairRandomFlip(orientation="vertical"),
+            # PairRandomFlip(orientation="vertical"),
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
@@ -86,7 +86,7 @@ class SequoiaDatasetInterface(DatasetInterface):
                                      batch_size=self.dataset_params.val_batch_size, index=val_index,
                                      transform=transform_test, target_transform=target_transform)
 
-        self.testset = SequoiaDataset(root=self.dataset_params.root, train=False,
+        self.testset = SequoiaDataset(root=self.dataset_params.root, train=False, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
                                       transform=transform_test, target_transform=target_transform)
 

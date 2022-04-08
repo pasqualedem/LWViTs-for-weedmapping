@@ -17,7 +17,7 @@ def linearize(dictionary: Mapping):
         elif isinstance(value, list):
             exps.append((key, value))
         else:
-          raise ValueError("Only dict or lists!!!")
+            raise ValueError("Only dict or lists!!!")
     return exps
 
 

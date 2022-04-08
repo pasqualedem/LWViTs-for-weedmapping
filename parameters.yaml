@@ -1,10 +1,14 @@
 
-experiment: [First experiment]
-description: [This is the first experiment]
+experiment:
+  name: [Second experiment test]
+  phase: [train]
+  exp_hash: [None]
+  description: [This is the first experiment]
+
 
 parameters:
   train_params:
-    max_epochs: [500]
+    max_epochs: [1]
     initial_lr: [0.001]
     optimizer: [SGD]
     optimizer_params:
@@ -17,6 +21,7 @@ parameters:
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
+    average_best_models: [False]
     metric_to_watch: [JaccardIndex]
 
   early_stopping:
@@ -34,6 +39,13 @@ parameters:
       num_classes: [3]
     auc:
       num_classes: [3]
+    perclassauc:
+      discriminator: # To discriminate between different classes
+        [[
+          ['auc_background', 0],
+          ['auc_crop', 1],
+          ['auc_weed', 2]
+        ]]
 
   model:
     name: [segnet]
@@ -41,9 +53,9 @@ parameters:
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-#    channels: ['CIR']
-    channels: ['CIR', ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
-    batch_size: [6, 12]
+    # channels: ['CIR', ['R', 'G'], ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
+    channels: [['R', 'G', 'RE', 'NIR']]
+    batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]

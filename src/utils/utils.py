@@ -35,10 +35,13 @@ def mlflow_server():
 
 
 class MLRun(MlflowClient):
-    def __init__(self, exp_name: str, description: str):
+    def __init__(self, exp_name: str, description: str, run_id: Optional[str] = None):
         super().__init__()
         exp_id = setup_mlflow(exp_name, description)
-        self.run = self.create_run(experiment_id=exp_id)
+        if run_id is None:
+            self.run = self.create_run(experiment_id=exp_id)
+        else:
+            self.run = self.get_run(run_id)
 
     def log_params(self, params: Mapping):
         for k, v in params.items():
