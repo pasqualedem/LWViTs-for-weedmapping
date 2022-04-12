@@ -1,11 +1,16 @@
 from typing import Mapping
 
+from super_gradients.common.abstractions.abstract_logger import get_logger
 from super_gradients.training import SgModel
+from super_gradients.training.params import TrainingParams
 from super_gradients.training.utils.callbacks import Phase
 
 import torch
 
 from callbacks import AverageMeterCallback, SegmentationVisualizationCallback
+
+
+logger = get_logger(__name__)
 
 
 class Trainer(SgModel):
@@ -46,3 +51,10 @@ class Trainer(SgModel):
         metric_names = test_metrics.keys()
         return {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
 
+    def init_train_params(self, train_params: Mapping = None) -> None:
+        if self.training_params is None:
+            self.training_params = TrainingParams()
+            self.training_params.override(**train_params)
+            self._initialize_sg_logger_objects()
+        else:
+            logger.warning("Training params already initialized. Ignoring train_params.")

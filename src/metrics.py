@@ -5,17 +5,22 @@ from torch import Tensor
 from torchmetrics import JaccardIndex, AUROC
 
 
+class AUC(AUROC):
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        AUROC.update(self, preds.cpu(), target.cpu())
+
+
 def PerClassAUC(name, code):
     def __init__(self, name, code, *args, **kwargs):
-        AUROC.__init__(self, num_classes=2, **kwargs)
+        AUC.__init__(self, num_classes=2, **kwargs)
         self.code = code
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         preds = preds[:, self.code, ::]
         target = target[:, self.code, ::]
-        AUROC.update(self, preds, target)
+        AUC.update(self, preds, target)
 
-    metric = type(name, (AUROC,), {"update": update, "__init__": __init__})
+    metric = type(name, (AUC,), {"update": update, "__init__": __init__})
     return metric(name, code)
 
 
@@ -40,6 +45,6 @@ def metrics_factory(metrics_params: Mapping) -> dict:
 
 METRICS = {
     'jaccard': JaccardIndex,
-    'auc': AUROC,
+    'auc': AUC,
     'perclassauc': PerClassAUC,
 }

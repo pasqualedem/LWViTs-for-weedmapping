@@ -2,6 +2,7 @@ import os
 from typing import Any, Mapping
 
 import torch
+import gc
 
 import numpy as np
 
@@ -104,7 +105,7 @@ def experiment(params: Mapping):
     if phase == 'train':
         # Callbacks
         cbcks = [
-            MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=train_params),
+            MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=params),
             MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
             SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
                                               freq=5,
@@ -117,8 +118,16 @@ def experiment(params: Mapping):
         train_params["phase_callbacks"] = cbcks
 
         sg_model.train(train_params)
+    else:
+        # To make the test work, we need to set train_params anyway
+        sg_model.init_train_params(train_params)
+
+    sg_model.train_loader._iterator._shutdown_workers()
+    sg_model.valid_loader._iterator._shutdown_workers()
+    gc.collect()
 
     test_metrics = sg_model.test(**test_params)
+    sg_model.test_loader._iterator._shutdown_workers()
 
     # log test metrics
     mlclient.log_metrics(test_metrics)
@@ -137,6 +146,7 @@ if __name__ == '__main__':
         try:
             logger.info(f'Running experiment {i} out of {len(experiments)}')
             experiment(params)
+            gc.collect()
         except Exception as e:
             logger.error(f'Experiment {i} failed with error {e}')
             raise e

@@ -1,3 +1,4 @@
+import collections
 import os
 import subprocess
 from typing import Any, Optional, Mapping
@@ -44,6 +45,7 @@ class MLRun(MlflowClient):
             self.run = self.get_run(run_id)
 
     def log_params(self, params: Mapping):
+        params = mlflow_linearize(params)
         for k, v in params.items():
             self.log_param(k, v)
 
@@ -65,4 +67,21 @@ class MLRun(MlflowClient):
         if run_id is None:
             run_id = self.run.info.run_id
         super().log_metric(run_id, key, value)
+
+
+def mlflow_linearize(dictionary: Mapping) -> Mapping:
+    """
+    Linearize a nested dictionary concatenating keys in order to allow mlflow parameters recording.
+
+    :param dictionary: nested dict
+    :return: one level dict
+    """
+    exps = {}
+    for key, value in dictionary.items():
+        if isinstance(value, collections.abc.Mapping):
+            exps = {**exps,
+                    **{key + '.' + lin_key: lin_value for lin_key, lin_value in mlflow_linearize(value).items()}}
+        else:
+            exps[key] = value
+    return exps
 

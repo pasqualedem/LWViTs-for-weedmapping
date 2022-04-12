@@ -47,28 +47,30 @@ class SequoiaDatasetInterface(DatasetInterface):
         }
 
         # crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val=320)
+        flip = PairRandomFlip(orientation="horizontal")
 
-        transform_train = transforms.Compose([
-            PairRandomFlip(orientation="horizontal"),
-            # PairRandomFlip(orientation="vertical"),
+        input_transform = [
+            flip,
             transforms.ToTensor(),
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
-        ])
+        ]
 
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
-        ])
-
-        target_transform = transforms.Compose([
-            PairRandomFlip(orientation="horizontal"),
-            # PairRandomFlip(orientation="vertical"),
+        target_transform = [
+            flip,
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=2),
+            FixValue(source=10000, target=1),
             SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
-        ])
+        ]
+
+        if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
+            resize = transforms.Resize(size=core_utils.get_param(self.dataset_params, 'size', default_val='same'))
+            input_transform.append(resize)
+            target_transform.append(resize)
+
+        target_transform = transforms.Compose(target_transform)
+        input_transform = transforms.Compose(input_transform)
 
         # Divide train, val and test
         train_folders = ['006', '007']  # Fixed subfolders
@@ -80,15 +82,15 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         self.trainset = SequoiaDataset(root=self.dataset_params.root, train=True, channels=channels,
                                        batch_size=self.dataset_params.batch_size, index=train_index,
-                                       transform=transform_train, target_transform=target_transform)
+                                       transform=input_transform, target_transform=target_transform)
 
         self.valset = SequoiaDataset(root=self.dataset_params.root, train=False, channels=channels,
                                      batch_size=self.dataset_params.val_batch_size, index=val_index,
-                                     transform=transform_test, target_transform=target_transform)
+                                     transform=input_transform, target_transform=target_transform)
 
         self.testset = SequoiaDataset(root=self.dataset_params.root, train=False, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
-                                      transform=transform_test, target_transform=target_transform)
+                                      transform=input_transform, target_transform=target_transform)
 
     def undo_preprocess(self, x):
         return (Denormalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std'])(x) * 255).type(torch.uint8)
