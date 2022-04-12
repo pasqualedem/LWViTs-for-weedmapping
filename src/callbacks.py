@@ -4,8 +4,8 @@ from typing import Union, Callable, Mapping, Any
 import cv2
 import numpy as np
 import torch
-from mlflow.tracking import MlflowClient
 from super_gradients.training.utils.callbacks import PhaseCallback, Phase, PhaseContext
+from super_gradients.training.utils.utils import AverageMeter
 from torchvision.utils import draw_segmentation_masks
 
 from utils.utils import MLRun
@@ -20,27 +20,31 @@ class SegmentationVisualizationCallback(PhaseCallback):
         last_img_idx_in_batch: Last image index to add to log. (default=-1, will take entire batch).
     """
 
-    def __init__(self, phase: Phase, freq: int, num_classes, batch_idx: int = 0, last_img_idx_in_batch: int = -1,
+    def __init__(self, phase: Phase, freq: int, num_classes, batch_idxs=None, last_img_idx_in_batch: int = None,
                  undo_preprocessing=None):
         super(SegmentationVisualizationCallback, self).__init__(phase)
+        if batch_idxs is None:
+            batch_idxs = [0]
         self.freq = freq
         self.num_classes = num_classes
-        self.batch_idx = batch_idx
+        self.batch_idxs = batch_idxs
         self.last_img_idx_in_batch = last_img_idx_in_batch
         self.undo_preprocesing = undo_preprocessing
+        self.prefix = 'train' if phase == Phase.TRAIN_EPOCH_END else 'test'
 
     def __call__(self, context: PhaseContext):
-        if context.epoch % self.freq == 0 and context.batch_idx == self.batch_idx:
+        epoch = context.epoch if context.epoch is not None else 0
+        if epoch % self.freq == 0 and context.batch_idx in self.batch_idxs:
             preds = context.preds.clone()
             batch_imgs = SegmentationVisualization.visualize_batch(context.inputs,
                                                                    preds, context.target, self.num_classes,
-                                                                   self.batch_idx,
+                                                                   context.batch_idx,
                                                                    undo_preprocessing_func=self.undo_preprocesing)
             batch_imgs = [cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in batch_imgs]
             batch_imgs = np.stack(batch_imgs)
-            tag = "batch_" + str(self.batch_idx) + "_images"
+            tag = self.prefix + "_batch_" + str(context.batch_idx) + "_images"
             context.sg_logger.add_images(tag=tag, images=batch_imgs[:self.last_img_idx_in_batch],
-                                         global_step=context.epoch, data_format='NHWC')
+                                         global_step=epoch, data_format='NHWC')
 
 
 class SegmentationVisualization:
@@ -155,3 +159,21 @@ class MlflowCallback(PhaseCallback):
         """
         if context.epoch % self.freq == 0:
             self.client.log_metrics({self.prefix + k: v for k, v in context.metrics_dict.items()})
+
+
+class AverageMeterCallback(PhaseCallback):
+    def __init__(self):
+        super(AverageMeterCallback, self).__init__(Phase.TEST_BATCH_END)
+        self.meters = {}
+
+    def __call__(self, context: PhaseContext):
+        """
+        Logs metrics to MLFlow.
+            param context: context of the current phase
+        """
+        context.metrics_compute_fn.update(context.preds, context.target)
+        metrics_dict = context.metrics_compute_fn.compute()
+        for k, v in metrics_dict.items():
+            if not self.meters.get(k):
+                self.meters[k] = AverageMeter()
+            self.meters[k].update(v, 1)

@@ -1,6 +1,6 @@
 
 experiment:
-  name: [Second experiment test]
+  name: [First experiment]
   phase: [train]
   exp_hash: [None]
   description: [This is the first experiment]
@@ -57,6 +57,6 @@ parameters:
     channels: [['R', 'G', 'RE', 'NIR']]
     batch_size: [6]
     val_batch_size: [12]
-    test_batch_size: [12]
-    num_workers: [0]
+    test_batch_size: [1]
+    num_workers: [2]
     num_classes: [3]

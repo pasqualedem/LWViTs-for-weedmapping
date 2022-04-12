@@ -66,7 +66,7 @@ class SequoiaDatasetInterface(DatasetInterface):
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=1),
+            FixValue(source=10000, target=2),
             SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
         ])
 

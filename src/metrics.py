@@ -2,9 +2,7 @@ from typing import Mapping
 from functools import reduce
 
 from torch import Tensor
-from torchmetrics import JaccardIndex, AUROC, Metric
-
-from torchmetrics.functional.classification import auroc
+from torchmetrics import JaccardIndex, AUROC
 
 
 def PerClassAUC(name, code):

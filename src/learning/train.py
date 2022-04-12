@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 
-from super_gradients.training import SgModel
+from learning.sgmodel import Trainer
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
@@ -27,7 +27,7 @@ EXP_DIR = 'mlflow'
 logger = get_logger(__name__)
 
 
-def parse_params(params: dict) -> (dict, (dict, dict), dict, list):
+def parse_params(params: dict) -> (dict, dict, dict, list):
     # Instantiate loss
     input_train_params = params['train_params']
     loss_params = params['train_params'].pop('loss')
@@ -50,20 +50,17 @@ def parse_params(params: dict) -> (dict, (dict, dict), dict, list):
     }
 
     test_params = {
-        "test_metrics_list": list(test_metrics.values()),
+        "test_metrics": test_metrics,
     }
 
     # early stopping
-    early_stopping_params = params['early_stopping']
-    if early_stopping_params['enabled']:
-        early_stop = [EarlyStop(Phase.VALIDATION_EPOCH_END, **early_stopping_params['params'])]
-    else:
-        early_stop = []
+    early_stop = [EarlyStop(Phase.VALIDATION_EPOCH_END, **params['early_stopping']['params'])] \
+        if params['early_stopping']['enabled'] else []
 
-    return train_params, (test_metrics, test_params), dataset_params, early_stop
+    return train_params, test_params, dataset_params, early_stop
 
 
-def init_model(sg_model: SgModel, params: Mapping, phase: str, mlflowclient: MLRun):
+def init_model(sg_model: Trainer, params: Mapping, phase: str, mlflowclient: MLRun):
     # init model
     model_params = params['model']
     if model_params['name'] in MODELS_DICT.keys():
@@ -75,10 +72,11 @@ def init_model(sg_model: SgModel, params: Mapping, phase: str, mlflowclient: MLR
         model = model_params['name']
 
     if not (phase == 'train'):
-        checkpoint = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
+        checkpoint_folder = mlflowclient.run.info.artifact_uri + '/SG'
     else:
-        checkpoint = None
-    sg_model.build_model(model, external_checkpoint_path=checkpoint)
+        checkpoint_folder = None
+    sg_model.build_model(model,
+                         source_ckpt_folder_name=checkpoint_folder)
 
 
 def experiment(params: Mapping):
@@ -88,42 +86,41 @@ def experiment(params: Mapping):
     phase = exp['phase']
 
     params = params['parameters']
-    train_params, (test_metrics_dict, test_params), dataset_params, early_stop = parse_params(params)
+    train_params, test_params, dataset_params, early_stop = parse_params(params)
 
     # Mlflow
     if not (phase == 'train'):
-        exp_hash = exp['hash']
+        exp_hash = exp['exp_hash']
     else:
         exp_hash = None
     mlclient = MLRun(exp_name, description, exp_hash)
 
-    sg_model = SgModel(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
+    sg_model = Trainer(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
     dataset = SequoiaDatasetInterface(dataset_params)
     sg_model.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
 
-    # Callbacks
-    cbcks = [
-        MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=train_params),
-        MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
-        SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
-                                          freq=5,
-                                          last_img_idx_in_batch=4,
-                                          num_classes=len(dataset.classes),
-                                          undo_preprocessing=dataset.undo_preprocess),
-        *early_stop
-    ]
-    train_params["phase_callbacks"] = cbcks
-
     init_model(sg_model, params, phase, mlclient)
 
-    sg_model.train(train_params)
+    if phase == 'train':
+        # Callbacks
+        cbcks = [
+            MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=train_params),
+            MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
+            SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
+                                              freq=5,
+                                              last_img_idx_in_batch=4,
+                                              num_classes=len(dataset.classes),
+                                              undo_preprocessing=dataset.undo_preprocess),
+            *early_stop
+        ]
+        train_params["phase_callbacks"] = cbcks
+
+        sg_model.train(train_params)
+
     test_metrics = sg_model.test(**test_params)
 
     # log test metrics
-    metric_names = test_metrics_dict.keys()
-    mlclient.log_metrics(
-        {'test_loss': test_metrics[0], **{'test_' + name: value
-                                          for name, value in zip(metric_names, test_metrics[1:])}})
+    mlclient.log_metrics(test_metrics)
 
 
 if __name__ == '__main__':
