@@ -108,6 +108,7 @@ def experiment(params: Mapping):
             MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
             SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
                                               freq=5,
+                                              batch_idxs=[0, len(sg_model.train_loader) - 1],
                                               last_img_idx_in_batch=4,
                                               num_classes=len(dataset.classes),
                                               undo_preprocessing=dataset.undo_preprocess),

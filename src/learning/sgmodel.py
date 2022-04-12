@@ -35,7 +35,7 @@ class Trainer(SgModel):
             AverageMeterCallback(),
             SegmentationVisualizationCallback(phase=Phase.TEST_BATCH_END,
                                               freq=1,
-                                              batch_idxs=list(range(50)),
+                                              batch_idxs=list(range(15)),
                                               num_classes=len(self.dataset_interface.classes),
                                               undo_preprocessing=self.dataset_interface.undo_preprocess)
         ]

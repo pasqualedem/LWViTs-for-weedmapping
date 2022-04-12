@@ -8,7 +8,7 @@ experiment:
 
 parameters:
   train_params:
-    max_epochs: [1]
+    max_epochs: [500]
     initial_lr: [0.001]
     optimizer: [SGD]
     optimizer_params:
@@ -53,8 +53,8 @@ parameters:
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    # channels: ['CIR', ['R', 'G'], ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
-    channels: [['R', 'G', 'RE', 'NIR']]
+    channels: ['CIR', ['R', 'G'], ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
+    # channels: [['R', 'G', 'RE', 'NIR']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [1]

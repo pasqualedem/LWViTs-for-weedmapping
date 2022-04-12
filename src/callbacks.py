@@ -30,7 +30,8 @@ class SegmentationVisualizationCallback(PhaseCallback):
         self.batch_idxs = batch_idxs
         self.last_img_idx_in_batch = last_img_idx_in_batch
         self.undo_preprocesing = undo_preprocessing
-        self.prefix = 'train' if phase == Phase.TRAIN_EPOCH_END else 'test'
+        self.prefix = 'train' if phase == Phase.TRAIN_EPOCH_END else 'val' \
+            if phase == Phase.VALIDATION_BATCH_END else 'test'
 
     def __call__(self, context: PhaseContext):
         epoch = context.epoch if context.epoch is not None else 0
@@ -43,6 +44,7 @@ class SegmentationVisualizationCallback(PhaseCallback):
             batch_imgs = [cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in batch_imgs]
             batch_imgs = np.stack(batch_imgs)
             tag = self.prefix + "_batch_" + str(context.batch_idx) + "_images"
+            tag = tag + f"_epoch_{context.epoch}" if context.epoch is not None else tag
             context.sg_logger.add_images(tag=tag, images=batch_imgs[:self.last_img_idx_in_batch],
                                          global_step=epoch, data_format='NHWC')
 
