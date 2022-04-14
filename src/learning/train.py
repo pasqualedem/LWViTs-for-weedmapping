@@ -7,18 +7,17 @@ import gc
 import numpy as np
 
 
-from learning.sgmodel import Trainer
+from learning.sgmodel import SegmentationTrainer
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
-from callbacks import SegmentationVisualizationCallback, MlflowCallback
+from callbacks import SegmentationVisualizationCallback, MlflowCallback, SaveSegmentationPredictionsCallback
 from data.sequoia import SequoiaDatasetInterface
 
 from loss import LOSSES as LOSSES_DICT
 from metrics import metrics_factory
-from models import MODELS as MODELS_DICT
 from utils.utils import MLRun
 from utils.grid import make_grid
 
@@ -61,25 +60,6 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
     return train_params, test_params, dataset_params, early_stop
 
 
-def init_model(sg_model: Trainer, params: Mapping, phase: str, mlflowclient: MLRun):
-    # init model
-    model_params = params['model']
-    if model_params['name'] in MODELS_DICT.keys():
-        model = MODELS_DICT[model_params['name']](**model_params['params'],
-                                                  in_chn=len(params['dataset']['channels']),
-                                                  out_chn=params['dataset']['num_classes']
-                                                  )
-    else:
-        model = model_params['name']
-
-    if not (phase == 'train'):
-        checkpoint_folder = mlflowclient.run.info.artifact_uri + '/SG'
-    else:
-        checkpoint_folder = None
-    sg_model.build_model(model,
-                         source_ckpt_folder_name=checkpoint_folder)
-
-
 def experiment(params: Mapping):
     exp = params['experiment']
     exp_name = exp['name']
@@ -96,11 +76,10 @@ def experiment(params: Mapping):
         exp_hash = None
     mlclient = MLRun(exp_name, description, exp_hash)
 
-    sg_model = Trainer(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
+    seg_trainer = SegmentationTrainer(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
     dataset = SequoiaDatasetInterface(dataset_params)
-    sg_model.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-
-    init_model(sg_model, params, phase, mlclient)
+    seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
+    seg_trainer.init_model(params, phase, mlclient)
 
     if phase == 'train':
         # Callbacks
@@ -109,7 +88,7 @@ def experiment(params: Mapping):
             MlflowCallback(Phase.VALIDATION_EPOCH_END, freq=1, client=mlclient),
             SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
                                               freq=5,
-                                              batch_idxs=[0, len(sg_model.train_loader) - 1],
+                                              batch_idxs=[0, len(seg_trainer.train_loader) - 1],
                                               last_img_idx_in_batch=4,
                                               num_classes=len(dataset.classes),
                                               undo_preprocessing=dataset.undo_preprocess),
@@ -117,20 +96,33 @@ def experiment(params: Mapping):
         ]
         train_params["phase_callbacks"] = cbcks
 
-        sg_model.train(train_params)
-    else:
-        # To make the test work, we need to set train_params anyway
-        sg_model.init_train_params(train_params)
-
-    sg_model.train_loader._iterator._shutdown_workers()
-    sg_model.valid_loader._iterator._shutdown_workers()
+        seg_trainer.train(train_params)
+        if seg_trainer.train_loader.num_workers > 0:
+            seg_trainer.train_loader._iterator._shutdown_workers()
+            seg_trainer.valid_loader._iterator._shutdown_workers()
     gc.collect()
+    if phase == 'train' or phase == 'test':
+        if phase == 'test':
+            # To make the test work, we need to set train_params anyway
+            seg_trainer.init_train_params(train_params)
 
-    test_metrics = sg_model.test(**test_params)
-    sg_model.test_loader._iterator._shutdown_workers()
+        test_metrics = seg_trainer.test(**test_params)
+        if seg_trainer.test_loader.num_workers > 0:
+            seg_trainer.test_loader._iterator._shutdown_workers()
 
-    # log test metrics
-    mlclient.log_metrics(test_metrics)
+        # log test metrics
+        mlclient.log_metrics(test_metrics)
+
+    if phase == 'run':
+        seg_trainer.init_train_params(train_params)
+        cbcks = [
+            SaveSegmentationPredictionsCallback(phase=Phase.POST_TRAINING,
+                                                path="predictions",
+                                                num_classes=len(seg_trainer.test_loader.dataset.classes),
+                                                )
+            ]
+        seg_trainer.test_loader.dataset.return_name = True
+        seg_trainer.run(seg_trainer.test_loader, callbacks=cbcks)
 
 
 if __name__ == '__main__':
@@ -144,9 +136,9 @@ if __name__ == '__main__':
 
     for i, params in enumerate(experiments):
         try:
-            logger.info(f'Running experiment {i} out of {len(experiments)}')
+            logger.info(f'Running experiment {i + 1} out of {len(experiments)}')
             experiment(params)
             gc.collect()
         except Exception as e:
-            logger.error(f'Experiment {i} failed with error {e}')
+            logger.error(f'Experiment {i + 1} failed with error {e}')
             raise e

@@ -7,6 +7,7 @@ import torch
 from super_gradients.training.utils.callbacks import PhaseCallback, Phase, PhaseContext
 from super_gradients.training.utils.utils import AverageMeter
 from torchvision.utils import draw_segmentation_masks
+from PIL import ImageColor, Image
 
 from utils.utils import MLRun
 
@@ -179,3 +180,34 @@ class AverageMeterCallback(PhaseCallback):
             if not self.meters.get(k):
                 self.meters[k] = AverageMeter()
             self.meters[k].update(v, 1)
+
+
+class SaveSegmentationPredictionsCallback(PhaseCallback):
+    def __init__(self, phase, path, num_classes):
+        super(SaveSegmentationPredictionsCallback, self).__init__(phase)
+        self.path = path
+        self.num_classes = num_classes
+
+        os.makedirs(self.path, exist_ok=True)
+        colors = ['blue', 'green', 'red']
+        self.colors = []
+        for color in colors:
+            if isinstance(color, str):
+                color = ImageColor.getrgb(color)
+            self.colors.append(torch.tensor(color, dtype=torch.uint8))
+
+    def __call__(self, context: PhaseContext):
+        for prediction, input_name in zip(context.preds, context.input_name):
+            path = os.path.join(self.path, input_name)
+            prediction = prediction.detach().cpu()
+            masks = torch.concat([
+                (prediction.argmax(0) == cls).unsqueeze(0)
+                for cls in range(self.num_classes)
+            ])
+
+            img_to_draw = torch.zeros(*prediction.shape[-2:], 3, dtype=torch.uint8)
+            # TODO: There might be a way to vectorize this
+            for mask, color in zip(masks, self.colors):
+                img_to_draw[mask] = color
+
+            Image.fromarray(img_to_draw.numpy()).save(path)

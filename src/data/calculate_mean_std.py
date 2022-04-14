@@ -23,7 +23,7 @@ def calculate():
     sq = SequoiaDataset("./dataset/processed/Sequoia",
                         transform=augs,
                         target_transform=augs,
-                        channels=['R', 'G', 'NIR', 'RE']
+                        channels=['R', 'NIR', 'RE', 'NDVI']
                         )
     count = len(sq) * WIDTH * HEIGHT
 

@@ -1,7 +1,7 @@
 
 experiment:
-  name: [Third experiment]
-  phase: [train] # train, resume, test
+  name: [Fourth experiment test]
+  phase: [train] # train, resume, test, run
   exp_hash: [None]
   description: [This is the first experiment]
 
@@ -49,17 +49,18 @@ parameters:
         ]]
 
   model:
-    name: [segnet, regseg48]
+    name: [segnet]
     params: [{}]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    channels: ['CIR', ['R', 'G'], ['R', 'G', 'RE'], ['R', 'G', 'RE', 'NIR']]
+    channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['G', 'NIR', 'R'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: ['CIR']
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
-    num_workers: [2]
+    num_workers: [0]
     num_classes: [3]
-    size: [[496, 368]]
+    size: [[368, 496]]

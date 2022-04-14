@@ -7,6 +7,8 @@ from PIL import Image
 from torchvision.datasets.vision import VisionDataset
 import torchvision.transforms as transforms
 from super_gradients.training.datasets.dataset_interfaces import DatasetInterface
+from torchvision.transforms import functional as F
+
 from transforms import PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0
 from sklearn.model_selection import train_test_split
 
@@ -29,6 +31,7 @@ class SequoiaDatasetInterface(DatasetInterface):
             ),
             'R': (0.3368, 0.1966),
             'G': (0.3166, 0.1799),
+            'NDVI': (0.3160, 0.2104),
             'NIR': (0.2927, 0.1507),
             'RE': (0.3152, 0.1563)
         }
@@ -50,13 +53,12 @@ class SequoiaDatasetInterface(DatasetInterface):
         flip = PairRandomFlip(orientation="horizontal")
 
         input_transform = [
-            flip,
-            transforms.ToTensor(),
+            #flip,
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
         ]
 
         target_transform = [
-            flip,
+            #flip,
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
@@ -202,7 +204,8 @@ class SequoiaDataset(VisionDataset):
                  index: Iterable = None,
                  batch_size: int = 4,
                  train: bool = True,
-                 return_mask: bool = False
+                 return_mask: bool = False,
+                 return_path: bool = False,
                  ):
         """
         Initialize a sequence of Graph User-Item IDs.
@@ -212,8 +215,9 @@ class SequoiaDataset(VisionDataset):
         self.batch_size = batch_size
         super().__init__(root=root)
 
-        if channels == 'CIR':
-            self.get_img = self.get_cir
+        if channels == 'CIR' or len(channels) == 1:
+            channels = channels[0] if len(channels) == 1 else channels
+            self.get_img = self.get_complete_image
         else:
             self.get_img = self.get_channels
 
@@ -230,6 +234,7 @@ class SequoiaDataset(VisionDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.return_mask = return_mask
+        self.return_name = return_path
 
     @classmethod
     def build_index(cls,
@@ -256,22 +261,18 @@ class SequoiaDataset(VisionDataset):
                 i += 1
         return list(index.values())
 
-    def get_cir(self, folder, file) -> Any:
+    def get_complete_image(self, folder, file) -> Any:
         img = Image.open(
-            os.path.join(self.path, folder, 'tile', 'cir', file)
+            os.path.join(self.path, folder, 'tile', self.channels, file)
         )
-        return img
+        return F.to_tensor(img)
 
     def get_channels(self, folder, file) -> Any:
-        return Image.fromarray(
-            np.moveaxis(
-                np.stack([
-                    Image.open(
+        return torch.stack([
+                    F.to_tensor(Image.open(
                         os.path.join(self.path, folder, 'tile', c, file)
-                    ) for c in self.channels
+                    )).squeeze(0) for c in self.channels
                 ]
-                ),
-                0, -1)
         )
 
     def __getitem__(self, index: int) -> Any:
@@ -288,13 +289,17 @@ class SequoiaDataset(VisionDataset):
                          folder + '_' + file.split('.')[0] + '_GroundTruth_iMap.png'
                          )
         )
+        img = self.transform(img)
+        gt = self.target_transform(gt)
+
         if self.return_mask:
             mask = Image.open(
                 os.path.join(self.path, folder, 'mask', file)
             )
-            return self.transform(img), (self.target_transform(gt), mask)
-        else:
-            return self.transform(img), self.target_transform(gt)
+            gt = (gt, mask)
+        if self.return_name:
+            return img, gt, {'input_name': folder + '_' + file}
+        return img, gt
 
     def __len__(self) -> int:
         """

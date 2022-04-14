@@ -1,19 +1,52 @@
 from typing import Mapping
 
 from super_gradients.common.abstractions.abstract_logger import get_logger
-from super_gradients.training import SgModel
+from super_gradients.training import SgModel, StrictLoad
 from super_gradients.training.params import TrainingParams
-from super_gradients.training.utils.callbacks import Phase
+from super_gradients.training.utils import sg_model_utils
+from super_gradients.training.utils.callbacks import Phase, PhaseContext, CallbackHandler
+from super_gradients.training import utils as core_utils
 
 import torch
+from super_gradients.training.utils.checkpoint_utils import load_checkpoint_to_model
+from tqdm import tqdm
 
 from callbacks import AverageMeterCallback, SegmentationVisualizationCallback
-
+from models import MODELS as MODELS_DICT
+from utils.utils import MLRun
 
 logger = get_logger(__name__)
 
 
-class Trainer(SgModel):
+class SegmentationTrainer(SgModel):
+    def init_model(self, params: Mapping, phase: str, mlflowclient: MLRun):
+        # init model
+        model_params = params['model']
+        if model_params['name'] in MODELS_DICT.keys():
+            model = MODELS_DICT[model_params['name']](**model_params['params'],
+                                                      in_chn=len(params['dataset']['channels']),
+                                                      out_chn=params['dataset']['num_classes']
+                                                      )
+        else:
+            model = model_params['name']
+
+        self.build_model(model)
+        if phase != 'train':
+            ckpt_local_path = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
+            self.checkpoint = load_checkpoint_to_model(ckpt_local_path=ckpt_local_path,
+                                                       load_backbone=False,
+                                                       net=self.net,
+                                                       strict=StrictLoad.ON.value,
+                                                       load_weights_only=self.load_weights_only)
+
+            if 'ema_net' in self.checkpoint.keys():
+                logger.warning("[WARNING] Main network has been loaded from checkpoint but EMA network exists as well. It "
+                               " will only be loaded during validation when training with ema=True. ")
+
+            # UPDATE TRAINING PARAMS IF THEY EXIST & WE ARE NOT LOADING AN EXTERNAL MODEL's WEIGHTS
+            self.best_metric = self.checkpoint['acc'] if 'acc' in self.checkpoint.keys() else -1
+            self.start_epoch = self.checkpoint['epoch'] if 'epoch' in self.checkpoint.keys() else 0
+
     def test(self,  # noqa: C901
              test_loader: torch.utils.data.DataLoader = None,
              loss: torch.nn.modules.loss._Loss = None,
@@ -54,7 +87,59 @@ class Trainer(SgModel):
     def init_train_params(self, train_params: Mapping = None) -> None:
         if self.training_params is None:
             self.training_params = TrainingParams()
-            self.training_params.override(**train_params)
-            self._initialize_sg_logger_objects()
-        else:
-            logger.warning("Training params already initialized. Ignoring train_params.")
+        self.training_params.override(**train_params)
+        self._initialize_sg_logger_objects()
+        if self.phase_callbacks is None:
+            self.phase_callbacks = []
+        self.phase_callback_handler = CallbackHandler(self.phase_callbacks)
+
+    def run(self, data_loader: torch.utils.data.DataLoader, callbacks=None, silent_mode: bool = False):
+        """
+        Runs the model on given dataloader.
+
+        :param data_loader: dataloader to perform run on
+
+        """
+
+        # THE DISABLE FLAG CONTROLS WHETHER THE PROGRESS BAR IS SILENT OR PRINTS THE LOGS
+        if callbacks is None:
+            callbacks = []
+        progress_bar_data_loader = tqdm(data_loader, bar_format="{l_bar}{bar:10}{r_bar}", dynamic_ncols=True,
+                                        disable=silent_mode)
+        context = PhaseContext(criterion=self.criterion,
+                               device=self.device,
+                               sg_logger=self.sg_logger)
+
+        self.phase_callbacks.extend(callbacks)
+
+        if not silent_mode:
+            # PRINT TITLES
+            pbar_start_msg = f"Running model on {len(data_loader)} batches"
+            progress_bar_data_loader.set_description(pbar_start_msg)
+
+        with torch.no_grad():
+            for batch_idx, batch_items in enumerate(progress_bar_data_loader):
+                batch_items = core_utils.tensor_container_to_device(batch_items, self.device, non_blocking=True)
+
+                additional_batch_items = {}
+                targets = None
+                if hasattr(batch_items, '__len__'):
+                    if len(batch_items) == 2:
+                        inputs, targets = batch_items
+                    elif len(batch_items) == 3:
+                        inputs, targets, additional_batch_items = batch_items
+                    else:
+                        raise ValueError(f"Expected 1, 2 or 3 items in batch_items, got {len(batch_items)}")
+                else:
+                    inputs = batch_items
+
+                output = self.net(inputs)
+
+                context.update_context(batch_idx=batch_idx,
+                                       inputs=inputs,
+                                       preds=output,
+                                       target=targets,
+                                       **additional_batch_items)
+
+                # TRIGGER PHASE CALLBACKS
+                self.phase_callback_handler(Phase.POST_TRAINING, context)
