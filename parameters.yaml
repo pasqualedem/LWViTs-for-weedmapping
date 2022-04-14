@@ -1,13 +1,15 @@
 
 experiment:
-  name: [Fourth experiment test]
-  phase: [train] # train, resume, test, run
-  exp_hash: [None]
-  description: [This is the first experiment]
+  name: Fourth experiment
+  description: This is the first experiment
+  continue_with_errors: True
 
 
 parameters:
+  run_hash: [None]
   details: [With flip]
+  phase: [train] # train, resume, test, run
+
   train_params:
     max_epochs: [500]
     initial_lr: [0.001]
@@ -54,8 +56,8 @@ parameters:
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['G', 'NIR', 'R'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+    channels: ['CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: ['CIR']
     batch_size: [6]

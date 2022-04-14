@@ -7,7 +7,7 @@ import gc
 import numpy as np
 
 
-from learning.sgmodel import SegmentationTrainer
+from learning.seg_trainer import SegmentationTrainer
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
@@ -60,21 +60,19 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
     return train_params, test_params, dataset_params, early_stop
 
 
-def experiment(params: Mapping):
-    exp = params['experiment']
-    exp_name = exp['name']
-    description = exp['description']
-    phase = exp['phase']
+def run(params: dict):
+    exp_name = params['name']
+    description = params['description']
+    phase = params['phase']
 
-    params = params['parameters']
     train_params, test_params, dataset_params, early_stop = parse_params(params)
 
     # Mlflow
     if not (phase == 'train'):
-        exp_hash = exp['exp_hash']
+        run_hash = params['run_hash']
     else:
-        exp_hash = None
-    mlclient = MLRun(exp_name, description, exp_hash)
+        run_hash = None
+    mlclient = MLRun(exp_name, description, run_hash)
 
     seg_trainer = SegmentationTrainer(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
     dataset = SequoiaDatasetInterface(dataset_params)
@@ -128,17 +126,23 @@ def experiment(params: Mapping):
 if __name__ == '__main__':
     param_path = 'parameters.yaml'
     with open(param_path, 'r') as param_stream:
-        grids = YAML().load(param_stream)
+        settings = YAML().load(param_stream)
+
+    exp_settings = settings['experiment']
+    grids = settings['parameters']
 
     logger.info(f'Loaded parameters from {param_path}')
-    experiments = make_grid(grids)
-    logger.info(f'Found {len(experiments)} experiments')
+    runs = make_grid(grids)
+    logger.info(f'Found {len(runs)} experiments')
 
-    for i, params in enumerate(experiments):
+    continue_with_errors = exp_settings.pop('continue_with_errors')
+
+    for i, params in enumerate(runs):
         try:
-            logger.info(f'Running experiment {i + 1} out of {len(experiments)}')
-            experiment(params)
+            logger.info(f'Running experiment {i + 1} out of {len(runs)}')
+            run({**exp_settings, **params})
             gc.collect()
         except Exception as e:
             logger.error(f'Experiment {i + 1} failed with error {e}')
-            raise e
+            if not continue_with_errors:
+                raise e

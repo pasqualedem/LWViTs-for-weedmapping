@@ -53,12 +53,12 @@ class SequoiaDatasetInterface(DatasetInterface):
         flip = PairRandomFlip(orientation="horizontal")
 
         input_transform = [
-            #flip,
+            flip,
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
         ]
 
         target_transform = [
-            #flip,
+            flip,
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
