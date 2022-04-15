@@ -25,10 +25,10 @@ class SequoiaDatasetInterface(DatasetInterface):
     MEAN_STDS = \
         {
             'CIR':
-            (
-                (0.2927, 0.3166, 0.3368),
-                (0.1507, 0.1799, 0.1966)
-            ),
+                (
+                    (0.2927, 0.3166, 0.3368),
+                    (0.1507, 0.1799, 0.1966)
+                ),
             'R': (0.3368, 0.1966),
             'G': (0.3166, 0.1799),
             'NDVI': (0.3160, 0.2104),
@@ -46,7 +46,8 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         self.lib_dataset_params = {
             'mean': mean,
-            'std': std
+            'std': std,
+            'channels': channels
         }
 
         # crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val=320)
@@ -75,22 +76,22 @@ class SequoiaDatasetInterface(DatasetInterface):
         input_transform = transforms.Compose(input_transform)
 
         # Divide train, val and test
-        train_folders = ['006', '007']  # Fixed subfolders
-        test_folders = ['005']  # Fixed subfolders
+        self.train_folders = ['006', '007']  # Fixed subfolders
+        self.test_folders = ['005']  # Fixed subfolders
 
-        train_index = SequoiaDataset.build_index(self.dataset_params.root, train_folders, channels)
-        test_index = SequoiaDataset.build_index(self.dataset_params.root, test_folders, channels)
+        train_index = SequoiaDataset.build_index(self.dataset_params.root, self.train_folders, channels)
+        test_index = SequoiaDataset.build_index(self.dataset_params.root, self.test_folders, channels)
         train_index, val_index = train_test_split(train_index, test_size=0.2)
 
-        self.trainset = SequoiaDataset(root=self.dataset_params.root, train=True, channels=channels,
+        self.trainset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                        batch_size=self.dataset_params.batch_size, index=train_index,
                                        transform=input_transform, target_transform=target_transform)
 
-        self.valset = SequoiaDataset(root=self.dataset_params.root, train=False, channels=channels,
+        self.valset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                      batch_size=self.dataset_params.val_batch_size, index=val_index,
                                      transform=input_transform, target_transform=target_transform)
 
-        self.testset = SequoiaDataset(root=self.dataset_params.root, train=False, channels=channels,
+        self.testset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
                                       transform=input_transform, target_transform=target_transform)
 
@@ -191,6 +192,43 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         self.classes = self.trainset.classes
 
+    def get_run_loader(self, root=None, folders=None, batch_size=None):
+        batch_size = batch_size if batch_size is not None else self.dataset_params.test_batch_size
+        folders = folders if folders is not None else self.test_folders
+        root = root if root is not None else self.dataset_params.root
+
+        index = SequoiaDataset.build_index(root, folders, self.dataset_params.channels)
+        input_transform = [
+            transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
+        ]
+
+        target_transform = [
+            transforms.PILToTensor(),
+            squeeze0,
+            ToLong(),
+            FixValue(source=10000, target=1),
+            SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
+        ]
+
+        if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
+            resize = transforms.Resize(size=core_utils.get_param(self.dataset_params, 'size', default_val='same'))
+            input_transform.append(resize)
+            target_transform.append(resize)
+
+        target_transform = transforms.Compose(target_transform)
+        input_transform = transforms.Compose(input_transform)
+
+        runset = SequoiaDataset(root=self.dataset_params.root, channels=self.dataset_params.channels,
+                                batch_size=self.dataset_params.test_batch_size, index=index,
+                                transform=input_transform, target_transform=target_transform)
+
+        loader = torch.utils.data.DataLoader(runset,
+                                             batch_size=batch_size,
+                                             num_workers=self.dataset_params.num_workers,
+                                             pin_memory=True,
+                                             persistent_workers=False)
+        return loader
+
 
 class SequoiaDataset(VisionDataset):
     CLASS_LABELS = {0: "background", 1: "crop", 2: 'weed'}
@@ -203,7 +241,6 @@ class SequoiaDataset(VisionDataset):
                  channels: Union[str, Iterable] = 'CIR',
                  index: Iterable = None,
                  batch_size: int = 4,
-                 train: bool = True,
                  return_mask: bool = False,
                  return_path: bool = False,
                  ):
@@ -269,10 +306,10 @@ class SequoiaDataset(VisionDataset):
 
     def get_channels(self, folder, file) -> Any:
         return torch.stack([
-                    F.to_tensor(Image.open(
-                        os.path.join(self.path, folder, 'tile', c, file)
-                    )).squeeze(0) for c in self.channels
-                ]
+            F.to_tensor(Image.open(
+                os.path.join(self.path, folder, 'tile', c, file)
+            )).squeeze(0) for c in self.channels
+        ]
         )
 
     def __getitem__(self, index: int) -> Any:

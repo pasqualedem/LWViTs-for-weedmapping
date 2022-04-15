@@ -84,11 +84,12 @@ class SegmentationTrainer(SgModel):
         metric_names = test_metrics.keys()
         return {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
 
-    def init_train_params(self, train_params: Mapping = None) -> None:
+    def init_train_params(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:
         if self.training_params is None:
             self.training_params = TrainingParams()
         self.training_params.override(**train_params)
-        self._initialize_sg_logger_objects()
+        if init_sg_loggers:
+            self._initialize_sg_logger_objects()
         if self.phase_callbacks is None:
             self.phase_callbacks = []
         self.phase_callback_handler = CallbackHandler(self.phase_callbacks)

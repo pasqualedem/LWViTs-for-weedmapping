@@ -6,7 +6,6 @@ import gc
 
 import numpy as np
 
-
 from learning.seg_trainer import SegmentationTrainer
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
@@ -63,12 +62,12 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
 def run(params: dict):
     exp_name = params['name']
     description = params['description']
-    phase = params['phase']
+    phases = params['phases']
 
     train_params, test_params, dataset_params, early_stop = parse_params(params)
 
     # Mlflow
-    if not (phase == 'train'):
+    if 'train' not in phases:
         run_hash = params['run_hash']
     else:
         run_hash = None
@@ -77,9 +76,9 @@ def run(params: dict):
     seg_trainer = SegmentationTrainer(experiment_name='SG', ckpt_root_dir=mlclient.run.info.artifact_uri)
     dataset = SequoiaDatasetInterface(dataset_params)
     seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-    seg_trainer.init_model(params, phase, mlclient)
+    seg_trainer.init_model(params, phases, mlclient)
 
-    if phase == 'train':
+    if 'train' in phases:
         # Callbacks
         cbcks = [
             MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=params),
@@ -95,14 +94,15 @@ def run(params: dict):
         train_params["phase_callbacks"] = cbcks
 
         seg_trainer.train(train_params)
+        # TODO Move into class this instructions
         if seg_trainer.train_loader.num_workers > 0:
             seg_trainer.train_loader._iterator._shutdown_workers()
             seg_trainer.valid_loader._iterator._shutdown_workers()
     gc.collect()
-    if phase == 'train' or phase == 'test':
-        if phase == 'test':
+    if 'test' in phases:
+        if 'train' not in phases:
             # To make the test work, we need to set train_params anyway
-            seg_trainer.init_train_params(train_params)
+            seg_trainer.init_train_params(train_params, params['test_params']['init_sg_loggers'])
 
         test_metrics = seg_trainer.test(**test_params)
         if seg_trainer.test_loader.num_workers > 0:
@@ -111,16 +111,21 @@ def run(params: dict):
         # log test metrics
         mlclient.log_metrics(test_metrics)
 
-    if phase == 'run':
-        seg_trainer.init_train_params(train_params)
+    if 'run' in phases:
+        run_params = params['run_params']
+        run_loader = dataset.get_run_loader(folders=run_params['run_folders'], batch_size=run_params['batch_size'])
+        seg_trainer.init_train_params(train_params, run_params['init_sg_loggers'])
         cbcks = [
             SaveSegmentationPredictionsCallback(phase=Phase.POST_TRAINING,
-                                                path="predictions",
+                                                path=
+                                                run_params['prediction_folder']
+                                                if run_params['prediction_folder'] != 'mlflow'
+                                                else mlclient.run.info.artifact_uri + '/predictions',
                                                 num_classes=len(seg_trainer.test_loader.dataset.classes),
                                                 )
-            ]
-        seg_trainer.test_loader.dataset.return_name = True
-        seg_trainer.run(seg_trainer.test_loader, callbacks=cbcks)
+        ]
+        run_loader.dataset.return_name = True
+        seg_trainer.run(run_loader, callbacks=cbcks)
 
 
 if __name__ == '__main__':

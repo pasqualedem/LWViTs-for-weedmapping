@@ -6,9 +6,11 @@ experiment:
 
 
 parameters:
-  run_hash: [None]
+  run_hash: [16ef60832df94834bb26a61ba26bda8a]
   details: [With flip]
-  phase: [train] # train, resume, test, run
+  # train, test, run
+  phases: [[run]]
+  # phases: [[train, test, run]]
 
   train_params:
     max_epochs: [500]
@@ -56,8 +58,8 @@ parameters:
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    channels: ['CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: ['CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: ['CIR']
     batch_size: [6]
@@ -65,4 +67,13 @@ parameters:
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
-    size: [[368, 496]]
+    size: [same]
+
+  test_params:
+    init_sg_loggers: [True]
+
+  run_params:
+    batch_size: [24]
+    run_folders: [["005"]]
+    init_sg_loggers: [False]
+    prediction_folder: [mlflow] # "mlflow" to make into artifact folder
