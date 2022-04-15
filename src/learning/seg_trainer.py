@@ -47,6 +47,12 @@ class SegmentationTrainer(SgModel):
             self.best_metric = self.checkpoint['acc'] if 'acc' in self.checkpoint.keys() else -1
             self.start_epoch = self.checkpoint['epoch'] if 'epoch' in self.checkpoint.keys() else 0
 
+    def train(self, training_params: dict = dict()):
+        super().train(training_params)
+        if self.train_loader.num_workers > 0:
+            self.train_loader._iterator._shutdown_workers()
+            self.valid_loader._iterator._shutdown_workers()
+
     def test(self,  # noqa: C901
              test_loader: torch.utils.data.DataLoader = None,
              loss: torch.nn.modules.loss._Loss = None,
@@ -82,6 +88,9 @@ class SegmentationTrainer(SgModel):
                                       metrics_progress_verbose, test_phase_callbacks, use_ema_net)
 
         metric_names = test_metrics.keys()
+
+        if self.test_loader.num_workers > 0:
+            self.test_loader._iterator._shutdown_workers()
         return {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
 
     def init_train_params(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:

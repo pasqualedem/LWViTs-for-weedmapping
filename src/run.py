@@ -78,7 +78,7 @@ def run(params: dict):
     seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
     seg_trainer.init_model(params, phases, mlclient)
 
-    if 'train' in phases:
+    if 'train' in phases:  # ------------------------ TRAINING PHASE ------------------------
         # Callbacks
         cbcks = [
             MlflowCallback(Phase.TRAIN_EPOCH_END, freq=1, client=mlclient, params=params),
@@ -94,24 +94,19 @@ def run(params: dict):
         train_params["phase_callbacks"] = cbcks
 
         seg_trainer.train(train_params)
-        # TODO Move into class this instructions
-        if seg_trainer.train_loader.num_workers > 0:
-            seg_trainer.train_loader._iterator._shutdown_workers()
-            seg_trainer.valid_loader._iterator._shutdown_workers()
+
     gc.collect()
-    if 'test' in phases:
+    if 'test' in phases:  # ------------------------ TEST PHASE ------------------------
         if 'train' not in phases:
             # To make the test work, we need to set train_params anyway
             seg_trainer.init_train_params(train_params, params['test_params']['init_sg_loggers'])
 
         test_metrics = seg_trainer.test(**test_params)
-        if seg_trainer.test_loader.num_workers > 0:
-            seg_trainer.test_loader._iterator._shutdown_workers()
 
         # log test metrics
         mlclient.log_metrics(test_metrics)
 
-    if 'run' in phases:
+    if 'run' in phases:  # ------------------------ RUN PHASE ------------------------
         run_params = params['run_params']
         run_loader = dataset.get_run_loader(folders=run_params['run_folders'], batch_size=run_params['batch_size'])
         seg_trainer.init_train_params(train_params, run_params['init_sg_loggers'])

@@ -6,7 +6,7 @@ experiment:
 
 
 parameters:
-  run_hash: [16ef60832df94834bb26a61ba26bda8a]
+  run_hash: [None]
   details: [With flip]
   # train, test, run
   phases: [[run]]
