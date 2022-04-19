@@ -125,11 +125,7 @@ def run(params: dict):
         # seg_trainer.run(seg_trainer.valid_loader, callbacks=cbcks)
 
 
-if __name__ == '__main__':
-    param_path = 'parameters.yaml'
-    with open(param_path, 'r') as param_stream:
-        settings = YAML().load(param_stream)
-
+def experiment(settings: Mapping):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
@@ -148,3 +144,12 @@ if __name__ == '__main__':
             logger.error(f'Experiment {i + 1} failed with error {e}')
             if not continue_with_errors:
                 raise e
+
+
+if __name__ == '__main__':
+    param_path = 'parameters.yaml'
+    with open(param_path, 'r') as param_stream:
+        settings = YAML().load(param_stream)
+
+    experiment(settings)
+

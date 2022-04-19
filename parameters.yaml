@@ -57,8 +57,8 @@ parameters:
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    train_folders: [['006', '007']]
-    test_folders: [['005']]
+    train_folders: [['005', '006']]
+    test_folders: [['007']]
     # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
     channels: [['R', 'G'],'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
