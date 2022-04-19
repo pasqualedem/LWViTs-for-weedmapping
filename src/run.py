@@ -121,6 +121,8 @@ def run(params: dict):
         ]
         run_loader.dataset.return_name = True
         seg_trainer.run(run_loader, callbacks=cbcks)
+        # seg_trainer.valid_loader.dataset.return_name = True
+        # seg_trainer.run(seg_trainer.valid_loader, callbacks=cbcks)
 
 
 if __name__ == '__main__':

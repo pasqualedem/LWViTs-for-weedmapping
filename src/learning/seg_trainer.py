@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 
 class SegmentationTrainer(SgModel):
-    def init_model(self, params: Mapping, phase: str, mlflowclient: MLRun):
+    def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun):
         # init model
         model_params = params['model']
         if model_params['name'] in MODELS_DICT.keys():
@@ -31,7 +31,7 @@ class SegmentationTrainer(SgModel):
             model = model_params['name']
 
         self.build_model(model)
-        if phase != 'train':
+        if 'train' not in phases:
             ckpt_local_path = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
             self.checkpoint = load_checkpoint_to_model(ckpt_local_path=ckpt_local_path,
                                                        load_backbone=False,
@@ -76,7 +76,6 @@ class SegmentationTrainer(SgModel):
         """
 
         test_phase_callbacks = list(test_phase_callbacks) + [
-            AverageMeterCallback(),
             SegmentationVisualizationCallback(phase=Phase.TEST_BATCH_END,
                                               freq=1,
                                               batch_idxs=list(range(15)),
