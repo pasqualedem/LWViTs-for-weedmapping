@@ -128,24 +128,28 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
-    mlflow_server(exp_settings['mlruns_folder'])
+    process = mlflow_server(exp_settings['mlruns_folder'])
     logger.info('Server started!')
 
-    logger.info(f'Loaded parameters from {param_path}')
-    runs = make_grid(grids)
-    logger.info(f'Found {len(runs)} experiments')
+    try:
+        logger.info(f'Loaded parameters from {param_path}')
+        runs = make_grid(grids)
+        logger.info(f'Found {len(runs)} experiments')
 
-    continue_with_errors = exp_settings.pop('continue_with_errors')
+        continue_with_errors = exp_settings.pop('continue_with_errors')
 
-    for i, params in enumerate(runs):
-        try:
-            logger.info(f'Running experiment {i + 1} out of {len(runs)}')
-            run({**exp_settings, **params})
-            gc.collect()
-        except Exception as e:
-            logger.error(f'Experiment {i + 1} failed with error {e}')
-            if not continue_with_errors:
-                raise e
+        for i, params in enumerate(runs):
+            try:
+                logger.info(f'Running experiment {i + 1} out of {len(runs)}')
+                run({**exp_settings, **params})
+                gc.collect()
+            except Exception as e:
+                logger.error(f'Experiment {i + 1} failed with error {e}')
+                if not continue_with_errors:
+                    raise e
+    finally:
+        logger.info("Stopping server")
+        process.kill()
 
 
 if __name__ == '__main__':

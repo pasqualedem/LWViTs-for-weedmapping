@@ -12,13 +12,14 @@ def setup_mlflow(exp_name: str, description: str) -> str:
     """
     Setup mlflow tracking server and experiment
     """
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
-    mlflow.set_registry_uri("http://127.0.0.1:5000")
+    tracking_uri = registry_uri = "http://localhost:5000"
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_registry_uri(registry_uri)
     print('URI set!')
-    client = MlflowClient()
+    client = MlflowClient(tracking_uri, registry_uri)
     exp_info = client.get_experiment_by_name(exp_name)
     exp_id = exp_info.experiment_id if exp_info else \
-        MlflowClient().create_experiment(exp_name, tags={'mlflow.note.content': description})
+        client.create_experiment(exp_name, tags={'mlflow.note.content': description})
     print('Experiment set')
     return exp_id
 
@@ -32,12 +33,13 @@ def mlflow_server(mlruns_folder: str = "."):
     child = subprocess.Popen(
         cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE
     )
+    return child
 
 
 class MLRun(MlflowClient):
     def __init__(self, exp_name: str, description: str, run_id: Optional[str] = None):
-        super().__init__()
         exp_id = setup_mlflow(exp_name, description)
+        super().__init__(mlflow.get_tracking_uri(), mlflow.get_registry_uri())
         if run_id is None:
             self.run = self.create_run(experiment_id=exp_id)
         else:
