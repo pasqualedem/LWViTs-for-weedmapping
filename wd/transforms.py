@@ -71,7 +71,7 @@ class PairRandomFlip(torch.nn.Module):
 
     def __init__(self, p=0.5, orientation='horizontal'):
         super().__init__()
-        _log_api_usage_once(self)
+        # _log_api_usage_once(self)
         self.p = p
         if orientation == 'horizontal':
             self.flip = F.hflip
