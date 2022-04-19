@@ -124,7 +124,7 @@ def run(params: dict):
         # seg_trainer.run(seg_trainer.valid_loader, callbacks=cbcks)
 
 
-def experiment(settings: Mapping):
+def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
