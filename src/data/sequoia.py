@@ -76,8 +76,8 @@ class SequoiaDatasetInterface(DatasetInterface):
         input_transform = transforms.Compose(input_transform)
 
         # Divide train, val and test
-        self.train_folders = ['006', '007']  # Fixed subfolders
-        self.test_folders = ['005']  # Fixed subfolders
+        self.train_folders = dataset_params['train_folders']
+        self.test_folders = dataset_params['test_folders']
 
         train_index = SequoiaDataset.build_index(self.dataset_params.root, self.train_folders, channels)
         test_index = SequoiaDataset.build_index(self.dataset_params.root, self.test_folders, channels)
