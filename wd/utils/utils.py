@@ -12,8 +12,6 @@ def setup_mlflow(exp_name: str, description: str) -> str:
     """
     Setup mlflow tracking server and experiment
     """
-    mlflow_server()
-    print('Server started!')
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
     print('URI set!')
     client = MlflowClient()
@@ -24,14 +22,14 @@ def setup_mlflow(exp_name: str, description: str) -> str:
     return exp_id
 
 
-def mlflow_server():
+def mlflow_server(server_wd: str = None):
     """
     Start mlflow server
     """
     cmd = ["mlflow", 'server']
     cmd_env = cmd_env = os.environ.copy()
     child = subprocess.Popen(
-        cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE,
+        cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE, cwd=server_wd
     )
 
 

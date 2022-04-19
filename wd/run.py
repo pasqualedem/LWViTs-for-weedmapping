@@ -15,7 +15,7 @@ from wd.callbacks import SegmentationVisualizationCallback, MlflowCallback, Save
 from wd.data.sequoia import SequoiaDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
-from wd.utils.utils import MLRun
+from wd.utils.utils import MLRun, mlflow_server
 from wd.utils.grid import make_grid
 from wd.learning.seg_trainer import SegmentationTrainer
 
@@ -127,6 +127,9 @@ def run(params: dict):
 def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
+
+    mlflow_server(exp_settings['server_wd'])
+    logger.info('Server started!')
 
     logger.info(f'Loaded parameters from {param_path}')
     runs = make_grid(grids)
