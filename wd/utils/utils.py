@@ -28,7 +28,7 @@ def mlflow_server():
     """
     Start mlflow server
     """
-    cmd = "mlflow server"
+    cmd = ["mlflow", 'server']
     cmd_env = cmd_env = os.environ.copy()
     child = subprocess.Popen(
         cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE,
