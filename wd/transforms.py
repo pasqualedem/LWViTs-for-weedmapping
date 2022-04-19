@@ -5,7 +5,7 @@ import torch
 from torch import Tensor
 from torch.nn.functional import one_hot
 
-from torchvision.utils import _log_api_usage_once
+# from torchvision.utils import _log_api_usage_once
 from torchvision.transforms import functional as F
 
 from PIL import ImageOps
@@ -147,7 +147,7 @@ class Denormalize(torch.nn.Module):
 
     def __init__(self, mean, std, inplace=False):
         super().__init__()
-        _log_api_usage_once(self)
+        # _log_api_usage_once(self)
         self.mean = mean
         self.std = std
         self.inplace = inplace
