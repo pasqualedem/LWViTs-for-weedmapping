@@ -1,8 +1,8 @@
 experiment:
   name: Fifth experiment test
   description: This is the fifth experiment
-  continue_with_errors: False
-  mlruns_folder: cipollino
+  continue_with_errors: True
+  mlruns_folder: .
 
 
 parameters:
