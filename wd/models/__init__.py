@@ -1,4 +1,4 @@
-from models.segnet import SegNet
+from wd.models.segnet import SegNet
 
 MODELS = {
     'segnet': SegNet
