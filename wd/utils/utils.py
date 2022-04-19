@@ -13,6 +13,7 @@ def setup_mlflow(exp_name: str, description: str) -> str:
     Setup mlflow tracking server and experiment
     """
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    mlflow.set_registry_uri("http://127.0.0.1:5000")
     print('URI set!')
     client = MlflowClient()
     exp_info = client.get_experiment_by_name(exp_name)
