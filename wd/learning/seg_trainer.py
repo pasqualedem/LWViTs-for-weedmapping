@@ -11,9 +11,9 @@ import torch
 from super_gradients.training.utils.checkpoint_utils import load_checkpoint_to_model
 from tqdm import tqdm
 
-from callbacks import AverageMeterCallback, SegmentationVisualizationCallback
-from models import MODELS as MODELS_DICT
-from utils.utils import MLRun
+from wd.callbacks import AverageMeterCallback, SegmentationVisualizationCallback
+from wd.models import MODELS as MODELS_DICT
+from wd.utils.utils import MLRun
 
 logger = get_logger(__name__)
 

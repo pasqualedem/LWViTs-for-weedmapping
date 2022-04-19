@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 from super_gradients.training.datasets.dataset_interfaces import DatasetInterface
 from torchvision.transforms import functional as F
 
-from transforms import PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0
+from wd.transforms import PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0
 from sklearn.model_selection import train_test_split
 
 from torch.utils.data.distributed import DistributedSampler

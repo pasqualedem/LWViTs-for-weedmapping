@@ -9,7 +9,7 @@ from super_gradients.training.utils.utils import AverageMeter
 from torchvision.utils import draw_segmentation_masks
 from PIL import ImageColor, Image
 
-from utils.utils import MLRun
+from wd.utils.utils import MLRun
 
 
 class SegmentationVisualizationCallback(PhaseCallback):

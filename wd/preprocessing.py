@@ -1,6 +1,6 @@
 import numpy as np
 
-from data.sequoia import SequoiaDataset
+from wd.data.sequoia import SequoiaDataset
 from tqdm import tqdm
 
 import torchvision.transforms as transforms

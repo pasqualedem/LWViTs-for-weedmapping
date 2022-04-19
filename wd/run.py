@@ -6,19 +6,18 @@ import gc
 
 import numpy as np
 
-from learning.seg_trainer import SegmentationTrainer
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
-from callbacks import SegmentationVisualizationCallback, MlflowCallback, SaveSegmentationPredictionsCallback
-from data.sequoia import SequoiaDatasetInterface
-
-from loss import LOSSES as LOSSES_DICT
-from metrics import metrics_factory
-from utils.utils import MLRun
-from utils.grid import make_grid
+from wd.callbacks import SegmentationVisualizationCallback, MlflowCallback, SaveSegmentationPredictionsCallback
+from wd.data.sequoia import SequoiaDatasetInterface
+from wd.loss import LOSSES as LOSSES_DICT
+from wd.metrics import metrics_factory
+from wd.utils.utils import MLRun
+from wd.utils.grid import make_grid
+from wd.learning.seg_trainer import SegmentationTrainer
 
 torch.manual_seed(42)
 np.random.seed(42)
