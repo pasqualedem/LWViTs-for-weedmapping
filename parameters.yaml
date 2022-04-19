@@ -2,7 +2,7 @@ experiment:
   name: Fifth experiment
   description: This is the fifth experiment
   continue_with_errors: True
-  server_wd: None
+  mlruns_folder: None
 
 
 parameters:

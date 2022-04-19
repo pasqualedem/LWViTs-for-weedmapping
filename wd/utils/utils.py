@@ -23,14 +23,14 @@ def setup_mlflow(exp_name: str, description: str) -> str:
     return exp_id
 
 
-def mlflow_server(server_wd: str = None):
+def mlflow_server(mlruns_folder: str = "."):
     """
     Start mlflow server
     """
-    cmd = ["mlflow", 'server', '--backend-store-uri', 'file:.']
+    cmd = ["mlflow", 'server', '--backend-store-uri', f'file:{mlruns_folder}']
     cmd_env = cmd_env = os.environ.copy()
     child = subprocess.Popen(
-        cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE, cwd=server_wd
+        cmd, env=cmd_env, universal_newlines=True, stdin=subprocess.PIPE
     )
 
 

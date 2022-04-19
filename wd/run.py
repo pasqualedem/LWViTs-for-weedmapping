@@ -128,7 +128,7 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
-    mlflow_server(exp_settings['server_wd'])
+    mlflow_server(exp_settings['mlruns_folder'])
     logger.info('Server started!')
 
     logger.info(f'Loaded parameters from {param_path}')
