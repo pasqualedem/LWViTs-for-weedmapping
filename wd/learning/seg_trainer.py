@@ -27,15 +27,21 @@ class SegmentationTrainer(SgModel):
     def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun):
         # init model
         model_params = params['model']
+        input_channels = len(params['dataset']['channels'])
+        output_channels = params['dataset']['num_classes']
         if model_params['name'] in MODELS_DICT.keys():
             model = MODELS_DICT[model_params['name']](**model_params['params'],
-                                                      in_chn=len(params['dataset']['channels']),
-                                                      out_chn=params['dataset']['num_classes']
+                                                      in_chn=input_channels,
+                                                      out_chn=output_channels
                                                       )
         else:
             model = model_params['name']
 
-        self.build_model(model)
+        self.build_model(model, arch_params={
+            'input_channels': input_channels,
+            'output_channels': output_channels,
+            **model_params['params']
+        })
         if 'train' not in phases:
             ckpt_local_path = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
             self.checkpoint = load_checkpoint_to_model(ckpt_local_path=ckpt_local_path,
@@ -45,8 +51,9 @@ class SegmentationTrainer(SgModel):
                                                        load_weights_only=self.load_weights_only)
 
             if 'ema_net' in self.checkpoint.keys():
-                logger.warning("[WARNING] Main network has been loaded from checkpoint but EMA network exists as well. It "
-                               " will only be loaded during validation when training with ema=True. ")
+                logger.warning(
+                    "[WARNING] Main network has been loaded from checkpoint but EMA network exists as well. It "
+                    " will only be loaded during validation when training with ema=True. ")
 
             # UPDATE TRAINING PARAMS IF THEY EXIST & WE ARE NOT LOADING AN EXTERNAL MODEL's WEIGHTS
             self.best_metric = self.checkpoint['acc'] if 'acc' in self.checkpoint.keys() else -1

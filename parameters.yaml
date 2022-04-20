@@ -1,8 +1,8 @@
 experiment:
-  name: Fifth experiment test
+  name: Fifth experiment
   description: This is the fifth experiment
   continue_with_errors: True
-  mlruns_folder: .
+  mlruns_folder: False
 
 
 parameters:
@@ -53,7 +53,7 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
+    name: [ddrnet_23]
     params: [{}]
 
   dataset:
@@ -61,7 +61,7 @@ parameters:
     train_folders: [['005', '006']]
     test_folders: [['007']]
     # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    channels: [['R', 'G'],'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    channels: [['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
     batch_size: [6]
@@ -76,6 +76,6 @@ parameters:
 
   run_params:
     batch_size: [24]
-    run_folders: [["005"]]
+    run_folders: [["007"]]
     init_sg_loggers: [False]
     prediction_folder: [mlflow] # "mlflow" to make into artifact folder
