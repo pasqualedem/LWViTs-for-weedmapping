@@ -27,9 +27,9 @@ decoder_dims = [
 
 class SegNet(nn.Module):
 
-    def __init__(self, in_chn, out_chn):
+    def __init__(self, arch_params):
         super(SegNet, self).__init__()
-
+        in_chn, out_chn = arch_params['input_channels'], arch_params['output_channels']
         # SegNet Architecture
         # Takes input of size in_chn = 3 (RGB images have 3 channels)
         # Outputs size label_chn (N # of classes)

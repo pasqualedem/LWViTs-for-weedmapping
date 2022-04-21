@@ -29,19 +29,18 @@ class SegmentationTrainer(SgModel):
         model_params = params['model']
         input_channels = len(params['dataset']['channels'])
         output_channels = params['dataset']['num_classes']
+        arch_params = {
+            'input_channels': input_channels,
+            'output_channels': output_channels,
+            'num_classes': output_channels,
+            **model_params['params']
+        }
         if model_params['name'] in MODELS_DICT.keys():
-            model = MODELS_DICT[model_params['name']](**model_params['params'],
-                                                      in_chn=input_channels,
-                                                      out_chn=output_channels
-                                                      )
+            model = MODELS_DICT[model_params['name']](arch_params)
         else:
             model = model_params['name']
 
-        self.build_model(model, arch_params={
-            'input_channels': input_channels,
-            'output_channels': output_channels,
-            **model_params['params']
-        })
+        self.build_model(model, arch_params=arch_params)
         if 'train' not in phases:
             ckpt_local_path = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
             self.checkpoint = load_checkpoint_to_model(ckpt_local_path=ckpt_local_path,
