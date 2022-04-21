@@ -51,15 +51,18 @@ class SequoiaDatasetInterface(DatasetInterface):
         }
 
         # crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val=320)
-        flip = PairRandomFlip(orientation="horizontal")
+        flip_hor = PairRandomFlip(orientation="horizontal")
+        flip_ver = PairRandomFlip(orientation="vertical")
 
         input_transform = [
-            flip,
+            flip_hor,
+            flip_ver,
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
         ]
 
         target_transform = [
-            flip,
+            flip_hor,
+            flip_ver,
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
