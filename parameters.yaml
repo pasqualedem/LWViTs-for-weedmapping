@@ -53,7 +53,7 @@ parameters:
         ]]
 
   model:
-    name: [ddrnet_23, segnet, regseg48]
+    name: [regseg48]
     params: [{}]
 
   dataset:
