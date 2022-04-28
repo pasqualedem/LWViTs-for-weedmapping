@@ -1,9 +1,9 @@
 experiment:
   name: Fifth experiment
   description: This is the fifth experiment
-  continue_with_errors: True
+  continue_with_errors: False
   mlruns_folder: False
-
+  entity: pasqualedem
 
 parameters:
   run_hash: [None]
@@ -13,7 +13,7 @@ parameters:
   phases: [[train, test, run]]
 
   train_params:
-    max_epochs: [500]
+    max_epochs: [3]
     initial_lr: [0.001]
     optimizer: [SGD]
     optimizer_params:
@@ -53,7 +53,7 @@ parameters:
         ]]
 
   model:
-    name: [regseg48]
+    name: [ddrnet_23]
     params: [{}]
 
   dataset:
@@ -61,7 +61,7 @@ parameters:
     train_folders: [['005', '006']]
     test_folders: [['007']]
     # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    channels: [['R', 'G'], 'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    channels: [['R', 'G']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
     batch_size: [6]
