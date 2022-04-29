@@ -17,7 +17,8 @@ from wd.data.sequoia import SequoiaDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
 from wd.utils.grid import make_grid
-from wd.learning.seg_trainer import SegmentationTrainer, WandbLogger
+from wd.learning.seg_trainer import SegmentationTrainer
+from wd.learning.wandb_logger import WandBSGLogger
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -44,7 +45,7 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
         "loss": loss,
         "greater_metric_to_watch_is_better": True,
         "loss_logging_items_names": ["loss"],
-        "sg_logger": WandbLogger,
+        "sg_logger": WandBSGLogger,
         **input_train_params,
         'sg_logger_params': {
             'entity': params['entity']

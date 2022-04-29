@@ -2,12 +2,10 @@ import os
 from typing import Union, Callable, Mapping, Any
 
 import wandb
-import cv2
 import numpy as np
 import torch
 from super_gradients.training.utils.callbacks import PhaseCallback, Phase, PhaseContext
 from super_gradients.training.utils.utils import AverageMeter
-from torchvision.utils import draw_segmentation_masks
 from PIL import ImageColor, Image
 
 from wd.utils.utils import MLRun

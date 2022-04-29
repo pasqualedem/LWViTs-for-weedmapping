@@ -2,17 +2,16 @@ import os
 from typing import Mapping
 
 from super_gradients.common.abstractions.abstract_logger import get_logger
-from super_gradients.common.sg_loggers.wandb_sg_logger import WANDB_ID_PREFIX
 from super_gradients.training import SgModel, StrictLoad
 from super_gradients.training.params import TrainingParams
 from super_gradients.training.utils.callbacks import Phase, PhaseContext, CallbackHandler
 from super_gradients.training import utils as core_utils
-from super_gradients.common.sg_loggers import WandBSGLogger
 
 import torch
 from super_gradients.training.utils.checkpoint_utils import load_checkpoint_to_model
 from tqdm import tqdm
 
+from learning.wandb_logger import WandBSGLogger
 from wd.callbacks import SegmentationVisualizationCallback
 from wd.models import MODELS as MODELS_DICT
 from wd.utils.utils import MLRun
@@ -117,7 +116,9 @@ class SegmentationTrainer(SgModel):
                 'training_params': self.training_params,
                 'checkpoints_dir_path': self.checkpoints_dir_path}
             sg_logger_params = core_utils.get_param(self.training_params, 'sg_logger_params', {})
-            self.training_params.override(sg_logger=WandbLogger(**sg_logger_params, **general_sg_logger_params))
+            sg_logger = WandBSGLogger(**sg_logger_params, **general_sg_logger_params)
+            self.checkpoints_dir_path = sg_logger.local_dir()
+            self.training_params.override(sg_logger=sg_logger)
             super()._initialize_sg_logger_objects()
 
     def init_loggers(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:
@@ -182,16 +183,18 @@ class SegmentationTrainer(SgModel):
                 self.phase_callback_handler(Phase.POST_TRAINING, context)
 
 
-class WandbLogger(WandBSGLogger):
-    def _set_wandb_id(self, id):
-        for file in os.listdir(self._local_dir):
-            if file.startswith(WANDB_ID_PREFIX):
-                os.remove(os.path.join(self._local_dir, file))
+# class WandbLogger(WandBSGLogger):
+#     def _set_wandb_id(self, id):
+#         for file in os.listdir(self._local_dir):
+#             if file.startswith(WANDB_ID_PREFIX):
+#                 os.remove(os.path.join(self._local_dir, file))
+#
+#     def close(self, really=False):
+#         if really:
+#             super().close()
+#
+#     def _init_tensorboard(self, resumed, tb_files_user_prompt):
+#         pass
+#     # Skip tensorboard initialization
 
-    def close(self, really=False):
-        if really:
-            super().close()
 
-    def _init_tensorboard(self, resumed, tb_files_user_prompt):
-        pass
-    # Skip tensorboard initialization
