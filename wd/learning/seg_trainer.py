@@ -1,9 +1,9 @@
+import os
 from typing import Mapping
 
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from super_gradients.training import SgModel, StrictLoad
 from super_gradients.training.params import TrainingParams
-from super_gradients.training.utils import sg_model_utils
 from super_gradients.training.utils.callbacks import Phase, PhaseContext, CallbackHandler
 from super_gradients.training import utils as core_utils
 
@@ -11,7 +11,8 @@ import torch
 from super_gradients.training.utils.checkpoint_utils import load_checkpoint_to_model
 from tqdm import tqdm
 
-from wd.callbacks import AverageMeterCallback, SegmentationVisualizationCallback
+from wd.learning.wandb_logger import WandBSGLogger
+from wd.callbacks import SegmentationVisualizationCallback
 from wd.models import MODELS as MODELS_DICT
 from wd.utils.utils import MLRun
 
@@ -20,11 +21,12 @@ logger = get_logger(__name__)
 
 class SegmentationTrainer(SgModel):
     def __init__(self, ckpt_root_dir=None, **kwargs):
-        ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:///') else ckpt_root_dir
-        ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:') else ckpt_root_dir
+        self.train_initialized = False
+        # ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:///') else ckpt_root_dir
+        # ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:') else ckpt_root_dir
         super().__init__(ckpt_root_dir=ckpt_root_dir, **kwargs)
 
-    def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun):
+    def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun = None):
         # init model
         model_params = params['model']
         input_channels = len(params['dataset']['channels'])
@@ -85,12 +87,11 @@ class SegmentationTrainer(SgModel):
         All of the above args will override SgModel's corresponding attribute when not equal to None. Then evaluation
          is ran on self.test_loader with self.test_metrics.
         """
-
         test_phase_callbacks = list(test_phase_callbacks) + [
             SegmentationVisualizationCallback(phase=Phase.TEST_BATCH_END,
-                                              freq=1,
+                                              freq=5,
                                               batch_idxs=list(range(15)),
-                                              num_classes=len(self.dataset_interface.classes),
+                                              num_classes=self.dataset_interface.trainset.CLASS_LABELS,
                                               undo_preprocessing=self.dataset_interface.undo_preprocess)
         ]
         metrics_values = super().test(test_loader, loss, silent_mode, list(test_metrics.values()),
@@ -103,7 +104,24 @@ class SegmentationTrainer(SgModel):
             self.test_loader._iterator._shutdown_workers()
         return {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
 
-    def init_train_params(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:
+    def _initialize_sg_logger_objects(self):
+        if not self.train_initialized:
+            self.train_initialized = True
+            # OVERRIDE SOME PARAMETERS TO MAKE SURE THEY MATCH THE TRAINING PARAMETERS
+            general_sg_logger_params = {  # 'experiment_name': self.experiment_name,
+                'experiment_name': '',
+                'group': self.experiment_name,
+                'storage_location': self.model_checkpoints_location,
+                'resumed': self.load_checkpoint,
+                'training_params': self.training_params,
+                'checkpoints_dir_path': self.checkpoints_dir_path}
+            sg_logger_params = core_utils.get_param(self.training_params, 'sg_logger_params', {})
+            sg_logger = WandBSGLogger(**sg_logger_params, **general_sg_logger_params)
+            self.checkpoints_dir_path = sg_logger.local_dir()
+            self.training_params.override(sg_logger=sg_logger)
+            super()._initialize_sg_logger_objects()
+
+    def init_loggers(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:
         if self.training_params is None:
             self.training_params = TrainingParams()
         self.training_params.override(**train_params)
@@ -163,3 +181,6 @@ class SegmentationTrainer(SgModel):
 
                 # TRIGGER PHASE CALLBACKS
                 self.phase_callback_handler(Phase.POST_TRAINING, context)
+
+
+

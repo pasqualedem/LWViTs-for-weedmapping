@@ -1,4 +1,4 @@
-from models.regseg import RegSeg48
+from wd.models.regseg import RegSeg48
 from wd.models.segnet import SegNet
 
 MODELS = {
