@@ -1,16 +1,17 @@
 experiment:
-  name: Fifth experiment
+  group: Test
   description: This is the fifth experiment
   continue_with_errors: False
-  mlruns_folder: False
+  tracking_dir: null
   entity: pasqualedem
+  excluded_files: "*.pth"
 
 parameters:
-  run_hash: [None]
   details: [With flip]
+  tags: [[]]
   # train, test, run
   # phases: [[run]]
-  phases: [[train, test, run]]
+  phases: [[train, test]]
 
   train_params:
     max_epochs: [3]
@@ -71,11 +72,6 @@ parameters:
     num_classes: [3]
     size: [[368, 496]]
 
-  test_params:
-    init_sg_loggers: [True]
-
   run_params:
     batch_size: [24]
     run_folders: [["007"]]
-    init_sg_loggers: [False]
-    prediction_folder: [mlflow] # "mlflow" to make into artifact folder

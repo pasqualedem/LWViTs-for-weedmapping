@@ -1,6 +1,6 @@
 venv
 dataset
-mlruns
+wandb
 try1
 
 .idea

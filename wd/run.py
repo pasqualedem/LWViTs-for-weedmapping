@@ -1,11 +1,10 @@
 import os
-from typing import Any, Mapping
+from typing import Mapping
 
 import torch
 import gc
 
 import numpy as np
-import wandb
 
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
@@ -22,7 +21,6 @@ from wd.learning.wandb_logger import WandBSGLogger
 
 torch.manual_seed(42)
 np.random.seed(42)
-EXP_DIR = 'mlflow'
 logger = get_logger(__name__)
 
 
@@ -48,7 +46,8 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
         "sg_logger": WandBSGLogger,
         **input_train_params,
         'sg_logger_params': {
-            'entity': params['entity']
+            'entity': params['entity'],
+            'tags': params['tags'],
         }
     }
 
@@ -68,13 +67,8 @@ def run(params: dict):
 
     train_params, test_params, dataset_params, early_stop = parse_params(params)
 
-    # Mlflow
-    if 'train' not in phases:
-        run_hash = params['run_hash']
-    else:
-        run_hash = None
-
-    seg_trainer = SegmentationTrainer(experiment_name=params['name'], ckpt_root_dir="test")
+    seg_trainer = SegmentationTrainer(experiment_name=params['group'],
+                                      ckpt_root_dir=params['tracking_dir'] if params['tracking_dir'] else 'wandb')
     dataset = SequoiaDatasetInterface(dataset_params)
     seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
     seg_trainer.init_model(params, phases, None)
@@ -128,26 +122,23 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
-    logger.info('Server started!')
+    os.environ['WANDB_IGNORE_GLOBS'] = exp_settings['excluded_files']
 
-    try:
-        logger.info(f'Loaded parameters from {param_path}')
-        runs = make_grid(grids)
-        logger.info(f'Found {len(runs)} experiments')
+    logger.info(f'Loaded parameters from {param_path}')
+    runs = make_grid(grids)
+    logger.info(f'Found {len(runs)} experiments')
 
-        continue_with_errors = exp_settings.pop('continue_with_errors')
+    continue_with_errors = exp_settings.pop('continue_with_errors')
 
-        for i, params in enumerate(runs):
-            try:
-                logger.info(f'Running experiment {i + 1} out of {len(runs)}')
-                run({**exp_settings, **params})
-                gc.collect()
-            except Exception as e:
-                logger.error(f'Experiment {i + 1} failed with error {e}')
-                if not continue_with_errors:
-                    raise e
-    finally:
-        logger.info("Stopping server")
+    for i, params in enumerate(runs):
+        try:
+            logger.info(f'Running experiment {i + 1} out of {len(runs)}')
+            run({**exp_settings, **params})
+            gc.collect()
+        except Exception as e:
+            logger.error(f'Experiment {i + 1} failed with error {e}')
+            if not continue_with_errors:
+                raise e
 
 
 if __name__ == '__main__':

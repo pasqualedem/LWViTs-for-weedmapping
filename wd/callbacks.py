@@ -32,6 +32,10 @@ class SegmentationVisualizationCallback(PhaseCallback):
         self.undo_preprocesing = undo_preprocessing
         self.prefix = 'train' if phase == Phase.TRAIN_EPOCH_END else 'val' \
             if phase == Phase.VALIDATION_BATCH_END else 'test'
+        if phase == Phase.TEST_BATCH_END:
+            self.table = wandb.Table(columns=['ID', 'Image'])
+        else:
+            self.table = None
 
     def __call__(self, context: PhaseContext):
         epoch = context.epoch if context.epoch is not None else 0
@@ -41,14 +45,16 @@ class SegmentationVisualizationCallback(PhaseCallback):
                                                       preds, context.target, self.num_classes,
                                                       context.batch_idx,
                                                       undo_preprocessing_func=self.undo_preprocesing,
-                                                      prefix=self.prefix)
+                                                      prefix=self.prefix,
+                                                      table=self.table)
+            if self.prefix == 'test' and context.batch_idx == self.batch_idxs[-1]:
+                wandb.log({f"{self.prefix}_seg": self.table})
 
 
 class SegmentationVisualization:
 
     @staticmethod
-    def _visualize_image(image_np: np.ndarray, pred_mask: torch.Tensor, target_mask: torch.Tensor, classes,
-                         image_scale: float, checkpoint_dir: str, image_name: str):
+    def _visualize_image(image_np: np.ndarray, pred_mask: torch.Tensor, target_mask: torch.Tensor, classes):
         pred_mask = torch.tensor(pred_mask.copy())
         target_mask = torch.tensor(target_mask.copy())
 
@@ -61,7 +67,7 @@ class SegmentationVisualization:
                                      torch.zeros((3 - image_np.shape[0], *image_np.shape[1:]), dtype=torch.uint8)]
                                     ).numpy()
 
-        return wandb.Image(np.moveaxis(image_np, 0, -1), masks={
+        img = wandb.Image(np.moveaxis(image_np, 0, -1), masks={
             "predictions": {
                 "mask_data": pred_mask.numpy(),
                 "class_labels": classes
@@ -71,13 +77,13 @@ class SegmentationVisualization:
                 "class_labels": classes
             }
         })
-        # wandb.log({image_name: mask_img})
+        return img
 
     @staticmethod
     def visualize_batch(image_tensor: torch.Tensor, pred_mask: torch.Tensor, target_mask: torch.Tensor, num_classes,
                         batch_name: Union[int, str], checkpoint_dir: str = None,
                         undo_preprocessing_func: Callable[[torch.Tensor], np.ndarray] = lambda x: x,
-                        image_scale: float = 1., prefix: str = ''):
+                        image_scale: float = 1., prefix: str = '', table: wandb.Table = None):
         """
         A helper function to visualize detections predicted by a network:
         saves images into a given path with a name that is {batch_name}_{imade_idx_in_the_batch}.jpg, one batch per call.
@@ -98,20 +104,18 @@ class SegmentationVisualization:
         """
         image_np = undo_preprocessing_func(image_tensor.detach()).type(dtype=torch.uint8).cpu()
 
-        table = wandb.Table(columns=['ID', 'Image'])
         for i in range(image_np.shape[0]):
             preds = pred_mask[i].detach().cpu().numpy()
             targets = target_mask[i].detach().cpu().numpy()
 
-            image_name = '_'.join([prefix, 'seg', str(batch_name), str(i)])
+            image_name = '_'.join([prefix, 'seg', str(batch_name), str(i)]) if prefix == 'val' else \
+                '_'.join([prefix, 'seg', str(batch_name * image_np.shape[0] + i)])
 
-
-
-            img = SegmentationVisualization._visualize_image(image_np[i], preds, targets, num_classes,
-                                                       image_scale, checkpoint_dir, image_name)
-            table.add_data(image_name, img)
-
-        wandb.log({f"{prefix}_seg": table})
+            img = SegmentationVisualization._visualize_image(image_np[i], preds, targets, num_classes)
+            if prefix == 'val':
+                wandb.log({image_name: img})
+            else:
+                table.add_data(image_name, img)
 
 
 class MlflowCallback(PhaseCallback):

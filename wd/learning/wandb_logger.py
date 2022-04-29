@@ -23,7 +23,6 @@ logger = get_logger(__name__)
 WANDB_ID_PREFIX = 'wandb_id.'
 WANDB_INCLUDE_FILE_NAME = '.wandbinclude'
 
-os.environ['WANDB_IGNORE_GLOBS'] = '*.pth'
 
 class BaseSGLogger(AbstractSGLogger):
 
@@ -277,9 +276,11 @@ class BaseSGLogger(AbstractSGLogger):
 
 class WandBSGLogger(BaseSGLogger):
 
-    def __init__(self, project_name: str, experiment_name: str, storage_location: str, resumed: bool, training_params: dict, checkpoints_dir_path: str, tb_files_user_prompt: bool = False,
-                 launch_tensorboard: bool = False, tensorboard_port: int = None, save_checkpoints_remote: bool = True, save_tensorboard_remote: bool = True,
-                 save_logs_remote: bool = True, entity: Optional[str] = None, api_server: Optional[str] = None, save_code: bool = False, **kwargs):
+    def __init__(self, project_name: str, experiment_name: str, storage_location: str, resumed: bool,
+                 training_params: dict, checkpoints_dir_path: str, tb_files_user_prompt: bool = False,
+                 launch_tensorboard: bool = False, tensorboard_port: int = None, save_checkpoints_remote: bool = True,
+                 save_tensorboard_remote: bool = True, save_logs_remote: bool = True, entity: Optional[str] = None,
+                 api_server: Optional[str] = None, save_code: bool = False, tags=None, **kwargs):
         """
 
         :param experiment_name: Used for logging and loading purposes
@@ -301,7 +302,10 @@ class WandBSGLogger(BaseSGLogger):
         if self.resumed:
             wandb_id = self._get_wandb_id()
 
-        run = wandb.init(project=project_name, name=experiment_name, entity=entity, resume=resumed, id=wandb_id, **kwargs)
+        os.makedirs(checkpoints_dir_path, exist_ok=True)
+        run = wandb.init(project=project_name, name=experiment_name,
+                         entity=entity, resume=resumed, id=wandb_id, tags=tags,
+                         dir=checkpoints_dir_path, **kwargs)
         if save_code:
             self._save_code()
 
