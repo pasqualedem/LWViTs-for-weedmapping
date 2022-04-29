@@ -1,4 +1,5 @@
 experiment:
+  name: weeddetection
   group: Test
   description: This is the fifth experiment
   continue_with_errors: False

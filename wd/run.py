@@ -48,6 +48,7 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
         'sg_logger_params': {
             'entity': params['entity'],
             'tags': params['tags'],
+            'project_name': params['name'],
         }
     }
 
