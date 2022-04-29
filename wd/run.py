@@ -122,7 +122,8 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
 
-    os.environ['WANDB_IGNORE_GLOBS'] = exp_settings['excluded_files']
+    if exp_settings['excluded_files']:
+        os.environ['WANDB_IGNORE_GLOBS'] = exp_settings['excluded_files']
 
     logger.info(f'Loaded parameters from {param_path}')
     runs = make_grid(grids)
