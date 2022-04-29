@@ -422,6 +422,7 @@ class WandBSGLogger(BaseSGLogger):
     def close(self, really=False):
         if really:
             super().close()
+            wandb.finish()
 
     @multi_process_safe
     def add_file(self, file_name: str = None):
