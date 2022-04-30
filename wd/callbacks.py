@@ -61,13 +61,13 @@ class SegmentationVisualization:
         pred_mask = pred_mask.argmax(dim=0)
         target_mask = target_mask.argmax(dim=0)
 
-        image_np = image_np[:3, :, :].numpy()  # Take only 3 bands if there are more
         if image_np.shape[0] < 3:
             image_np = torch.vstack([image_np,
                                      torch.zeros((3 - image_np.shape[0], *image_np.shape[1:]), dtype=torch.uint8)]
-                                    ).numpy()
+                                    )
+        image_np = image_np[:3, :, :]  # Take only 3 bands if there are more
 
-        img = wandb.Image(np.moveaxis(image_np, 0, -1), masks={
+        img = wandb.Image(np.moveaxis(image_np.numpy(), 0, -1), masks={
             "predictions": {
                 "mask_data": pred_mask.numpy(),
                 "class_labels": classes
