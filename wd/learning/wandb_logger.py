@@ -429,6 +429,10 @@ class WandBSGLogger(BaseSGLogger):
         wandb.save(glob_str=os.path.join(self._local_dir, file_name), base_path=self._local_dir, policy='now')
 
     @multi_process_safe
+    def add_summary(self, metrics: dict):
+        wandb.summary.update(metrics)
+
+    @multi_process_safe
     def upload(self):
 
         if self.save_tensorboard_wandb:

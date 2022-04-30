@@ -102,7 +102,9 @@ class SegmentationTrainer(SgModel):
 
         if self.test_loader.num_workers > 0:
             self.test_loader._iterator._shutdown_workers()
-        return {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
+        metrics = {'test_loss': metrics_values[0], **dict(zip(metric_names, metrics_values[1:]))}
+        self.sg_logger.add_summary(metrics)
+        return metrics
 
     def _initialize_sg_logger_objects(self):
         if not self.train_initialized:
