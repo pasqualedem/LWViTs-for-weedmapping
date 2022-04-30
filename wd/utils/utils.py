@@ -5,7 +5,10 @@ from typing import Any, Optional, Mapping
 
 import mlflow
 import torch
+import collections.abc
 from mlflow.tracking import MlflowClient
+
+
 
 
 def setup_mlflow(exp_name: str, description: str) -> str:
@@ -88,3 +91,11 @@ def mlflow_linearize(dictionary: Mapping) -> Mapping:
             exps[key] = value
     return exps
 
+
+def nested_dict_update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = nested_dict_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d

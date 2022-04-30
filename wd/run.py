@@ -3,6 +3,7 @@ from typing import Mapping
 
 import torch
 import gc
+import copy
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
+from utils.utils import nested_dict_update
 from wd.callbacks import SegmentationVisualizationCallback, WandbCallback
 from wd.data.sequoia import SequoiaDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
@@ -125,13 +127,20 @@ def run(params: dict):
 def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
+    other_runs = settings['other_runs']
 
     if exp_settings['excluded_files']:
         os.environ['WANDB_IGNORE_GLOBS'] = exp_settings['excluded_files']
 
     logger.info(f'Loaded parameters from {param_path}')
     runs = make_grid(grids)
-    logger.info(f'Found {len(runs)} experiments')
+    logger.info(f'Found {len(runs)} runs from grid')
+
+    if other_runs:
+        other_runs = [nested_dict_update(copy.deepcopy(runs[0]), other_run) for other_run in other_runs]
+        logger.info(f'Found {len(other_runs)} other runs')
+        runs = runs + other_runs
+    logger.info(f'Total runs: {len(runs)}')
 
     continue_with_errors = exp_settings.pop('continue_with_errors')
 
