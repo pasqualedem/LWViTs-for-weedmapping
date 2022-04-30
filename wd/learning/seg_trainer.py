@@ -22,8 +22,6 @@ logger = get_logger(__name__)
 class SegmentationTrainer(SgModel):
     def __init__(self, ckpt_root_dir=None, **kwargs):
         self.train_initialized = False
-        # ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:///') else ckpt_root_dir
-        # ckpt_root_dir = ckpt_root_dir.lstrip('file:///') if ckpt_root_dir.startswith('file:') else ckpt_root_dir
         super().__init__(ckpt_root_dir=ckpt_root_dir, **kwargs)
 
     def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun = None):
