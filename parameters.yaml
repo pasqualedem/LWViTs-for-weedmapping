@@ -1,8 +1,8 @@
 experiment:
   name: weeddetection
-  group: 005_check
+  group: First Experiments
   description: This is the fifth experiment
-  continue_with_errors: False
+  continue_with_errors: True
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
@@ -55,15 +55,15 @@ parameters:
         ]]
 
   model:
-    name: [ddrnet_23, regseg48]
+    name: [segnet]
     params: [{}]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
-    train_folders: [['005']]
-    test_folders: [['006'], ['007']]
+    train_folders: [['006', '007']]
+    test_folders: [['005']]
     # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR']]
+    channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
     batch_size: [6]
@@ -76,3 +76,7 @@ parameters:
   run_params:
     batch_size: [24]
     run_folders: [["007"]]
+
+
+other_runs:
+  null
