@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: First Experiments
+  group: Adam
   description: This is the fifth experiment
   continue_with_errors: True
   tracking_dir: null
@@ -17,14 +17,13 @@ parameters:
   train_params:
     max_epochs: [500]
     initial_lr: [0.001]
-    optimizer: [SGD]
+    optimizer: [Adam]
     optimizer_params:
-      momentum: [0.9]
-      weight_decay: [0.0005]
+      weight_decay: [0, 0.0005]
     loss:
       name: [cross_entropy]
       params:
-        weight: [[0.0273, 1.0, 4.3802]]
+        weight: [null, [0.0273, 1.0, 4.3802]]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -34,7 +33,7 @@ parameters:
   early_stopping:
     enabled: [True]
     params:
-      patience: [5]
+      patience: [10]
       monitor: [loss]
       mode: [min]
 
@@ -55,7 +54,7 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
+    name: [segnet, regseg48, ddrnet_23]
     params: [{}]
 
   dataset:
