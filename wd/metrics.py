@@ -76,18 +76,12 @@ def metric_instance(name: str, params: dict) -> dict:
 
 
 def metrics_factory(metrics_params: Mapping) -> dict:
-    return { **reduce(lambda a, b: {**a, **b},
+    return reduce(lambda a, b: {**a, **b},
                   [
                       metric_instance(name, params)
                       for name, params in metrics_params.items()
                   ]
-                  ),
-
-            'f1': WrapF1(num_classes=3, average='macro', mdmc_average='global'),
-            'precision': WrapPrecision(num_classes=3, average='macro', mdmc_average='global'),
-            'recall': WrapRecall(num_classes=3, average='macro', mdmc_average='global'),
-            'conf_mat': WrapCF(num_classes=3),
-           }
+                  )
 
 
 METRICS = {
@@ -97,5 +91,5 @@ METRICS = {
     'f1': WrapF1,
     'precision': WrapPrecision,
     'recall': WrapRecall,
-    'confusion_matrix': WrapCF
+    'conf_mat': WrapCF
 }

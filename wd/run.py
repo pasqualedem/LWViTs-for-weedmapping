@@ -206,7 +206,7 @@ def resume(settings):
 
 
 parser = argparse.ArgumentParser(description='Train and test models')
-parser.add_argument('resume', metavar='N', type=bool,
+parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the run(s)', default=False)
 
 if __name__ == '__main__':
