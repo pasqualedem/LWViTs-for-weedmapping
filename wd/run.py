@@ -12,7 +12,7 @@ from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
-from utils.utils import nested_dict_update
+from utils.utils import nested_dict_update, dict_to_yaml_string
 from wd.callbacks import SegmentationVisualizationCallback, WandbCallback
 from wd.data.sequoia import SequoiaDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
@@ -48,9 +48,9 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
         "loss_logging_items_names": ["loss"],
         "sg_logger": WandBSGLogger,
         'sg_logger_params': {
-            'entity': params['entity'],
+            'entity': params['experiment']['entity'],
             'tags': params['tags'],
-            'project_name': params['name'],
+            'project_name': params['experiment']['name'],
         }
     }
 
@@ -72,57 +72,63 @@ def run(params: dict):
 
         train_params, test_params, dataset_params, early_stop = parse_params(params)
 
-        seg_trainer = SegmentationTrainer(experiment_name=params['group'],
-                                          ckpt_root_dir=params['tracking_dir'] if params['tracking_dir'] else 'wandb')
+        seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
+                                          ckpt_root_dir=params['experiment']['tracking_dir']
+                                          if params['experiment']['tracking_dir'] else 'wandb')
         dataset = SequoiaDatasetInterface(dataset_params)
         seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
         seg_trainer.init_model(params, phases, None)
-        seg_trainer.init_loggers(train_params)
-        logger.info(f"Training params \n {params}")
+        seg_trainer.init_loggers({"in_params": params}, train_params)
+        logger.info(f"Input params: \n\n {dict_to_yaml_string(params)}")
 
-        if 'train' in phases:  # ------------------------ TRAINING PHASE ------------------------
-            # Callbacks
-            cbcks = [
-                WandbCallback(Phase.TRAIN_EPOCH_END, freq=1),
-                WandbCallback(Phase.VALIDATION_EPOCH_END, freq=1, params={"in_params": params}),
-                SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
-                                                  freq=1,
-                                                  batch_idxs=[0, len(seg_trainer.train_loader) - 1],
-                                                  last_img_idx_in_batch=4,
-                                                  num_classes=dataset.trainset.CLASS_LABELS,
-                                                  undo_preprocessing=dataset.undo_preprocess),
-                *early_stop
-            ]
-            train_params["phase_callbacks"] = cbcks
+        if 'train' in phases:
+            train(seg_trainer, train_params, dataset, early_stop)
 
-            seg_trainer.train(train_params)
-
-        gc.collect()
-        if 'test' in phases:  # ------------------------ TEST PHASE ------------------------
+        if 'test' in phases:
             test_metrics = seg_trainer.test(**test_params)
 
-            # # log test metrics
-            # wandb.summary.update(test_metrics)
-
-        if 'run' in phases:  # ------------------------ RUN PHASE ------------------------
-            run_params = params['run_params']
-            run_loader = dataset.get_run_loader(folders=run_params['run_folders'], batch_size=run_params['batch_size'])
-            cbcks = [
-                # SaveSegmentationPredictionsCallback(phase=Phase.POST_TRAINING,
-                #                                     path=
-                #                                     run_params['prediction_folder']
-                #                                     if run_params['prediction_folder'] != 'mlflow'
-                #                                     else mlclient.run.info.artifact_uri + '/predictions',
-                #                                     num_classes=len(seg_trainer.test_loader.dataset.classes),
-                #                                     )
-            ]
-            run_loader.dataset.return_name = True
-            seg_trainer.run(run_loader, callbacks=cbcks)
-            # seg_trainer.valid_loader.dataset.return_name = True
-            # seg_trainer.run(seg_trainer.valid_loader, callbacks=cbcks)
+        if 'inference' in phases:
+            inference(seg_trainer, params['run_params'], dataset)
     finally:
         if seg_trainer:
             seg_trainer.sg_logger.close(True)
+
+
+def train(seg_trainer, train_params, dataset, early_stop):
+    # ------------------------ TRAINING PHASE ------------------------
+    # Callbacks
+    cbcks = [
+        WandbCallback(Phase.TRAIN_EPOCH_END, freq=1),
+        WandbCallback(Phase.VALIDATION_EPOCH_END, freq=1),
+        SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
+                                          freq=1,
+                                          batch_idxs=[0, len(seg_trainer.train_loader) - 1],
+                                          last_img_idx_in_batch=4,
+                                          num_classes=dataset.trainset.CLASS_LABELS,
+                                          undo_preprocessing=dataset.undo_preprocess),
+        *early_stop
+    ]
+    train_params["phase_callbacks"] = cbcks
+
+    seg_trainer.train(train_params)
+    gc.collect()
+
+
+def inference(seg_trainer, run_params, dataset):
+    run_loader = dataset.get_run_loader(folders=run_params['run_folders'], batch_size=run_params['batch_size'])
+    cbcks = [
+        # SaveSegmentationPredictionsCallback(phase=Phase.POST_TRAINING,
+        #                                     path=
+        #                                     run_params['prediction_folder']
+        #                                     if run_params['prediction_folder'] != 'mlflow'
+        #                                     else mlclient.run.info.artifact_uri + '/predictions',
+        #                                     num_classes=len(seg_trainer.test_loader.dataset.classes),
+        #                                     )
+    ]
+    run_loader.dataset.return_name = True
+    seg_trainer.run(run_loader, callbacks=cbcks)
+    # seg_trainer.valid_loader.dataset.return_name = True
+    # seg_trainer.run(seg_trainer.valid_loader, callbacks=cbcks)
 
 
 def experiment(settings: Mapping, param_path: str = "local variable"):
@@ -152,7 +158,7 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     for i, params in enumerate(runs):
         try:
             logger.info(f'Running experiment {i + 1} out of {len(runs)}')
-            run({**exp_settings, **params})
+            run({'experiment': exp_settings, **params})
             gc.collect()
         except Exception as e:
             logger.error(f'Experiment {i + 1} failed with error {e}')

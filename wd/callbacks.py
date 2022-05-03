@@ -161,8 +161,7 @@ class WandbCallback(PhaseCallback):
     A callback that logs metrics to MLFlow.
     """
 
-    def __init__(self, phase: Phase, freq: int,
-                 params: Mapping = None
+    def __init__(self, phase: Phase, freq: int
                  ):
         """
         param phase: phase to log metrics for
@@ -179,9 +178,6 @@ class WandbCallback(PhaseCallback):
 
         super(WandbCallback, self).__init__(phase)
         self.freq = freq
-
-        if params:
-            wandb.config.update(params)
 
     def __call__(self, context: PhaseContext):
         """

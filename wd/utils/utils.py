@@ -1,14 +1,14 @@
 import collections
 import os
 import subprocess
+from io import StringIO
 from typing import Any, Optional, Mapping
 
 import mlflow
 import torch
 import collections.abc
 from mlflow.tracking import MlflowClient
-
-
+from ruamel.yaml import YAML
 
 
 def setup_mlflow(exp_name: str, description: str) -> str:
@@ -99,3 +99,15 @@ def nested_dict_update(d, u):
         else:
             d[k] = v
     return d
+
+
+def dict_to_yaml_string(mapping: Mapping) -> str:
+    """
+    Convert a nested dictionary to a string
+    """
+    string_stream = StringIO()
+    yaml = YAML()
+    yaml.dump(mapping, string_stream)
+    output_str = string_stream.getvalue()
+    string_stream.close()
+    return output_str

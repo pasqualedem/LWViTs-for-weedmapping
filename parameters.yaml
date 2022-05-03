@@ -1,15 +1,14 @@
 experiment:
   name: weeddetection
-  group: test
-  description: This is the fifth experiment
-  continue_with_errors: False
+  group: Reproduction
+  continue_with_errors: True
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
   tags: [[]]
-  # train, test, run
+  # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
 
@@ -72,7 +71,7 @@ parameters:
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
-    size: [[368, 496]]
+    size: [same]
 
   run_params:
     batch_size: [24]

@@ -121,7 +121,10 @@ class SegmentationTrainer(SgModel):
             self.training_params.override(sg_logger=sg_logger)
             super()._initialize_sg_logger_objects()
 
-    def init_loggers(self, train_params: Mapping = None, init_sg_loggers: bool = True) -> None:
+    def init_loggers(self,
+                     in_params: Mapping = None,
+                     train_params: Mapping = None,
+                     init_sg_loggers: bool = True) -> None:
         if self.training_params is None:
             self.training_params = TrainingParams()
         self.training_params.override(**train_params)
@@ -130,6 +133,7 @@ class SegmentationTrainer(SgModel):
         if self.phase_callbacks is None:
             self.phase_callbacks = []
         self.phase_callback_handler = CallbackHandler(self.phase_callbacks)
+        self.sg_logger.add_config(config=in_params)
 
     def run(self, data_loader: torch.utils.data.DataLoader, callbacks=None, silent_mode: bool = False):
         """
