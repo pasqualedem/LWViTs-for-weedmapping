@@ -1,6 +1,8 @@
 import os
 from typing import Any, Union, Iterable, Mapping
 
+import functools
+
 import numpy as np
 import torch
 from PIL import Image
@@ -10,6 +12,7 @@ from super_gradients.training.datasets.dataset_interfaces import DatasetInterfac
 from torchvision.transforms import functional as F
 
 from wd.transforms import PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0
+from wd.data.sequoia_stats import STATS as SEQUOIA_STATS
 from sklearn.model_selection import train_test_split
 
 from torch.utils.data.distributed import DistributedSampler
@@ -22,27 +25,14 @@ logger = get_logger(__name__)
 
 
 class SequoiaDatasetInterface(DatasetInterface):
-    MEAN_STDS = \
-        {
-            'CIR':
-                (
-                    (0.2927, 0.3166, 0.3368),
-                    (0.1507, 0.1799, 0.1966)
-                ),
-            'R': (0.3368, 0.1966),
-            'G': (0.3166, 0.1799),
-            'NDVI': (0.3160, 0.2104),
-            'NIR': (0.2927, 0.1507),
-            'RE': (0.3152, 0.1563)
-        }
+    STATS = SEQUOIA_STATS
 
     def __init__(self, dataset_params, name="sequoia"):
         super(SequoiaDatasetInterface, self).__init__(dataset_params)
         channels = dataset_params['channels']
         self.dataset_name = name
 
-        mean, std = self.MEAN_STDS[channels] if type(channels) is str else \
-            list(zip(*(self.MEAN_STDS[c] for c in channels)))
+        mean, std = self.get_mean_std(dataset_params['train_folders'], channels)
 
         self.lib_dataset_params = {
             'mean': mean,
@@ -100,6 +90,24 @@ class SequoiaDatasetInterface(DatasetInterface):
 
     def undo_preprocess(self, x):
         return (Denormalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std'])(x) * 255).type(torch.uint8)
+
+    @classmethod
+    def get_mean_std(cls, train_folders, channels):
+        if channels == 'CIR':
+            channels = ['NIR', 'G', 'R']
+        if len(train_folders) == 1:
+            f = train_folders[0]
+            return list(zip(*[(cls.STATS[f][c]['mean'], cls.STATS[f][c]['std']) for c in channels]))
+        else:
+            sums = {
+                **{c + '_sum': sum([cls.STATS[f][c]['sum'] for f in train_folders]) for c in channels},
+                **{c + '_sum_sq': sum([cls.STATS[f][c]['sum_sq'] for f in train_folders]) for c in channels}
+            }
+            count = sum([cls.STATS[f]['count'] for f in train_folders])
+            means = [sums[c + '_sum'] / count for c in channels]
+            stds = [np.sqrt((sums[c + '_sum_sq'] / count) - (means[i] ** 2))
+                    for i, c in enumerate(channels)]
+            return means, stds
 
     def build_data_loaders(self, batch_size_factor=1, num_workers=8, train_batch_size=None, val_batch_size=None,
                            test_batch_size=None, distributed_sampler: bool = False):

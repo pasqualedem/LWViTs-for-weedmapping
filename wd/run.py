@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 def parse_params(params: dict) -> (dict, dict, dict, list):
     # Instantiate loss
     input_train_params = params['train_params']
-    loss_params = params['train_params'].pop('loss')
+    loss_params = params['train_params']['loss']
     loss = LOSSES_DICT[loss_params['name']](**loss_params['params'])
 
     # metrics
@@ -40,13 +40,13 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
     dataset_params = params['dataset']
 
     train_params = {
+        **input_train_params,
         "train_metrics_list": list(train_metrics.values()),
         "valid_metrics_list": list(test_metrics.values()),
         "loss": loss,
         "greater_metric_to_watch_is_better": True,
         "loss_logging_items_names": ["loss"],
         "sg_logger": WandBSGLogger,
-        **input_train_params,
         'sg_logger_params': {
             'entity': params['entity'],
             'tags': params['tags'],
@@ -78,6 +78,7 @@ def run(params: dict):
         seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
         seg_trainer.init_model(params, phases, None)
         seg_trainer.init_loggers(train_params)
+        logger.info(f"Training params \n {params}")
 
         if 'train' in phases:  # ------------------------ TRAINING PHASE ------------------------
             # Callbacks

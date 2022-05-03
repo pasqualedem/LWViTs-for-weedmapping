@@ -12,12 +12,12 @@ class AUC(AUROC):
 
 def PerClassAUC(name, code):
     def __init__(self, name, code, *args, **kwargs):
-        AUC.__init__(self, num_classes=2, **kwargs)
+        AUC.__init__(self, **kwargs)
         self.code = code
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        preds = preds[:, self.code, ::]
-        target = target[:, self.code, ::]
+        preds = preds[:, self.code, ::].flatten()
+        target = target[:, self.code, ::].bool().flatten()
         AUC.update(self, preds, target)
 
     metric = type(name, (AUC,), {"update": update, "__init__": __init__})

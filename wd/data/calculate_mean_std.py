@@ -1,6 +1,8 @@
 import multiprocessing
 
 import torch
+import json
+
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torchvision.transforms import transforms
@@ -17,13 +19,24 @@ def calculate():
     """
     Calculate the mean and the standard deviation of a dataset
     """
+    root = "./dataset/processed/Sequoia"
+    folders = ['006']
+    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
+
     augs = transforms.Compose([
                       transforms.ToTensor()])
 
+    index = SequoiaDataset.build_index(
+        root,
+        macro_folders=folders,
+        channels=channels,
+    )
+
     sq = SequoiaDataset("./dataset/processed/Sequoia",
-                        transform=augs,
+                        transform=lambda x: x,
                         target_transform=augs,
-                        channels=['R', 'NIR', 'RE', 'NDVI']
+                        index=index,
+                        channels=channels
                         )
     count = len(sq) * WIDTH * HEIGHT
 
@@ -36,8 +49,8 @@ def calculate():
                                   pin_memory=True)
 
         # placeholders
-        psum = torch.tensor([0.0, 0.0, 0.0, 0.0])
-        psum_sq = torch.tensor([0.0, 0.0, 0.0, 0.0])
+        psum = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0])
+        psum_sq = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0])
 
         # loop through images
         for input, _ in tqdm(image_loader):
@@ -49,9 +62,16 @@ def calculate():
         total_var = (psum_sq / count) - (total_mean ** 2)
         total_std = torch.sqrt(total_var)
 
-        print("Mean: {}".format(total_mean))
-        print("Var : {}".format(total_var))
-        print("Std : {}".format(total_std))
+        d = {}
+        for i in range(len(channels)):
+            d[channels[i]] = {
+                'mean': total_mean[i].item(),
+                'std': total_std[i].item(),
+                'sum': psum[i].item(),
+                'sum_sq': psum_sq[i].item(),
+            }
+        print(json.dumps(d, indent=4))
+        print(f"Count: {count}")
 
 
 if __name__ == '__main__':
