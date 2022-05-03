@@ -38,11 +38,29 @@ parameters:
   train_metrics:
     jaccard:
       num_classes: [3]
+    f1:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
   test_metrics:
     jaccard:
       num_classes: [3]
     auc:
       num_classes: [3]
+    confusion_matrix:
+      num_classes: [3]
+    f1:
+      num_classes: [3]
+      average: [macro]
+      mdmc_average: [global]
+    precision:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
+    recall:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
     perclassauc:
       discriminator: # To discriminate between different classes
         [[

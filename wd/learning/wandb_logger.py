@@ -419,6 +419,13 @@ class WandBSGLogger(BaseSGLogger):
         wandb.log({tag: figure}, step=global_step)
 
     @multi_process_safe
+    def add_table(self, tag, data, columns, rows):
+        if isinstance(data, torch.Tensor):
+            data = [[x.item() for x in row] for row in data]
+        table = wandb.Table(data=data, rows=rows, columns=columns)
+        wandb.log({tag: table})
+
+    @multi_process_safe
     def close(self, really=False):
         if really:
             super().close()
