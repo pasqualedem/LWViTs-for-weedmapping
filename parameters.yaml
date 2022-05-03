@@ -1,14 +1,13 @@
 experiment:
   name: weeddetection
-  group: Adam
+  group: test
   description: This is the fifth experiment
-  continue_with_errors: True
+  continue_with_errors: False
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
-  details: [With flip]
   tags: [[]]
   # train, test, run
   # phases: [[run]]
@@ -19,11 +18,11 @@ parameters:
     initial_lr: [0.001]
     optimizer: [Adam]
     optimizer_params:
-      weight_decay: [0, 0.0005]
+      weight_decay: [0.0005]
     loss:
       name: [cross_entropy]
       params:
-        weight: [null, [0.0273, 1.0, 4.3802]]
+        weight: [[0.0273, 1.0, 4.3802]]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -54,18 +53,21 @@ parameters:
         ]]
 
   model:
-    name: [segnet, regseg48, ddrnet_23]
+    name: [segnet]
     params: [{}]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
-    # channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-    channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    hor_flip: [True]
+    ver_flip: [False]
+    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    batch_size: [6]
+    channels: [['NDVI']]
+    batch_size: [5]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
@@ -77,5 +79,19 @@ parameters:
     run_folders: [["007"]]
 
 
-other_runs:
-  null
+other_grids:
+  -
+    train_params:
+      loss:
+        params:
+          weight: [null]
+      dataset:
+        channels: ['CIR', ['G', 'NIR', 'R']]
+  -
+    train_params:
+      loss:
+        params:
+          weight: [null, [0.0273, 1.0, 4.3802]]
+      dataset:
+        batch_size: [5, 6]
+        channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]

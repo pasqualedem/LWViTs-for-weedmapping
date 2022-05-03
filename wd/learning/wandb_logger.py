@@ -121,7 +121,9 @@ class BaseSGLogger(AbstractSGLogger):
         log_lines.append(json.dumps(config, indent=4, default=str))
         log_lines.append('------- config parameters end --------')
 
-        self.tensorboard_writer.add_text("Hyper_parameters", json.dumps(config, indent=4, default=str).replace(" ", "&nbsp;").replace("\n", "  \n  "))
+        if self.use_tensorboard:
+            self.tensorboard_writer.add_text("Hyper_parameters", json.dumps(config, indent=4, default=str)
+                                             .replace(" ", "&nbsp;").replace("\n", "  \n  "))
         self._write_to_log_file(log_lines)
 
     @multi_process_safe
@@ -363,7 +365,9 @@ class WandBSGLogger(BaseSGLogger):
 
 
     @multi_process_safe
-    def add_config(self, tag: str, config: dict):
+    def add_config(self, tag: str = None, config: dict = None):
+        if tag:
+            config = {tag: config}
         wandb.config.update(config, allow_val_change=self.resumed)
 
     @multi_process_safe
@@ -527,3 +531,5 @@ class WandBSGLogger(BaseSGLogger):
 
         return None
 
+    def __repr__(self):
+        return "WandbSGLogger"

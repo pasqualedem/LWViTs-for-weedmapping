@@ -84,7 +84,7 @@ def run(params: dict):
             # Callbacks
             cbcks = [
                 WandbCallback(Phase.TRAIN_EPOCH_END, freq=1),
-                WandbCallback(Phase.VALIDATION_EPOCH_END, freq=1, params=params),
+                WandbCallback(Phase.VALIDATION_EPOCH_END, freq=1, params={"in_params": params}),
                 SegmentationVisualizationCallback(phase=Phase.VALIDATION_BATCH_END,
                                                   freq=1,
                                                   batch_idxs=[0, len(seg_trainer.train_loader) - 1],
@@ -128,19 +128,23 @@ def run(params: dict):
 def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     grids = settings['parameters']
-    other_runs = settings['other_runs']
+    other_grids = settings['other_grids']
 
     if exp_settings['excluded_files']:
         os.environ['WANDB_IGNORE_GLOBS'] = exp_settings['excluded_files']
 
     logger.info(f'Loaded parameters from {param_path}')
     runs = make_grid(grids)
-    logger.info(f'Found {len(runs)} runs from grid')
+    logger.info(f'Found {len(runs)} runs from base grid')
 
-    if other_runs:
-        other_runs = [nested_dict_update(copy.deepcopy(runs[0]), other_run) for other_run in other_runs]
-        logger.info(f'Found {len(other_runs)} other runs')
-        runs = runs + other_runs
+    if other_grids:
+        complete_other_grids =\
+            [nested_dict_update(copy.deepcopy(settings['parameters']), other_run) for other_run in other_grids]
+        other_runs = [make_grid(other_grid) for other_grid in complete_other_grids]
+        logger.info(f'There are {len(other_grids)} other grids')
+        for i, other_run in enumerate(other_runs):
+            logger.info(f'Found {len(other_run)} runs from grid {i + 1}')
+            runs = runs + other_run
     logger.info(f'Total runs: {len(runs)}')
 
     continue_with_errors = exp_settings.pop('continue_with_errors')
@@ -154,6 +158,10 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
             logger.error(f'Experiment {i + 1} failed with error {e}')
             if not continue_with_errors:
                 raise e
+
+
+def resume():
+    pass
 
 
 if __name__ == '__main__':
