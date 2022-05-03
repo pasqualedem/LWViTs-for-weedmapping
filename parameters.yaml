@@ -7,7 +7,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[]]
+  tags: [[reproduction]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -15,7 +15,7 @@ parameters:
   train_params:
     max_epochs: [500]
     initial_lr: [0.001]
-    optimizer: [Adam]
+    optimizer: [SGD]
     optimizer_params:
       weight_decay: [0.0005]
     loss:

@@ -103,7 +103,7 @@ def nested_dict_update(d, u):
 
 def dict_to_yaml_string(mapping: Mapping) -> str:
     """
-    Convert a nested dictionary to a string
+    Convert a nested dictionary or list to a string
     """
     string_stream = StringIO()
     yaml = YAML()
@@ -111,3 +111,24 @@ def dict_to_yaml_string(mapping: Mapping) -> str:
     output_str = string_stream.getvalue()
     string_stream.close()
     return output_str
+
+
+def values_to_number(collec) -> Any:
+    """
+    Convert all values in a dictionary or list to numbers
+    """
+    if isinstance(collec, collections.abc.Mapping):
+        for key, value in collec.items():
+            collec[key] = values_to_number(value)
+    elif isinstance(collec, list):
+        return [values_to_number(v) for v in collec]
+    elif isinstance(collec, str) and collec.startswith('00'):
+        return collec
+    elif isinstance(collec, int):
+        return collec
+    else:
+        try:
+            return float(collec)
+        except (ValueError, TypeError):
+            pass
+    return collec

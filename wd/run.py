@@ -1,3 +1,4 @@
+import argparse
 import os
 from typing import Mapping
 
@@ -6,6 +7,7 @@ import gc
 import copy
 
 import numpy as np
+import wandb
 
 from super_gradients.training.utils.early_stopping import EarlyStop
 from super_gradients.training.utils.callbacks import Phase
@@ -18,15 +20,19 @@ from wd.data.sequoia import SequoiaDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
 from wd.utils.grid import make_grid
+from wd.utils.utils import values_to_number
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.learning.wandb_logger import WandBSGLogger
 
-torch.manual_seed(42)
-np.random.seed(42)
+
 logger = get_logger(__name__)
 
 
 def parse_params(params: dict) -> (dict, dict, dict, list):
+    # Set Random seeds
+    torch.manual_seed(params['train_params']['seed'])
+    np.random.seed(params['train_params']['seed'])
+
     # Instantiate loss
     input_train_params = params['train_params']
     loss_params = params['train_params']['loss']
@@ -77,7 +83,7 @@ def run(params: dict):
                                           if params['experiment']['tracking_dir'] else 'wandb')
         dataset = SequoiaDatasetInterface(dataset_params)
         seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-        seg_trainer.init_model(params, phases, None)
+        seg_trainer.init_model(params, False, None)
         seg_trainer.init_loggers({"in_params": params}, train_params)
         logger.info(f"Input params: \n\n {dict_to_yaml_string(params)}")
 
@@ -166,14 +172,55 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
                 raise e
 
 
-def resume():
-    pass
+def resume(settings):
+    queries = settings['runs']
+    path = settings['path']
+    for query in queries:
+        filters = query['filters']
+        stage = query['stage']
+        api = wandb.Api()
+        runs = api.runs(path=path, filters=filters)
+        for run in runs:
+            seg_trainer = None
+            try:
+                params = values_to_number(run.config['in_params'])
+                train_params, test_params, dataset_params, early_stop = parse_params(params)
 
+                seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
+                                                  ckpt_root_dir=params['experiment']['tracking_dir']
+                                                  if params['experiment']['tracking_dir'] else 'wandb')
+                dataset = SequoiaDatasetInterface(dataset_params)
+                seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
+                checkpoint_path_group = os.path.join('wandb', run.group, 'wandb')
+                run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
+                checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', 'ckpt_best.pth')
+                seg_trainer.init_model(params, True, checkpoint_path)
+                seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
+                if stage == 'train':
+                    train(seg_trainer, train_params, dataset, early_stop)
+                elif stage == 'test':
+                    test_metrics = seg_trainer.test(**test_params)
+            finally:
+                if seg_trainer is not None:
+                    seg_trainer.sg_logger.close()
+
+
+parser = argparse.ArgumentParser(description='Train and test models')
+parser.add_argument('resume', metavar='N', type=bool,
+                    help='Resume the run(s)', default=False)
 
 if __name__ == '__main__':
-    param_path = 'parameters.yaml'
-    with open(param_path, 'r') as param_stream:
-        settings = YAML().load(param_stream)
+    args = parser.parse_args()
 
-    experiment(settings)
+    if args.resume:
+        param_path = 'resume.yaml'
+        with open(param_path, 'r') as param_stream:
+            settings = YAML().load(param_stream)
+        resume(settings)
+    else:
+        param_path = 'parameters.yaml'
+        with open(param_path, 'r') as param_stream:
+            settings = YAML().load(param_stream)
+
+        experiment(settings)
 

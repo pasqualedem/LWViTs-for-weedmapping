@@ -282,7 +282,7 @@ class WandBSGLogger(BaseSGLogger):
                  training_params: dict, checkpoints_dir_path: str, tb_files_user_prompt: bool = False,
                  launch_tensorboard: bool = False, tensorboard_port: int = None, save_checkpoints_remote: bool = True,
                  save_tensorboard_remote: bool = True, save_logs_remote: bool = True, entity: Optional[str] = None,
-                 api_server: Optional[str] = None, save_code: bool = False, tags=None, **kwargs):
+                 api_server: Optional[str] = None, save_code: bool = False, tags=None, run_id=None, **kwargs):
         """
 
         :param experiment_name: Used for logging and loading purposes
@@ -299,14 +299,11 @@ class WandBSGLogger(BaseSGLogger):
         :param save_code: save current code to wandb
         """
         self.s3_location_available = storage_location.startswith('s3')
-        wandb_id = None
         self.resumed = resumed
-        if self.resumed:
-            wandb_id = self._get_wandb_id()
-
+        resume = 'must' if resumed else None
         os.makedirs(checkpoints_dir_path, exist_ok=True)
         run = wandb.init(project=project_name, name=experiment_name,
-                         entity=entity, resume=resumed, id=wandb_id, tags=tags,
+                         entity=entity, resume=resume, id=run_id, tags=tags,
                          dir=checkpoints_dir_path, **kwargs)
         if save_code:
             self._save_code()
@@ -315,7 +312,6 @@ class WandBSGLogger(BaseSGLogger):
         self.save_tensorboard_wandb = save_tensorboard_remote
         self.save_logs_wandb = save_logs_remote
         checkpoints_dir_path = os.path.relpath(run.dir, os.getcwd())
-
         super().__init__(project_name, experiment_name, storage_location, resumed, training_params,
                          checkpoints_dir_path, tb_files_user_prompt, launch_tensorboard, tensorboard_port,
                          self.s3_location_available, self.s3_location_available, self.s3_location_available)

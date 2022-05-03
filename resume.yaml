@@ -1,0 +1,6 @@
+path: "pasqualedem/weeddetection"
+runs:
+  -
+    filters:
+      display_name: "smart-sun-23"
+    stage: "test"

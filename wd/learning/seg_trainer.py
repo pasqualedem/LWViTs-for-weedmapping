@@ -21,10 +21,11 @@ logger = get_logger(__name__)
 
 class SegmentationTrainer(SgModel):
     def __init__(self, ckpt_root_dir=None, **kwargs):
+        self.run_id = None
         self.train_initialized = False
         super().__init__(ckpt_root_dir=ckpt_root_dir, **kwargs)
 
-    def init_model(self, params: Mapping, phases: list, mlflowclient: MLRun = None):
+    def init_model(self, params: Mapping, resume: bool, checkpoint_path: str = None):
         # init model
         model_params = params['model']
         input_channels = len(params['dataset']['channels'])
@@ -41,13 +42,13 @@ class SegmentationTrainer(SgModel):
             model = model_params['name']
 
         self.build_model(model, arch_params=arch_params)
-        if 'train' not in phases:
-            ckpt_local_path = mlflowclient.run.info.artifact_uri + '/SG/ckpt_best.pth'
-            self.checkpoint = load_checkpoint_to_model(ckpt_local_path=ckpt_local_path,
+        if resume:
+            self.checkpoint = load_checkpoint_to_model(ckpt_local_path=checkpoint_path,
                                                        load_backbone=False,
                                                        net=self.net,
                                                        strict=StrictLoad.ON.value,
                                                        load_weights_only=self.load_weights_only)
+            self.load_checkpoint = True
 
             if 'ema_net' in self.checkpoint.keys():
                 logger.warning(
@@ -85,6 +86,9 @@ class SegmentationTrainer(SgModel):
         All of the above args will override SgModel's corresponding attribute when not equal to None. Then evaluation
          is ran on self.test_loader with self.test_metrics.
         """
+        loss = loss or self.training_params.loss
+        if loss is not None:
+            loss.to(self.device)
         test_phase_callbacks = list(test_phase_callbacks) + [
             SegmentationVisualizationCallback(phase=Phase.TEST_BATCH_END,
                                               freq=5,
@@ -114,7 +118,9 @@ class SegmentationTrainer(SgModel):
                 'storage_location': self.model_checkpoints_location,
                 'resumed': self.load_checkpoint,
                 'training_params': self.training_params,
-                'checkpoints_dir_path': self.checkpoints_dir_path}
+                'checkpoints_dir_path': self.checkpoints_dir_path,
+                'run_id': self.run_id
+            }
             sg_logger_params = core_utils.get_param(self.training_params, 'sg_logger_params', {})
             sg_logger = WandBSGLogger(**sg_logger_params, **general_sg_logger_params)
             self.checkpoints_dir_path = sg_logger.local_dir()
@@ -124,7 +130,10 @@ class SegmentationTrainer(SgModel):
     def init_loggers(self,
                      in_params: Mapping = None,
                      train_params: Mapping = None,
-                     init_sg_loggers: bool = True) -> None:
+                     init_sg_loggers: bool = True,
+                     run_id=None) -> None:
+
+        self.run_id = run_id
         if self.training_params is None:
             self.training_params = TrainingParams()
         self.training_params.override(**train_params)

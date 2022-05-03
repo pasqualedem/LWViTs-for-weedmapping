@@ -4,6 +4,8 @@ from functools import reduce
 from torch import Tensor
 from torchmetrics import JaccardIndex, AUROC
 
+from copy import deepcopy
+
 
 class AUC(AUROC):
     def update(self, preds: Tensor, target: Tensor) -> None:
@@ -26,6 +28,7 @@ def PerClassAUC(name, code):
 
 def metric_instance(name: str, params: dict) -> dict:
     if params.get('discriminator') is not None:
+        params = deepcopy(params)
         names = params.pop('discriminator')
         return {
             subname: METRICS[name](subname, code, **params)
