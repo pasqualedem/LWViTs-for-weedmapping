@@ -102,13 +102,13 @@ other_grids:
       loss:
         params:
           weight: [null]
-      dataset:
-        channels: ['CIR', ['G', 'NIR', 'R']]
+    dataset:
+      channels: ['CIR', ['G', 'NIR', 'R']]
   -
     train_params:
       loss:
         params:
           weight: [null, [0.0273, 1.0, 4.3802]]
-      dataset:
-        batch_size: [5, 6]
-        channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+    dataset:
+      batch_size: [5, 6]
+      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
