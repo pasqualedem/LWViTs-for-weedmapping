@@ -1,13 +1,13 @@
 experiment:
   name: weeddetection
-  group: Reproduction
+  group: Adam
   continue_with_errors: True
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[reproduction]]
+  tags: [[]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -15,7 +15,7 @@ parameters:
   train_params:
     max_epochs: [500]
     initial_lr: [0.001]
-    optimizer: [SGD]
+    optimizer: [Adam]
     optimizer_params:
       weight_decay: [0.0005]
     loss:
