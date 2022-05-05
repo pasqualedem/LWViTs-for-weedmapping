@@ -81,15 +81,18 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         self.trainset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                        batch_size=self.dataset_params.batch_size, index=train_index,
-                                       transform=input_transform, target_transform=target_transform)
+                                       transform=input_transform, target_transform=target_transform,
+                                       return_path=dataset_params['return_path'])
 
         self.valset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                      batch_size=self.dataset_params.val_batch_size, index=val_index,
-                                     transform=input_transform, target_transform=target_transform)
+                                     transform=input_transform, target_transform=target_transform,
+                                     return_path=dataset_params['return_path'])
 
         self.testset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
-                                      transform=input_transform, target_transform=target_transform)
+                                      transform=input_transform, target_transform=target_transform,
+                                      return_path=dataset_params['return_path'])
 
     def undo_preprocess(self, x):
         return (Denormalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std'])(x) * 255).type(torch.uint8)

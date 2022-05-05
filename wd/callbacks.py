@@ -1,5 +1,5 @@
 import os
-from typing import Union, Callable, Mapping, Any
+from typing import Union, Callable, Mapping, Any, List
 
 import wandb
 import numpy as np
@@ -46,7 +46,8 @@ class SegmentationVisualizationCallback(PhaseCallback):
                                                       context.batch_idx,
                                                       undo_preprocessing_func=self.undo_preprocesing,
                                                       prefix=self.prefix,
-                                                      table=self.table)
+                                                      table=self.table,
+                                                      names=context.input_name)
             if self.prefix == 'test' and context.batch_idx == self.batch_idxs[-1]:
                 wandb.log({f"{self.prefix}_seg": self.table})
 
@@ -81,9 +82,10 @@ class SegmentationVisualization:
 
     @staticmethod
     def visualize_batch(image_tensor: torch.Tensor, pred_mask: torch.Tensor, target_mask: torch.Tensor, num_classes,
-                        batch_name: Union[int, str], checkpoint_dir: str = None,
+                        batch_name: Union[int, str],
                         undo_preprocessing_func: Callable[[torch.Tensor], np.ndarray] = lambda x: x,
-                        image_scale: float = 1., prefix: str = '', table: wandb.Table = None):
+                        image_scale: float = 1., prefix: str = '', table: wandb.Table = None,
+                        names: List[str] = None):
         """
         A helper function to visualize detections predicted by a network:
         saves images into a given path with a name that is {batch_name}_{imade_idx_in_the_batch}.jpg, one batch per call.
@@ -104,18 +106,20 @@ class SegmentationVisualization:
         """
         image_np = undo_preprocessing_func(image_tensor.detach()).type(dtype=torch.uint8).cpu()
 
+        if names is None:
+            names = ['_'.join([prefix, 'seg', str(batch_name), str(i)]) if prefix == 'val' else \
+                              '_'.join([prefix, 'seg', str(batch_name * image_np.shape[0] + i)]) for i in
+                          range(image_np.shape[0])]
+
         for i in range(image_np.shape[0]):
             preds = pred_mask[i].detach().cpu().numpy()
             targets = target_mask[i].detach().cpu().numpy()
 
-            image_name = '_'.join([prefix, 'seg', str(batch_name), str(i)]) if prefix == 'val' else \
-                '_'.join([prefix, 'seg', str(batch_name * image_np.shape[0] + i)])
-
             img = SegmentationVisualization._visualize_image(image_np[i], preds, targets, num_classes)
             if prefix == 'val':
-                wandb.log({image_name: img})
+                wandb.log({names[i]: img})
             else:
-                table.add_data(image_name, img)
+                table.add_data(names[i], img)
 
 
 class MlflowCallback(PhaseCallback):

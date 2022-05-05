@@ -67,6 +67,12 @@ class SegmentationTrainer(SgModel):
         if self.train_loader.num_workers > 0:
             self.train_loader._iterator._shutdown_workers()
             self.valid_loader._iterator._shutdown_workers()
+        # Restore best parameters
+        self.checkpoint = load_checkpoint_to_model(ckpt_local_path=self.model_checkpoints_location + '/best_ckpt.pth',
+                                                   load_backbone=False,
+                                                   net=self.net,
+                                                   strict=StrictLoad.ON.value,
+                                                   load_weights_only=True)
 
     def test(self,  # noqa: C901
              test_loader: torch.utils.data.DataLoader = None,
@@ -89,13 +95,14 @@ class SegmentationTrainer(SgModel):
         All of the above args will override SgModel's corresponding attribute when not equal to None. Then evaluation
          is ran on self.test_loader with self.test_metrics.
         """
+        test_loader = test_loader or self.test_loader
         loss = loss or self.training_params.loss
         if loss is not None:
             loss.to(self.device)
         test_phase_callbacks = list(test_phase_callbacks) + [
             SegmentationVisualizationCallback(phase=Phase.TEST_BATCH_END,
                                               freq=5,
-                                              batch_idxs=list(range(15)),
+                                              batch_idxs=list(range(test_loader.__len__())),
                                               num_classes=self.dataset_interface.trainset.CLASS_LABELS,
                                               undo_preprocessing=self.dataset_interface.undo_preprocess)
         ]
@@ -111,11 +118,13 @@ class SegmentationTrainer(SgModel):
         if 'conf_mat' in metrics.keys():
             metrics.pop('conf_mat')
             cf = test_metrics['conf_mat'].get_cf()
+            logger.info(f'Confusion matrix:\n{cf}')
             self.sg_logger.add_table('confusion_matrix', cf,
                                      columns=list(self.dataset_interface.testset.CLASS_LABELS.values()),
                                      rows=list(self.dataset_interface.testset.CLASS_LABELS.values())
                                      )
         self.sg_logger.add_summary(metrics)
+        logger.info('Computing ROC curve...')
         roc = test_metrics['auc'].get_roc()
         fpr_tpr = [(roc[0][i], roc[1][i]) for i in range(len(roc))]
         skip = [x[0].shape.numel() // 1000 for x in fpr_tpr]
@@ -139,6 +148,7 @@ class SegmentationTrainer(SgModel):
                 "y-axis-title": "True positive rate",
             },
         )
+        logger.info('ROC curve computed.')
         wandb.log({"roc": plt})
         return metrics
 

@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: Adam
+  group: NewModels
   continue_with_errors: True
   tracking_dir: null
   entity: pasqualedem
@@ -17,7 +17,7 @@ parameters:
     initial_lr: [0.001]
     optimizer: [Adam]
     optimizer_params:
-      weight_decay: [0.0005]
+      weight_decay: [0, 0.0005]
     loss:
       name: [cross_entropy]
       params:
@@ -70,7 +70,7 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
+    name: [regseg48, drrnet_23]
     params: [{}]
 
   dataset:
@@ -84,12 +84,13 @@ parameters:
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
     channels: [['NDVI']]
-    batch_size: [5]
-    val_batch_size: [12]
-    test_batch_size: [12]
+    batch_size: [12]
+    val_batch_size: [24]
+    test_batch_size: [24]
     num_workers: [0]
     num_classes: [3]
-    size: [same]
+    size: [[368, 496]]
+    return_path: [True]
 
   run_params:
     batch_size: [24]
@@ -110,5 +111,4 @@ other_grids:
         params:
           weight: [null, [0.0273, 1.0, 4.3802]]
     dataset:
-      batch_size: [5, 6]
       channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]

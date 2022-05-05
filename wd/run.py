@@ -178,12 +178,18 @@ def resume(settings):
     for query in queries:
         filters = query['filters']
         stage = query['stage']
+        updated_config = query['updated_config']
         api = wandb.Api()
         runs = api.runs(path=path, filters=filters)
+        if len(runs) == 0:
+            logger.error(f'No runs found for query {filters}')
         for run in runs:
             seg_trainer = None
             try:
                 params = values_to_number(run.config['in_params'])
+                params = nested_dict_update(params, updated_config)
+                run.config['in_params'] = params
+                run.config.update()
                 train_params, test_params, dataset_params, early_stop = parse_params(params)
 
                 seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
@@ -202,7 +208,7 @@ def resume(settings):
                     test_metrics = seg_trainer.test(**test_params)
             finally:
                 if seg_trainer is not None:
-                    seg_trainer.sg_logger.close()
+                    seg_trainer.sg_logger.close(really=True)
 
 
 parser = argparse.ArgumentParser(description='Train and test models')

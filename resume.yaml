@@ -2,5 +2,8 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      display_name: "smart-sun-23"
+      group: "Reproduction"
     stage: "test"
+    updated_config:
+      dataset:
+        return_path: True

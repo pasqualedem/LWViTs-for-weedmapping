@@ -93,11 +93,12 @@ def mlflow_linearize(dictionary: Mapping) -> Mapping:
 
 
 def nested_dict_update(d, u):
-    for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
-            d[k] = nested_dict_update(d.get(k, {}), v)
-        else:
-            d[k] = v
+    if u is not None:
+        for k, v in u.items():
+            if isinstance(v, collections.abc.Mapping):
+                d[k] = nested_dict_update(d.get(k, {}), v)
+            else:
+                d[k] = v
     return d
 
 
