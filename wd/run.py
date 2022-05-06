@@ -144,7 +144,7 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     starting_run = exp_settings['start_from_run']
 
     exp_log = open('exp_log.txt', 'a')
-    exp_log.write('---')
+    exp_log.write('---\n')
     exp_log.flush()
 
     if exp_settings['excluded_files']:
@@ -218,7 +218,7 @@ def resume(settings):
                 params = values_to_number(run.config['in_params'])
                 params = nested_dict_update(params, updated_config)
                 run.config['in_params'] = params
-                run.config.update()
+                run.update()
                 train_params, test_params, dataset_params, early_stop = parse_params(params)
 
                 seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],

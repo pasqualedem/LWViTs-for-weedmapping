@@ -2,8 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: "Reproduction"
+      null
     stage: "test"
     updated_config:
-      dataset:
-        return_path: True
+      null
