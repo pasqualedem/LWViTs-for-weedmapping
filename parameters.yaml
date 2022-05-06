@@ -70,7 +70,7 @@ parameters:
         ]]
 
   model:
-    name: [regseg48, drrnet_23]
+    name: [ddrnet_23]
     params: [{}]
 
   dataset:
@@ -84,7 +84,7 @@ parameters:
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
     channels: [['NDVI']]
-    batch_size: [12]
+    batch_size: [6, 12]
     val_batch_size: [24]
     test_batch_size: [24]
     num_workers: [0]
@@ -98,17 +98,59 @@ parameters:
 
 
 other_grids:
-  -
-    train_params:
+  - train_params:
       loss:
         params:
           weight: [null]
     dataset:
       channels: ['CIR', ['G', 'NIR', 'R']]
-  -
-    train_params:
+      batch_size: [6, 12]
+  - train_params:
       loss:
         params:
           weight: [null, [0.0273, 1.0, 4.3802]]
     dataset:
       channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+      batch_size: [6, 12]
+
+
+  - train_params:
+      loss:
+        params:
+          weight: [null]
+    dataset:
+      channels: ['CIR', ['G', 'NIR', 'R']]
+      batch_size: [6]
+    model:
+      name: [regseg48]
+
+  - train_params:
+      loss:
+        params:
+          weight: [null, [0.0273, 1.0, 4.3802]]
+    dataset:
+      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+      batch_size: [6]
+    model:
+      name: [regseg48]
+
+  - train_params:
+      loss:
+        params:
+          weight: [[0.0273, 1.0, 4.3802]]
+    dataset:
+      channels: [['NDVI']]
+      batch_size: [6]
+    model:
+      name: [regseg48]
+
+
+  - train_params:
+      loss:
+        params:
+          weight: [[0.0273, 1.0, 4.3802]]
+    dataset:
+      channels: [['R', 'G']]
+      batch_size: [6, 12]
+    model:
+      name: [ddrnet_23, regseg48]

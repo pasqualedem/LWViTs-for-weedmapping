@@ -68,7 +68,7 @@ class SegmentationTrainer(SgModel):
             self.train_loader._iterator._shutdown_workers()
             self.valid_loader._iterator._shutdown_workers()
         # Restore best parameters
-        self.checkpoint = load_checkpoint_to_model(ckpt_local_path=self.model_checkpoints_location + '/best_ckpt.pth',
+        self.checkpoint = load_checkpoint_to_model(ckpt_local_path=self.checkpoints_dir_path + '/ckpt_best.pth',
                                                    load_backbone=False,
                                                    net=self.net,
                                                    strict=StrictLoad.ON.value,
