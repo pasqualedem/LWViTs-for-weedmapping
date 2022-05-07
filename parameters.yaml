@@ -1,9 +1,9 @@
 experiment:
   name: weeddetection
-  group: NewModels
+  group: NewLR
   continue_with_errors: True
-  start_from_grid: 3
-  start_from_run: 2
+  start_from_grid: 0
+  start_from_run: 0
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
@@ -16,7 +16,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.001]
+    initial_lr: [0.0001]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0, 0.0005]
@@ -72,7 +72,7 @@ parameters:
         ]]
 
   model:
-    name: [ddrnet_23]
+    name: [regseg48, ddrnet_23, segnet]
     params: [{}]
 
   dataset:
@@ -85,8 +85,8 @@ parameters:
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['NDVI']]
-    batch_size: [6, 12]
+    channels: [['R', 'G'], ['NDVI'], 'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    batch_size: [6]
     val_batch_size: [24]
     test_batch_size: [24]
     num_workers: [0]
@@ -100,59 +100,4 @@ parameters:
 
 
 other_grids:
-  - train_params:
-      loss:
-        params:
-          weight: [null]
-    dataset:
-      channels: ['CIR', ['G', 'NIR', 'R']]
-      batch_size: [6, 12]
-  - train_params:
-      loss:
-        params:
-          weight: [null, [0.0273, 1.0, 4.3802]]
-    dataset:
-      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-      batch_size: [6, 12]
-
-
-  - train_params:
-      loss:
-        params:
-          weight: [null]
-    dataset:
-      channels: ['CIR', ['G', 'NIR', 'R']]
-      batch_size: [6]
-    model:
-      name: [regseg48]
-
-  - train_params:
-      loss:
-        params:
-          weight: [null, [0.0273, 1.0, 4.3802]]
-    dataset:
-      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
-      batch_size: [6]
-    model:
-      name: [regseg48]
-
-  - train_params:
-      loss:
-        params:
-          weight: [[0.0273, 1.0, 4.3802]]
-    dataset:
-      channels: [['NDVI']]
-      batch_size: [6]
-    model:
-      name: [regseg48]
-
-
-  - train_params:
-      loss:
-        params:
-          weight: [[0.0273, 1.0, 4.3802]]
-    dataset:
-      channels: [['R', 'G']]
-      batch_size: [6, 12]
-    model:
-      name: [ddrnet_23, regseg48]
+  null
