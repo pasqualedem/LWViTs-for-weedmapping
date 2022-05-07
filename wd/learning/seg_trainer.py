@@ -36,6 +36,8 @@ class SegmentationTrainer(SgModel):
         arch_params = {
             'input_channels': input_channels,
             'output_channels': output_channels,
+            'in_channels': input_channels,
+            'out_channels': output_channels,
             'num_classes': output_channels,
             **model_params['params']
         }
