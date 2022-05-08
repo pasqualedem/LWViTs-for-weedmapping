@@ -2,7 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      null
+      group: NewLR
     stage: "test"
     updated_config:
       null
