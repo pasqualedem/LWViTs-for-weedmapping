@@ -94,7 +94,7 @@ def run(params: dict):
         if 'inference' in phases:
             inference(seg_trainer, params['run_params'], dataset)
     finally:
-        if seg_trainer:
+        if seg_trainer is not None:
             seg_trainer.sg_logger.close(True)
 
 

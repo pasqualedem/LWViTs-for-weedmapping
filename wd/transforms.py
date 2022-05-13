@@ -1,6 +1,7 @@
 import os
 import numbers
 
+import PIL
 import torch
 from torch import Tensor
 from torch.nn.functional import one_hot
@@ -44,19 +45,25 @@ class PairRandomCrop:
         if self.padding > 0:
             img = ImageOps.expand(img, border=self.padding, fill=0)
 
-        w, h = img.size
+        if isinstance(img, PIL.Image.Image):
+            w, h = img.size
+        elif isinstance(img, torch.Tensor):
+            w, h = img.size()[-2:]
+        else:
+            raise TypeError("img should be PIL.Image or torch.Tensor, not {}".format(type(img)))
+
         th, tw = self.size
         if w == tw and h == th:
             return img
 
-        pid = self.os.getpid()
+        pid = os.getpid()
         if pid in self.image_crop_position:
             x1, y1 = self.image_crop_position.pop(pid)
         else:
-            x1 = torch.randint(0, w - tw)
-            y1 = torch.randint(0, h - th)
+            x1 = torch.randint(size=(1,), low=0, high=w - tw)
+            y1 = torch.randint(size=(1,), low=0, high=w - th)
             self.image_crop_position[pid] = (x1, y1)
-        return img.crop((x1, y1, x1 + tw, y1 + th))
+        return F.crop(img, x1, y1, tw, th)
 
 
 class PairRandomFlip(torch.nn.Module):

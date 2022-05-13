@@ -68,6 +68,12 @@ class SequoiaDatasetInterface(DatasetInterface):
             input_transform.append(resize)
             target_transform.append(resize)
 
+        crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val='same')
+        if crop_size != 'same':
+            crop = PairRandomCrop(crop_size)
+            input_transform.append(crop)
+            target_transform.append(crop)
+
         target_transform = transforms.Compose(target_transform)
         input_transform = transforms.Compose(input_transform)
 
