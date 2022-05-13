@@ -49,7 +49,6 @@ def parse_params(params: dict) -> (dict, dict, dict, list):
         "train_metrics_list": list(train_metrics.values()),
         "valid_metrics_list": list(test_metrics.values()),
         "loss": loss,
-        "greater_metric_to_watch_is_better": True,
         "loss_logging_items_names": ["loss"],
         "sg_logger": WandBSGLogger,
         'sg_logger_params': {
