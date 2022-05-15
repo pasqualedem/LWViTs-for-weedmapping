@@ -2,7 +2,7 @@ experiment:
   name: weeddetection
   group: AdamCrop
   continue_with_errors: False
-  start_from_grid: 1
+  start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
   entity: pasqualedem
@@ -100,21 +100,3 @@ parameters:
   run_params:
     batch_size: [24]
     run_folders: [["007"]]
-
-
-other_grids:
-  -
-    train_params:
-      loss:
-        params:
-          weight: [null]
-    dataset:
-      channels: ['CIR', ['G', 'NIR', 'R']]
-  -
-    train_params:
-      loss:
-        params:
-          weight: [null, [0.0273, 1.0, 4.3802]]
-    dataset:
-      batch_size: [5, 6]
-      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
