@@ -2,10 +2,9 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: AdamCrop
-      config.in_params.model.name: "lawin"
+      group: Lawin
     stage: "test"
     updated_config:
       null
     updated_meta:
-      group: Lawin
+      null

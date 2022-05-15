@@ -46,12 +46,12 @@ if __name__ == '__main__':
         if len(runs) != 0:
             for run in tqdm(runs):
                 fix_string_param(run)
-                if update_config is None:
+                if updated_config is None:
                     print('No config to update')
                 else:
                     update_config(run, updated_config)
-                if update_metadata is None:
+                if updated_metadata is None:
                     print('No metadata to update')
                 else:
-                    update_metadata(run, updated_metadata)
+                    updated_metadata(run, updated_metadata)
                 run.update()
