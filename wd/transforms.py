@@ -6,10 +6,87 @@ import torch
 from torch import Tensor
 from torch.nn.functional import one_hot
 
-# from torchvision.utils import _log_api_usage_once
 from torchvision.transforms import functional as F
 
 from PIL import ImageOps
+
+
+class PairSystematicTransform:
+
+    def __init__(self, init_state, periodicity=1):
+        self.periodicity = periodicity
+        self.init_state = init_state
+
+        self.pair_state = {}
+        self.period_state = {}
+
+    def __call__(self, img):
+        pid = os.getpid()
+        if pid in self.pair_state:
+            state = self.pair_state.pop(pid)
+        else:
+            state, counter = self.period_state.get(pid) or (self.init_state, 0)
+            self.pair_state[pid] = state
+            if counter + 1 >= self.periodicity:
+                self.period_state[pid] = self.change_state(state), 0
+            else:
+                self.period_state[pid] = state, counter + 1
+        return self.transform(img, state)
+
+    def transform(self, img, state):
+        raise NotImplementedError
+
+    def change_state(self, state):
+        raise NotImplementedError
+
+
+class PairFlip(PairSystematicTransform):
+    def __init__(self, periodicity=1, orientation='horizontal'):
+        super().__init__(False, periodicity)
+        if orientation == 'horizontal':
+            self.flip = F.hflip
+        elif orientation == 'vertical':
+            self.flip = F.vflip
+        else:
+            raise ValueError(f'Unknown orientation: {orientation}')
+
+    def transform(self, img, state):
+        if state:
+            return self.flip(img)
+        else:
+            return img
+
+    def change_state(self, state):
+        return not state
+
+
+class PairFourCrop(PairSystematicTransform):
+    def __init__(self, size, padding=0, periodicity=1):
+        super().__init__(0, periodicity)
+        self.padding = padding
+        if isinstance(size, numbers.Number):
+            self.size = (int(size), int(size))
+        else:
+            self.size = size
+
+    def transform(self, img, state):
+        if isinstance(img, PIL.Image.Image):
+            w, h = img.size
+        elif isinstance(img, torch.Tensor):
+            w, h = img.size()[-2:]
+        else:
+            raise TypeError("img should be PIL.Image or torch.Tensor, not {}".format(type(img)))
+        if state == 0:
+            return F.crop(img, 0, 0, *self.size)
+        elif state == 1:
+            return F.crop(img, 0, h - self.size[1], *self.size)
+        elif state == 2:
+            return F.crop(img, w - self.size[0], 0, *self.size)
+        elif state == 3:
+            return F.crop(img, w - self.size[0], h - self.size[1], *self.size)
+
+    def change_state(self, state):
+        return (state + 1) % 4
 
 
 class PairRandomCrop:

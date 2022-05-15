@@ -1,25 +1,25 @@
 experiment:
   name: weeddetection
-  group: AdamCrop
+  group: LawinAug
   continue_with_errors: False
-  start_from_grid: 1
+  start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[crop]]
+  tags: [[crop, aug, B0]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.001]
+    initial_lr: [0.001, 0.0001]
     optimizer: [Adam]
     optimizer_params:
-      weight_decay: [0.0005]
+      weight_decay: [0, 0.0005]
     loss:
       name: [cross_entropy]
       params:
@@ -73,22 +73,22 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
+    name: [lawin]
     params:
-      backbone: [null]
+      backbone: [MiT-B0]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
     hor_flip: [True]
-    ver_flip: [False]
+    ver_flip: [True]
     # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['NDVI']]
-    batch_size: [5]
+    channels: [['R', 'G'], ['NDVI'], 'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
@@ -103,18 +103,4 @@ parameters:
 
 
 other_grids:
-  -
-    train_params:
-      loss:
-        params:
-          weight: [null]
-    dataset:
-      channels: ['CIR', ['G', 'NIR', 'R']]
-  -
-    train_params:
-      loss:
-        params:
-          weight: [null, [0.0273, 1.0, 4.3802]]
-    dataset:
-      batch_size: [5, 6]
-      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+  null

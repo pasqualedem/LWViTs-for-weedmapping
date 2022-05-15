@@ -1,3 +1,4 @@
+import itertools
 import os
 from typing import Any, Union, Iterable, Mapping
 
@@ -11,7 +12,9 @@ import torchvision.transforms as transforms
 from super_gradients.training.datasets.dataset_interfaces import DatasetInterface
 from torchvision.transforms import functional as F
 
-from wd.transforms import PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0
+from wd.transforms import \
+    PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0, \
+    PairFlip, PairFourCrop
 from wd.data.sequoia_stats import STATS as SEQUOIA_STATS
 from sklearn.model_selection import train_test_split
 
@@ -40,10 +43,20 @@ class SequoiaDatasetInterface(DatasetInterface):
             'channels': channels
         }
 
-        # crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val=320)
-
         input_transform = [
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
+        ]
+
+        test_transform = [
+            transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
+        ]
+
+        test_target_transform = [
+            transforms.PILToTensor(),
+            squeeze0,
+            ToLong(),
+            FixValue(source=10000, target=1),
+            SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
         ]
 
         target_transform = [
@@ -53,29 +66,47 @@ class SequoiaDatasetInterface(DatasetInterface):
             FixValue(source=10000, target=1),
             SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
         ]
+        period = 1
+
+        crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val='same')
+        if crop_size != 'same':
+            crop = PairRandomCrop(crop_size)
+            test_crop = PairFourCrop(crop_size, periodicity=period)
+
+            input_transform.append(crop)
+            target_transform.append(crop)
+            test_transform.append(test_crop)
+            test_target_transform.append(test_crop)
+            period *= 4
 
         if dataset_params['hor_flip']:
             flip_hor = PairRandomFlip(orientation="horizontal")
+            test_flip_hor = PairRandomFlip(orientation="horizontal")
+
             input_transform.append(flip_hor)
             target_transform.append(flip_hor)
+            test_transform.append(test_flip_hor)
+            test_target_transform.append(test_flip_hor)
+
         if dataset_params['ver_flip']:
             flip_ver = PairRandomFlip(orientation="vertical")
+            test_flip_ver = PairRandomFlip(orientation="vertical")
+
             input_transform.append(flip_ver)
             target_transform.append(flip_ver)
+
+            test_transform.append(test_flip_ver)
+            test_target_transform.append(test_flip_ver)
 
         if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
             resize = transforms.Resize(size=core_utils.get_param(self.dataset_params, 'size', default_val='same'))
             input_transform.append(resize)
             target_transform.append(resize)
 
-        crop_size = core_utils.get_param(self.dataset_params, 'crop_size', default_val='same')
-        if crop_size != 'same':
-            crop = PairRandomCrop(crop_size)
-            input_transform.append(crop)
-            target_transform.append(crop)
-
         target_transform = transforms.Compose(target_transform)
         input_transform = transforms.Compose(input_transform)
+        test_transform = transforms.Compose(test_transform)
+        test_target_transform = transforms.Compose(test_target_transform)
 
         # Divide train, val and test
         self.train_folders = dataset_params['train_folders']
@@ -97,8 +128,8 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         self.testset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
-                                      transform=input_transform, target_transform=target_transform,
-                                      return_path=dataset_params['return_path'])
+                                      transform=test_transform, target_transform=test_target_transform,
+                                      return_path=dataset_params['return_path'], period=period)
 
     def undo_preprocess(self, x):
         return (Denormalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std'])(x) * 255).type(torch.uint8)
@@ -266,11 +297,20 @@ class SequoiaDataset(VisionDataset):
                  batch_size: int = 4,
                  return_mask: bool = False,
                  return_path: bool = False,
+                 period: int = None,
                  ):
         """
-        Initialize a sequence of Graph User-Item IDs.
+        Initialize a SequoiaDataset object.
 
         :param batch_size: The batch size.
+        :param root: The root directory.
+        :param transform: The transform to apply to the data.
+        :param target_transform: The transform to apply to the target.
+        :param channels: The channels to use.
+        :param index: The index to get the images.
+        :param return_mask: Whether to return the mask.
+        :param return_path: Whether to return the path.
+        :param period: Used when augmentation returns different augmentations for each image.
         """
         self.batch_size = batch_size
         super().__init__(root=root)
@@ -285,6 +325,9 @@ class SequoiaDataset(VisionDataset):
             self.index = index
         else:
             self.index = self.build_index(root, channels=channels)
+
+        if period is not None:
+            self.index = list(itertools.chain.from_iterable(itertools.repeat(x, period) for x in self.index))
 
         self.len = len(self.index)
 
