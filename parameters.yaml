@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: LawinAugPatience
+  group: LawinPretrained
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[crop, aug, B0, newPatience]]
+  tags: [[crop, aug, B0, newPatience, pretrained]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -76,6 +76,7 @@ parameters:
     name: [lawin]
     params:
       backbone: [MiT-B0]
+      backbone_pretrained: [True]
 
   dataset:
     root: ["dataset/processed/Sequoia"]

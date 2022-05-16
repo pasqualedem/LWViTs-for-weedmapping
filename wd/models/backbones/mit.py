@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 from wd.models.layers import DropPath
-from transformers import SegformerForSemanticSegmentation
+from transformers import SegformerModel, SegformerConfig
 
 
 class Attention(nn.Module):
@@ -137,9 +137,19 @@ class MiT(nn.Module):
             self.forward = self.base_forward
         else:
             url = self.pretrained_url[0] + model_name.lower() + self.pretrained_url[1]
-            model = SegformerForSemanticSegmentation.from_pretrained(url)
-            self.encoder = model.base_model.encoder
+            self.url = url
+            config = SegformerConfig().from_pretrained(url)
+            config.num_channels = input_channels
+            self.config = config
+            self.channels = config.hidden_sizes
+            self.encoder = SegformerModel(config)
             self.forward = self.hug_forward
+
+    def init_pretrained_weights(self):
+        weights = SegformerModel.from_pretrained(self.url).state_dict()
+        weights['encoder.patch_embeddings.0.proj.weight'] = \
+            weights['encoder.patch_embeddings.0.proj.weight'][:, :self.config.num_channels]
+        self.encoder.load_state_dict(weights)
 
     def hug_forward(self, x):
         return self.encoder(x, output_hidden_states=True).hidden_states
