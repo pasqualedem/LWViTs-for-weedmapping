@@ -106,3 +106,4 @@ wheel==0.36.2
 wrapt==1.14.0
 zipp==3.7.0
 wandb
+transformers

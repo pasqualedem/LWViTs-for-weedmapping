@@ -2,16 +2,17 @@ import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 from wd.models.layers import DropPath
+from transformers import SegformerForSemanticSegmentation
 
 
 class Attention(nn.Module):
     def __init__(self, dim, head, sr_ratio):
         super().__init__()
         self.head = head
-        self.sr_ratio = sr_ratio 
+        self.sr_ratio = sr_ratio
         self.scale = (dim // head) ** -0.5
         self.q = nn.Linear(dim, dim)
-        self.kv = nn.Linear(dim, dim*2)
+        self.kv = nn.Linear(dim, dim * 2)
         self.proj = nn.Linear(dim, dim)
 
         if sr_ratio > 1:
@@ -26,7 +27,7 @@ class Attention(nn.Module):
             x = x.permute(0, 2, 1).reshape(B, C, H, W)
             x = self.sr(x).reshape(B, C, -1).permute(0, 2, 1)
             x = self.norm(x)
-            
+
         k, v = self.kv(x).reshape(B, -1, 2, self.head, C // self.head).permute(2, 0, 3, 1, 4)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
@@ -55,7 +56,7 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(c1, c2)
         self.dwconv = DWConv(c2)
         self.fc2 = nn.Linear(c2, c1)
-        
+
     def forward(self, x: Tensor, H, W) -> Tensor:
         return self.fc2(F.gelu(self.dwconv(self.fc1(x), H, W)))
 
@@ -63,7 +64,7 @@ class MLP(nn.Module):
 class PatchEmbed(nn.Module):
     def __init__(self, c1=3, c2=32, patch_size=7, stride=4):
         super().__init__()
-        self.proj = nn.Conv2d(c1, c2, patch_size, stride, patch_size//2)    # padding=(ps[0]//2, ps[1]//2)
+        self.proj = nn.Conv2d(c1, c2, patch_size, stride, patch_size // 2)  # padding=(ps[0]//2, ps[1]//2)
         self.norm = nn.LayerNorm(c2)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -81,7 +82,7 @@ class Block(nn.Module):
         self.attn = Attention(dim, head, sr_ratio)
         self.drop_path = DropPath(dpr) if dpr > 0. else nn.Identity()
         self.norm2 = nn.LayerNorm(dim)
-        self.mlp = MLP(dim, int(dim*4))
+        self.mlp = MLP(dim, int(dim * 4))
 
     def forward(self, x: Tensor, H, W) -> Tensor:
         x = x + self.drop_path(self.attn(self.norm1(x), H, W))
@@ -90,7 +91,7 @@ class Block(nn.Module):
 
 
 mit_settings = {
-    'B0': [[32, 64, 160, 256], [2, 2, 2, 2]],        # [embed_dims, depths]
+    'B0': [[32, 64, 160, 256], [2, 2, 2, 2]],  # [embed_dims, depths]
     'B1': [[64, 128, 320, 512], [2, 2, 2, 2]],
     'B2': [[64, 128, 320, 512], [3, 4, 6, 3]],
     'B3': [[64, 128, 320, 512], [3, 4, 18, 3]],
@@ -100,39 +101,50 @@ mit_settings = {
 
 
 class MiT(nn.Module):
-    def __init__(self, model_name: str = 'B0', input_channels=3):
+    pretrained_url = ("nvidia/segformer-", "-finetuned-ade-512-512")
+
+    def __init__(self, model_name: str = 'B0', input_channels=3, pretrained=False):
         super().__init__()
-        assert model_name in mit_settings.keys(), f"MiT model name should be in {list(mit_settings.keys())}"
-        embed_dims, depths = mit_settings[model_name]
-        drop_path_rate = 0.1
-        self.channels = embed_dims
+        if not pretrained:
+            assert model_name in mit_settings.keys(), f"MiT model name should be in {list(mit_settings.keys())}"
+            embed_dims, depths = mit_settings[model_name]
+            drop_path_rate = 0.1
+            self.channels = embed_dims
 
-        # patch_embed
-        self.patch_embed1 = PatchEmbed(input_channels, embed_dims[0], 7, 4)
-        self.patch_embed2 = PatchEmbed(embed_dims[0], embed_dims[1], 3, 2)
-        self.patch_embed3 = PatchEmbed(embed_dims[1], embed_dims[2], 3, 2)
-        self.patch_embed4 = PatchEmbed(embed_dims[2], embed_dims[3], 3, 2)
+            # patch_embed
+            self.patch_embed1 = PatchEmbed(input_channels, embed_dims[0], 7, 4)
+            self.patch_embed2 = PatchEmbed(embed_dims[0], embed_dims[1], 3, 2)
+            self.patch_embed3 = PatchEmbed(embed_dims[1], embed_dims[2], 3, 2)
+            self.patch_embed4 = PatchEmbed(embed_dims[2], embed_dims[3], 3, 2)
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
-        
-        cur = 0
-        self.block1 = nn.ModuleList([Block(embed_dims[0], 1, 8, dpr[cur+i]) for i in range(depths[0])])
-        self.norm1 = nn.LayerNorm(embed_dims[0])
+            dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
 
-        cur += depths[0]
-        self.block2 = nn.ModuleList([Block(embed_dims[1], 2, 4, dpr[cur+i]) for i in range(depths[1])])
-        self.norm2 = nn.LayerNorm(embed_dims[1])
+            cur = 0
+            self.block1 = nn.ModuleList([Block(embed_dims[0], 1, 8, dpr[cur + i]) for i in range(depths[0])])
+            self.norm1 = nn.LayerNorm(embed_dims[0])
 
-        cur += depths[1]
-        self.block3 = nn.ModuleList([Block(embed_dims[2], 5, 2, dpr[cur+i]) for i in range(depths[2])])
-        self.norm3 = nn.LayerNorm(embed_dims[2])
+            cur += depths[0]
+            self.block2 = nn.ModuleList([Block(embed_dims[1], 2, 4, dpr[cur + i]) for i in range(depths[1])])
+            self.norm2 = nn.LayerNorm(embed_dims[1])
 
-        cur += depths[2]
-        self.block4 = nn.ModuleList([Block(embed_dims[3], 8, 1, dpr[cur+i]) for i in range(depths[3])])
-        self.norm4 = nn.LayerNorm(embed_dims[3])
+            cur += depths[1]
+            self.block3 = nn.ModuleList([Block(embed_dims[2], 5, 2, dpr[cur + i]) for i in range(depths[2])])
+            self.norm3 = nn.LayerNorm(embed_dims[2])
 
+            cur += depths[2]
+            self.block4 = nn.ModuleList([Block(embed_dims[3], 8, 1, dpr[cur + i]) for i in range(depths[3])])
+            self.norm4 = nn.LayerNorm(embed_dims[3])
+            self.forward = self.base_forward
+        else:
+            url = self.pretrained_url[0] + model_name.lower() + self.pretrained_url[1]
+            model = SegformerForSemanticSegmentation.from_pretrained(url)
+            self.encoder = model.base_model.encoder
+            self.forward = self.hug_forward
 
-    def forward(self, x: Tensor) -> Tensor:
+    def hug_forward(self, x):
+        return self.encoder(x, output_hidden_states=True).hidden_states
+
+    def base_forward(self, x: Tensor) -> Tensor:
         B = x.shape[0]
         # stage 1
         x, H, W = self.patch_embed1(x)
@@ -167,5 +179,3 @@ if __name__ == '__main__':
     outs = model(x)
     for y in outs:
         print(y.shape)
-        
-

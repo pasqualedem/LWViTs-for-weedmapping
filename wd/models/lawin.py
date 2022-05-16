@@ -15,7 +15,8 @@ class Lawin(BaseModel):
         num_classes = get_param(arch_params, "num_classes")
         input_channels = get_param(arch_params, "input_channels", 3)
         backbone = get_param(arch_params, "backbone", 'MiT-B0')
-        super().__init__(backbone, input_channels)
+        pretrained = get_param(arch_params, "pretrained", False)
+        super().__init__(backbone, input_channels, pretrained)
         self.decode_head = LawinHead(self.backbone.channels, 256 if 'B0' in backbone else 512, num_classes)
         self.apply(self._init_weights)
 

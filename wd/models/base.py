@@ -6,10 +6,10 @@ from wd.models.layers import trunc_normal_
 
 
 class BaseModel(nn.Module):
-    def __init__(self, backbone: str = 'MiT-B0', input_channels: int = 3) -> None:
+    def __init__(self, backbone: str = 'MiT-B0', input_channels: int = 3, pretrained: bool = False) -> None:
         super().__init__()
         backbone, variant = backbone.split('-')
-        self.backbone = eval(backbone)(variant, input_channels)
+        self.backbone = eval(backbone)(variant, input_channels, pretrained)
 
     def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
