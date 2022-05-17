@@ -1,7 +1,7 @@
 experiment:
   name: weeddetection
-  group: LawinPretrained
-  continue_with_errors: False
+  group: LawinFrozen
+  continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[crop, aug, B0, newPatience, pretrained]]
+  tags: [[crop, aug, B0, newPatience, frozen]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -30,6 +30,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
+    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -105,7 +106,7 @@ parameters:
 
 other_grids:
   -
-  tags: [[crop, aug, B1, newPatience, pretrained]]
-  model:
-    params:
-      backbone: [MiT-B1]
+    tags: [[crop, aug, B1, newPatience, frozen]]
+    model:
+      params:
+        backbone: [MiT-B1]

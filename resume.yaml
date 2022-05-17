@@ -2,7 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: Lawin
+      group: LawinAugPatience
     stage: "test"
     updated_config:
       null
