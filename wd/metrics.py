@@ -37,6 +37,11 @@ def PerClassAUC(name, code):
     return metric(name, code)
 
 
+class WrapJaccard(JaccardIndex):
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        return super().update(preds.argmax(dim=1), target.argmax(dim=1))
+
+
 class WrapF1(F1Score):
     def update(self, preds: Tensor, target: Tensor) -> None:
         return super().update(preds.argmax(dim=1), target.argmax(dim=1))
@@ -85,7 +90,7 @@ def metrics_factory(metrics_params: Mapping) -> dict:
 
 
 METRICS = {
-    'jaccard': JaccardIndex,
+    'jaccard': WrapJaccard,
     'auc': AUC,
     'perclassauc': PerClassAUC,
     'f1': WrapF1,
