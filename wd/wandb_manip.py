@@ -53,5 +53,5 @@ if __name__ == '__main__':
                 if updated_metadata is None:
                     print('No metadata to update')
                 else:
-                    updated_metadata(run, updated_metadata)
+                    update_metadata(run, updated_metadata)
                 run.update()
