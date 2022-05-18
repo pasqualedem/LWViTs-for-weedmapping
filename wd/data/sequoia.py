@@ -100,8 +100,11 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
             resize = transforms.Resize(size=core_utils.get_param(self.dataset_params, 'size', default_val='same'))
+
             input_transform.append(resize)
             target_transform.append(resize)
+            test_transform.append(resize)
+            test_target_transform.append(resize)
 
         target_transform = transforms.Compose(target_transform)
         input_transform = transforms.Compose(input_transform)
