@@ -14,8 +14,9 @@ class CELoss(CrossEntropyLoss):
 
 
 class FocalLoss(Module):
-    def __init__(self, alpha: float = 1, gamma: float = 0, weight=None, reduction: str = 'none', **kwargs):
+    def __init__(self, gamma: float = 0, weight=None, reduction: str = 'mean', **kwargs):
         super().__init__()
+        self.weight = None
         if weight:
             self.weight = torch.tensor(weight)
         self.gamma = gamma
@@ -30,19 +31,18 @@ class FocalLoss(Module):
             raise NotImplementedError(f"Invalid reduction mode: {self.reduction}")
 
     def __call__(self, x, target, **kwargs):
-        soft = F.softmax(x, 1)
+        ce_loss = F.cross_entropy(x, target.float(), reduction='none', **kwargs)
+        pt = torch.exp(-ce_loss)
         if self.weight is not None:
-            wtarget = self.weight * target
+            wtarget = self.weight[(...,) + (None, ) * (len(target.shape) - 1)]\
+                          .moveaxis(0, 1).to(target.device) \
+                      * target
+            wtarget = wtarget[wtarget != 0].reshape(pt.shape)
+            focal_loss = torch.pow((1 - pt), self.gamma) * wtarget * ce_loss
         else:
-            wtarget = target
+            focal_loss = torch.pow((1 - pt), self.gamma) * ce_loss
 
-        pt = soft[wtarget != 0]
-        ce = -(torch.log(pt) * wtarget[wtarget != 0])
-
-        focus = torch.pow(-soft + 1.0, self.gamma)
-        focal = (focus * ce)
-
-        return self.reduction(focal)
+        return self.reduction(focal_loss)
 
 
 LOSSES = {
