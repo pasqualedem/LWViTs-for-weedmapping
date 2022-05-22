@@ -48,4 +48,4 @@ class FocalLoss(Module):
 LOSSES = {
     'cross_entropy': CELoss,
     'focal': FocalLoss
-}
+} 
