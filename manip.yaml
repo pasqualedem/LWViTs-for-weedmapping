@@ -3,8 +3,9 @@ runs:
   -
     filters:
       group: LawinPretrained
-    stage: "test"
     updated_config:
-      train_params.freeze_pretrained: False
+      null
     updated_meta:
+      null
+    keys_to_delete:
       null

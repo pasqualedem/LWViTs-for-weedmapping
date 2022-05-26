@@ -1,0 +1,100 @@
+import multiprocessing
+import os
+
+import PIL.Image
+import torch
+
+from tqdm import tqdm
+from torchvision.transforms import transforms
+from torchvision.transforms import functional as F, InterpolationMode
+
+from wd.data.sequoia import SequoiaDataset
+
+WORKERS = multiprocessing.cpu_count()
+WEED_CLASS = 2
+ROTATIONS = 4
+CROP_SIZE = [256, 256]
+CIR = [3, 1, 0]
+
+
+def get_crops(img, size):
+    if isinstance(img, PIL.Image.Image):
+        h, w = img.size
+    elif isinstance(img, torch.Tensor):
+        w, h = img.size()[-2:]
+    else:
+        raise TypeError("img should be PIL.Image or torch.Tensor, not {}".format(type(img)))
+    yield 0, F.crop(img, 0, 0, *size)
+    yield 1, F.crop(img, 0, h - size[1], *size)
+    yield 2, F.crop(img, w - size[0], 0, *size)
+    yield 3, F.crop(img, w - size[0], h - size[1], *size)
+
+
+def calculate():
+    """
+    Calculate the mean and the standard deviation of a dataset
+    """
+    root = "./dataset/processed/Sequoia"
+    target_root = f"./dataset/{ROTATIONS}_rotations_processed/Sequoia"
+
+    os.makedirs(target_root, exist_ok=True)
+    folders = ['005', '006', '007']
+
+    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
+
+    for f in folders:
+        os.makedirs(os.path.join(target_root, f), exist_ok=True)
+        for c in channels:
+            os.makedirs(os.path.join(target_root, f, "tile", c), exist_ok=True)
+        os.makedirs(os.path.join(target_root, f, "groundtruth"), exist_ok=True)
+        os.makedirs(os.path.join(target_root, f, "tile", "CIR"), exist_ok=True)
+
+    index = SequoiaDataset.build_index(
+        root,
+        macro_folders=folders,
+        channels=channels,
+    )
+
+    sq = SequoiaDataset("./dataset/processed/Sequoia",
+                        transform=lambda x: x,
+                        target_transform=lambda x: x,
+                        index=index,
+                        channels=channels,
+                        return_path=True
+                        )
+
+    init_degrees = [-180, 180]
+
+    totensor = transforms.ToTensor()
+    # loop through images
+    images_with_weed = 0
+    for input, target, additional in tqdm(sq):
+        for (k, input_crop), (_, target_crop) in zip(get_crops(input, CROP_SIZE), get_crops(target, CROP_SIZE)):
+            f, name = additional['input_name'].split('_')
+            name = name.split('.')[0]
+            if name == 'frame0022' and k == 3:
+                y = 0
+
+            if WEED_CLASS in totensor(target_crop).unique():
+                for r in range(ROTATIONS):
+                    degrees = torch.FloatTensor(1).uniform_(*init_degrees).item()
+                    r_input = F.rotate(input_crop, degrees, InterpolationMode.BILINEAR)
+                    r_target = F.rotate(target_crop, degrees, InterpolationMode.NEAREST)
+                    for i, c in enumerate(r_input):
+                        F.to_pil_image(c).save(os.path.join(target_root, f, "tile", channels[i], f"{name}_{k}_{r}.png"))
+                    r_target.save(os.path.join(target_root, f, "groundtruth", f"{f}_{name}_{k}_{r}_GroundTruth_iMap.png"))
+                    F.to_pil_image(torch.stack([r_input[CIR[0]], r_input[CIR[1]], r_input[CIR[2]]]))\
+                        .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}_{r}.png"))
+                images_with_weed += 1
+
+            for i, c in enumerate(input_crop):
+                F.to_pil_image(c).save(os.path.join(target_root, f, "tile", channels[i], f"{name}_{k}.png"))
+            target_crop.save(os.path.join(target_root, f, "groundtruth", f"{f}_{name}_{k}_GroundTruth_iMap.png"))
+            F.to_pil_image(torch.stack([input_crop[CIR[0]], input_crop[CIR[1]], input_crop[CIR[2]]])) \
+                .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}.png"))
+
+    print(f"{images_with_weed} images with weed")  # 363 images with weed
+
+
+if __name__ == '__main__':
+    calculate()

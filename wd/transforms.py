@@ -1,12 +1,13 @@
 import os
 import numbers
+from typing import Iterable
 
 import PIL
 import torch
 from torch import Tensor
 from torch.nn.functional import one_hot
 
-from torchvision.transforms import functional as F
+from torchvision.transforms import functional as F, InterpolationMode
 
 from PIL import ImageOps
 
@@ -71,7 +72,7 @@ class PairFourCrop(PairSystematicTransform):
 
     def transform(self, img, state):
         if isinstance(img, PIL.Image.Image):
-            w, h = img.size
+            h, w = img.size
         elif isinstance(img, torch.Tensor):
             w, h = img.size()[-2:]
         else:
@@ -185,6 +186,49 @@ class PairRandomFlip(torch.nn.Module):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(p={self.p})"
+
+
+class PairRandomRotation(torch.nn.Module):
+    """Rotate the given image randomly with a given rotation.
+    If the image is torch Tensor, it is expected
+    to have [..., H, W] shape, where ... means an arbitrary number of leading
+    dimensions
+
+    Args:
+        degree: degree of rotation.
+        interpolation: Default: InterpolationMode.BILINEAR
+    """
+
+    def __init__(self, degree, interpolation=InterpolationMode.BILINEAR):
+        super().__init__()
+        # _log_api_usage_once(self)
+
+        if isinstance(self.degree, Iterable):
+            self.degree = degree
+        else:
+            self.degree = [-degree, degree]
+        self.interpolation = interpolation
+        self.image_rotation = {}
+
+    def forward(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be rotated.
+
+        Returns:
+            PIL Image or Tensor: Randomly rotated image.
+        """
+        pid = os.getpid()
+        if pid in self.image_rotation:
+            value = self.image_rotation.pop(pid)
+        else:
+            value = torch.FloatTensor(1).uniform_(*self.degree)
+            self.image_rotation[pid] = value
+
+        return F.rotate(img, value, self.interpolation)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(p={self.degree})"
 
 
 class ToLong:
