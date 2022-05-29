@@ -3,6 +3,8 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 from einops import rearrange
 
+RATIOS = [8, 4, 2]
+
 
 class MLP(nn.Module):
     def __init__(self, dim=2048, embed_dim=768):
@@ -68,7 +70,6 @@ class LawinAttn(nn.Module):
             nn.BatchNorm2d(in_ch)
         )
 
-
     def forward(self, query: Tensor, context: Tensor) -> Tensor:
         B, C, H, W = context.shape
         context = context.reshape(B, C, -1)
@@ -122,6 +123,7 @@ class LawinHead(nn.Module):
         for i, dim in enumerate(in_channels):
             self.add_module(f"linear_c{i+1}", MLP(dim, 48 if i == 0 else embed_dim))
 
+        self.ratios = RATIOS
         self.lawin_8 = LawinAttn(embed_dim, 64)
         self.lawin_4 = LawinAttn(embed_dim, 16)
         self.lawin_2 = LawinAttn(embed_dim, 4)
@@ -141,21 +143,20 @@ class LawinHead(nn.Module):
         self.linear_pred = nn.Conv2d(embed_dim, num_classes, 1)
         self.dropout = nn.Dropout2d(0.1)
     
-    def get_lawin_att_feats(self, x: Tensor, patch_size: int):
+    def get_lawin_att_feats(self, x: Tensor, patch_size: int, ratios: list, step: str = "") -> list:
         _, _, H, W = x.shape
         query = F.unfold(x, patch_size, stride=patch_size)
         query = rearrange(query, 'b (c ph pw) (nh nw) -> (b nh nw) c ph pw', ph=patch_size, pw=patch_size, nh=H//patch_size, nw=W//patch_size)
         outs = []
 
-        for r in [8, 4, 2]:
+        for r in ratios:
             context = F.unfold(x, patch_size*r, stride=patch_size, padding=int((r-1)/2*patch_size))
             context = rearrange(context, "b (c ph pw) (nh nw) -> (b nh nw) c ph pw", ph=patch_size*r, pw=patch_size*r, nh=H//patch_size, nw=W//patch_size)
-            context = getattr(self, f"ds_{r}")(context)
-            output = getattr(self, f"lawin_{r}")(query, context)
+            context = getattr(self, f"ds_{step}{r}")(context)
+            output = getattr(self, f"lawin_{step}{r}")(query, context)
             output = rearrange(output, "(b nh nw) c ph pw -> b c (nh ph) (nw pw)", ph=patch_size, pw=patch_size, nh=H//patch_size, nw=W//patch_size)
             outs.append(output)
         return outs
-
 
     def forward(self, features):
         B, _, H, W = features[1].shape
@@ -171,7 +172,7 @@ class LawinHead(nn.Module):
         ## Lawin attention spatial pyramid pooling
         feat_short = self.short_path(feat)
         feat_pool = F.interpolate(self.image_pool(feat), size=(H, W), mode='bilinear', align_corners=False)
-        feat_lawin = self.get_lawin_att_feats(feat, 8)
+        feat_lawin = self.get_lawin_att_feats(feat, 8, self.ratios)
         output = self.cat(torch.cat([feat_short, feat_pool, *feat_lawin], dim=1))
 
         ## Low-level feature enhancement

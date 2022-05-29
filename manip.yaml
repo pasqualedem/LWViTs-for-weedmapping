@@ -2,7 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: LawinPretrained
+      group: RRotationPatience
     updated_config:
       null
     updated_meta:
