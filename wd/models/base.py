@@ -11,9 +11,8 @@ from wd.models.layers import trunc_normal_
 class BaseModel(nn.Module):
     def __init__(self, backbone: str = 'MiT-B0', input_channels: int = 3, backbone_pretrained: bool = False) -> None:
         super().__init__()
-        backbone, variant = backbone.split('-')
         self.backbone_pretrained = backbone_pretrained
-        self.backbone = eval(backbone)(variant, input_channels, backbone_pretrained)
+        self.backbone = self.eval_backbone(backbone, input_channels, pretrained=backbone_pretrained)
 
     def _init_weights(self, m: nn.Module) -> None:
         if isinstance(m, nn.Linear):
@@ -43,3 +42,8 @@ class BaseModel(nn.Module):
         if self.backbone_pretrained and freeze_pretrained:
             return [{'named_params': list(filter(lambda x: not x[0].startswith('backbone'), list(self.named_parameters())))}]
         return [{'named_params': self.named_parameters()}]
+
+    @classmethod
+    def eval_backbone(cls, backbone: str, input_channels: int, pretrained: bool = False) -> nn.Module:
+        backbone, variant = backbone.split('-')
+        return eval(backbone)(variant, input_channels, pretrained)

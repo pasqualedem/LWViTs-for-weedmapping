@@ -81,22 +81,15 @@ class SequoiaDatasetInterface(DatasetInterface):
 
         if dataset_params['hor_flip']:
             flip_hor = PairRandomFlip(orientation="horizontal")
-            test_flip_hor = PairRandomFlip(orientation="horizontal")
 
             input_transform.append(flip_hor)
             target_transform.append(flip_hor)
-            test_transform.append(test_flip_hor)
-            test_target_transform.append(test_flip_hor)
 
         if dataset_params['ver_flip']:
             flip_ver = PairRandomFlip(orientation="vertical")
-            test_flip_ver = PairRandomFlip(orientation="vertical")
 
             input_transform.append(flip_ver)
             target_transform.append(flip_ver)
-
-            test_transform.append(test_flip_ver)
-            test_target_transform.append(test_flip_ver)
 
         if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
             resize = transforms.Resize(size=core_utils.get_param(self.dataset_params, 'size', default_val='same'))

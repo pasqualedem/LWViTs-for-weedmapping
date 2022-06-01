@@ -1,8 +1,11 @@
+from typing import Tuple, List, Any
+
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
-from wd.models.layers import DropPath
+from wd.models.layers import DropPath, ConvModule
 from transformers import SegformerModel, SegformerConfig
+from einops import rearrange
 
 
 class Attention(nn.Module):
@@ -67,7 +70,7 @@ class PatchEmbed(nn.Module):
         self.proj = nn.Conv2d(c1, c2, patch_size, stride, patch_size // 2)  # padding=(ps[0]//2, ps[1]//2)
         self.norm = nn.LayerNorm(c2)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> tuple[Any, Any, Any]:
         x = self.proj(x)
         _, _, H, W = x.shape
         x = x.flatten(2).transpose(1, 2)
@@ -181,6 +184,29 @@ class MiT(nn.Module):
         x4 = self.norm4(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
 
         return x1, x2, x3, x4
+
+
+class FusionBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.conv1 = ConvModule(channels, channels, k=1, p=0)
+        self.conv2 = ConvModule(channels, channels, k=1, p=0)
+
+    def forward(self, x1, x2):
+        return self.conv1(x1) + self.conv2(x2)
+
+
+class MiTFusion(nn.Module):
+    def __init__(self, channel_dims: list):
+        super().__init__()
+        self.channel_dims = channel_dims
+        for i in range(len(channel_dims)):
+            setattr(self, f'fusion_{i}', FusionBlock(channel_dims[i]))
+
+    def forward(self, x: Tuple[List]) -> List:
+        y = [getattr(self, f"fusion_{i}")(f1, f2)
+             for i, (f1, f2) in enumerate(zip(*x))]
+        return y
 
 
 if __name__ == '__main__':

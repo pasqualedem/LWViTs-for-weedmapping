@@ -2,6 +2,8 @@ import torch
 from super_gradients.training.utils import get_param
 from torch import Tensor
 from torch.nn import functional as F
+
+from .backbones.mit import MiTFusion
 from wd.models.base import BaseModel
 from wd.models.heads.lawin import LawinHead
 from wd.models.heads.laweed import LaweedHead
@@ -45,6 +47,34 @@ class Laweed(BaseLawin):
     """
     def __init__(self, arch_params) -> None:
         super().__init__(arch_params, LaweedHead)
+
+
+class DoubleLawin(BaseLawin):
+    """
+    Notes::::: This implementation has larger params and FLOPs than the results reported in the paper.
+    Will update the code and weights if the original author releases the full code.
+    """
+    def __init__(self, arch_params) -> None:
+        backbone = get_param(arch_params, "backbone", 'MiT-B0')
+        main_channels = get_param(arch_params, "main_channels", None)
+        if main_channels is None:
+            raise ValueError("Please provide side_channels")
+        self.side_channels = arch_params['input_channels'] - main_channels
+        self.main_channels = main_channels
+        arch_params['input_channels'] = arch_params['main_channels']
+        super().__init__(arch_params, LawinHead)
+        self.side_backbone = self.eval_backbone(backbone, self.side_channels, pretrained=False)
+        self.fusion = MiTFusion(self.backbone.channels)
+
+    def forward(self, x: Tensor) -> Tensor:
+        main_channels = x[:, :self.main_channels, ::].contiguous()
+        side_channels = x[:, self.main_channels:, ::].contiguous()
+        feat_main = self.backbone(main_channels)
+        feat_side = self.side_backbone(side_channels)
+        feat = self.fusion((feat_main, feat_side))
+        y = self.decode_head(feat)   # 4x reduction in image size
+        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
+        return y
 
 
 if __name__ == '__main__':

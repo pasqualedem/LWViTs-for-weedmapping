@@ -30,28 +30,10 @@ def get_crops(img, size):
     yield 3, F.crop(img, w - size[0], h - size[1], *size)
 
 
-def calculate():
-    """
-    Calculate the mean and the standard deviation of a dataset
-    """
-    root = "./dataset/processed/Sequoia"
-    target_root = f"./dataset/{ROTATIONS}_rotations_processed/Sequoia"
-
-    os.makedirs(target_root, exist_ok=True)
-    folders = ['005', '006', '007']
-
-    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
-
-    for f in folders:
-        os.makedirs(os.path.join(target_root, f), exist_ok=True)
-        for c in channels:
-            os.makedirs(os.path.join(target_root, f, "tile", c), exist_ok=True)
-        os.makedirs(os.path.join(target_root, f, "groundtruth"), exist_ok=True)
-        os.makedirs(os.path.join(target_root, f, "tile", "CIR"), exist_ok=True)
-
+def generate_train(root, target_root, train_folders, channels):
     index = SequoiaDataset.build_index(
         root,
-        macro_folders=folders,
+        macro_folders=train_folders,
         channels=channels,
     )
 
@@ -72,8 +54,6 @@ def calculate():
         for (k, input_crop), (_, target_crop) in zip(get_crops(input, CROP_SIZE), get_crops(target, CROP_SIZE)):
             f, name = additional['input_name'].split('_')
             name = name.split('.')[0]
-            if name == 'frame0022' and k == 3:
-                y = 0
 
             if WEED_CLASS in totensor(target_crop).unique():
                 for r in range(ROTATIONS):
@@ -94,6 +74,59 @@ def calculate():
                 .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}.png"))
 
     print(f"{images_with_weed} images with weed")  # 363 images with weed
+
+
+def generate_test(root, target_root, test_folders, channels):
+    index = SequoiaDataset.build_index(
+        root,
+        macro_folders=test_folders,
+        channels=channels,
+    )
+
+    sq = SequoiaDataset("./dataset/processed/Sequoia",
+                        transform=lambda x: x,
+                        target_transform=lambda x: x,
+                        index=index,
+                        channels=channels,
+                        return_path=True
+                        )
+    # loop through images
+    for input, target, additional in tqdm(sq):
+        for (k, input_crop), (_, target_crop) in zip(get_crops(input, CROP_SIZE), get_crops(target, CROP_SIZE)):
+            f, name = additional['input_name'].split('_')
+            name = name.split('.')[0]
+
+            for i, c in enumerate(input_crop):
+                F.to_pil_image(c).save(os.path.join(target_root, f, "tile", channels[i], f"{name}_{k}.png"))
+            target_crop.save(os.path.join(target_root, f, "groundtruth", f"{f}_{name}_{k}_GroundTruth_iMap.png"))
+            F.to_pil_image(torch.stack([input_crop[CIR[0]], input_crop[CIR[1]], input_crop[CIR[2]]])) \
+                .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}.png"))
+
+
+def calculate():
+    """
+    Calculate the mean and the standard deviation of a dataset
+    """
+    torch.manual_seed(42)
+    root = "./dataset/processed/Sequoia"
+
+    train_folders = ['006', '007']
+    test_folders = ['005']
+
+    target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
+
+    os.makedirs(target_root, exist_ok=True)
+    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
+
+    for f in train_folders + test_folders:
+        os.makedirs(os.path.join(target_root, f), exist_ok=True)
+        for c in channels:
+            os.makedirs(os.path.join(target_root, f, "tile", c), exist_ok=True)
+        os.makedirs(os.path.join(target_root, f, "groundtruth"), exist_ok=True)
+        os.makedirs(os.path.join(target_root, f, "tile", "CIR"), exist_ok=True)
+
+    generate_train(root, target_root, train_folders, channels)
+    generate_test(root, target_root, test_folders, channels)
 
 
 if __name__ == '__main__':

@@ -2,9 +2,11 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: LawinPretrained
+      $or:
+        - group: RandomRotation
+        - group: RRotationPatience
     stage: "test"
     updated_config:
-      train_params.freeze_pretrained: False
+      null
     updated_meta:
       null
