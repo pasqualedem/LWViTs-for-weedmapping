@@ -8,6 +8,9 @@ from transformers import SegformerModel, SegformerConfig
 from einops import rearrange
 
 
+CHANNEL_PRETRAIN = {'R': 0, 'G': 1, 'B': 2}
+
+
 class Attention(nn.Module):
     def __init__(self, dim, head, sr_ratio):
         super().__init__()
@@ -148,10 +151,15 @@ class MiT(nn.Module):
             self.encoder = SegformerModel(config)
             self.forward = self.hug_forward
 
-    def init_pretrained_weights(self):
+    def init_pretrained_weights(self, channel_to_load=None):
+        if channel_to_load is None:
+            channel_to_load = slice(self.config.num_channels)
+        else:
+            channel_to_load = [CHANNEL_PRETRAIN[x] for x in channel_to_load]
+
         weights = SegformerModel.from_pretrained(self.url).state_dict()
         weights['encoder.patch_embeddings.0.proj.weight'] = \
-            weights['encoder.patch_embeddings.0.proj.weight'][:, :self.config.num_channels]
+            weights['encoder.patch_embeddings.0.proj.weight'][:, channel_to_load]
         self.encoder.load_state_dict(weights)
 
     def hug_forward(self, x):

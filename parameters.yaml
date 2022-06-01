@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: DoubleLawin
+  group: DoubleLawinPretrained
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
@@ -31,6 +31,7 @@ parameters:
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
     freeze_pretrained: [True, False]
+    side_pretrained: ['G']
 
   early_stopping:
     enabled: [True]
