@@ -58,17 +58,17 @@ class DoubleLawin(BaseLawin):
         backbone = get_param(arch_params, "backbone", 'MiT-B0')
         main_channels = get_param(arch_params, "main_channels", None)
         if main_channels is None:
-            raise ValueError("Please provide side_channels")
+            raise ValueError("Please provide main_channels")
         self.side_channels = arch_params['input_channels'] - main_channels
         self.side_pretrained = get_param(arch_params, "side_pretrained", None)
         self.main_channels = main_channels
         arch_params['input_channels'] = arch_params['main_channels']
         super().__init__(arch_params, LawinHead)
-        self.side_backbone = self.eval_backbone(backbone, self.side_channels, pretrained=False)
+        self.side_backbone = self.eval_backbone(backbone, self.side_channels, pretrained=bool(self.side_pretrained))
         if self.side_pretrained is not None:
             if isinstance(self.side_pretrained, str):
                 self.side_pretrained = [self.side_pretrained] * self.side_channels
-                self.side_backbone.init_pretrained_weights(self.side_pretrained)
+            self.side_backbone.init_pretrained_weights(self.side_pretrained)
         self.fusion = MiTFusion(self.backbone.channels)
 
     def forward(self, x: Tensor) -> Tensor:
