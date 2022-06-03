@@ -18,11 +18,14 @@ class BaseLawin(BaseModel):
         input_channels = get_param(arch_params, "input_channels", 3)
         backbone = get_param(arch_params, "backbone", 'MiT-B0')
         backbone_pretrained = get_param(arch_params, "backbone_pretrained", False)
+        pretrained_channels = get_param(arch_params, "main_pretrained", None)
         super().__init__(backbone, input_channels, backbone_pretrained)
         self.decode_head = lawin_class(self.backbone.channels, 256 if 'B0' in backbone else 512, num_classes)
         self.apply(self._init_weights)
         if backbone_pretrained:
-            self.backbone.init_pretrained_weights()
+            if isinstance(pretrained_channels, str):
+                self.side_pretrained = [pretrained_channels] * input_channels
+            self.backbone.init_pretrained_weights(pretrained_channels)
 
     def forward(self, x: Tensor) -> Tensor:
         y = self.backbone(x)
