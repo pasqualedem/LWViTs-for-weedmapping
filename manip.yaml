@@ -2,10 +2,12 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: RRotationPatience
+      group: RedEdge
+#      config.in_params.dataset.channels: ["NDVI"]
     updated_config:
       null
+#      train_params:
+#        freeze_pretrained: False
     updated_meta:
-      null
     keys_to_delete:
       null
