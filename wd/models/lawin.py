@@ -72,7 +72,9 @@ class DoubleLawin(BaseLawin):
             if isinstance(self.side_pretrained, str):
                 self.side_pretrained = [self.side_pretrained] * self.side_channels
             self.side_backbone.init_pretrained_weights(self.side_pretrained)
-        self.fusion = MiTFusion(self.backbone.channels)
+        p_local = get_param(arch_params, "p_local", None)
+        p_glob = get_param(arch_params, "p_glob", None)
+        self.fusion = MiTFusion(self.backbone.channels, p_local=p_local, p_glob=p_glob)
 
     def forward(self, x: Tensor) -> Tensor:
         main_channels = x[:, :self.main_channels, ::].contiguous()

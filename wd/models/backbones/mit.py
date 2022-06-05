@@ -3,7 +3,7 @@ from typing import Tuple, List, Any
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
-from wd.models.layers import DropPath, ConvModule
+from wd.models.layers import DropPath, ConvModule, MultiDropPath
 from transformers import SegformerModel, SegformerConfig
 from einops import rearrange
 
@@ -195,21 +195,25 @@ class MiT(nn.Module):
 
 
 class FusionBlock(nn.Module):
-    def __init__(self, channels):
+    def __init__(self, channels, p_local=0.1, p_glob=0.1):
         super().__init__()
         self.conv1 = ConvModule(channels, channels, k=1, p=0)
         self.conv2 = ConvModule(channels, channels, k=1, p=0)
+        self.multi_drop = MultiDropPath(num_inputs=2, p=p_glob)
+        self.drop = DropPath(p_local)
 
     def forward(self, x1, x2):
-        return self.conv1(x1) + self.conv2(x2)
+        y1 = x1 + self.drop(self.conv1(x1))
+        y2 = x2 + self.drop(self.conv2(x2))
+        return self.multi_drop([y1, y2])
 
 
 class MiTFusion(nn.Module):
-    def __init__(self, channel_dims: list):
+    def __init__(self, channel_dims: list, p_local=0.1, p_glob=0.5):
         super().__init__()
         self.channel_dims = channel_dims
         for i in range(len(channel_dims)):
-            setattr(self, f'fusion_{i}', FusionBlock(channel_dims[i]))
+            setattr(self, f'fusion_{i}', FusionBlock(channel_dims[i], p_local=p_local, p_glob=p_glob))
 
     def forward(self, x: Tuple[List]) -> List:
         y = [getattr(self, f"fusion_{i}")(f1, f2)
