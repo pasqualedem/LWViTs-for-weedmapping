@@ -3,6 +3,7 @@ from super_gradients.training.utils import get_param
 from torch import Tensor
 from torch.nn import functional as F
 
+from utils.utils import filter_none
 from .backbones.mit import MiTFusion
 from wd.models.base import BaseModel
 from wd.models.heads.lawin import LawinHead
@@ -74,7 +75,8 @@ class DoubleLawin(BaseLawin):
             self.side_backbone.init_pretrained_weights(self.side_pretrained)
         p_local = get_param(arch_params, "p_local", None)
         p_glob = get_param(arch_params, "p_glob", None)
-        self.fusion = MiTFusion(self.backbone.channels, p_local=p_local, p_glob=p_glob)
+        self.fusion = MiTFusion(self.backbone.channels,
+                                **filter_none({"p_local": p_local, "p_glob": p_glob}))
 
     def forward(self, x: Tensor) -> Tensor:
         main_channels = x[:, :self.main_channels, ::].contiguous()

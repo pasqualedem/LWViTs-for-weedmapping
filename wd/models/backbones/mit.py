@@ -195,7 +195,7 @@ class MiT(nn.Module):
 
 
 class FusionBlock(nn.Module):
-    def __init__(self, channels, p_local=0.1, p_glob=0.1):
+    def __init__(self, channels, p_local=0.1, p_glob=0.5):
         super().__init__()
         self.conv1 = ConvModule(channels, channels, k=1, p=0)
         self.conv2 = ConvModule(channels, channels, k=1, p=0)
@@ -205,7 +205,7 @@ class FusionBlock(nn.Module):
     def forward(self, x1, x2):
         y1 = x1 + self.drop(self.conv1(x1))
         y2 = x2 + self.drop(self.conv2(x2))
-        return self.multi_drop([y1, y2])
+        return sum(self.multi_drop([y1, y2]))
 
 
 class MiTFusion(nn.Module):

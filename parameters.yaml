@@ -1,9 +1,9 @@
 experiment:
   name: weeddetection
-  group: Laweed
-  continue_with_errors: True
-  start_from_grid: 3
-  start_from_run: 1
+  group: DLPretrainedDrop
+  continue_with_errors: False
+  start_from_grid: 0
+  start_from_run: 0
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
@@ -30,7 +30,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True, False]
+    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -74,13 +74,12 @@ parameters:
         ]]
 
   model:
-    name: [laweed]
+    name: [doublelawin]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]
-      main_channels: [1]
-      main_pretrained: [['G']]
-      side_pretrained: [null]
+      main_channels: [2]
+      side_pretrained: ['G']
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]
@@ -88,7 +87,7 @@ parameters:
     test_folders: [['005']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['NDVI']]
+    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -107,48 +106,7 @@ other_grids:
   -
     tags: [[]]
     train_params:
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]
-  # CIR
-  -
-    model:
-      params:
-        main_channels: [3]
-        main_pretrained: [null]
-    dataset:
-      channels: ['CIR']
-  -
-    model:
-      params:
-        main_channels: [3]
-        main_pretrained: [null]
-    dataset:
-      channels: ['CIR']
-    tags: [[]]
-    train_params:
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]
-  # R G NIR RE
-  -
-    model:
-      params:
-        main_channels: [4]
-        main_pretrained: [['R', 'G', 'G', 'G']]
-    dataset:
-      channels:  [["R", "G", "NIR", "RE"]]
-  -
-    model:
-      params:
-        main_channels: [4]
-        main_pretrained: [['R', 'G', 'G', 'G']]
-    dataset:
-      channels: [["R", "G", "NIR", "RE"]]
-    tags: [[]]
-    train_params:
+      freeze_pretrained: [True]
       loss:
         name: [ focal ]
         params:

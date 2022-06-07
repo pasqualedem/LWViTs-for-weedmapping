@@ -50,14 +50,14 @@ class MultiDropPath(nn.Module):
         shape = (len(inputs), x.shape[0],) + (1,) * (x.ndim - 1)
         random_tensor = kp + torch.rand(shape, dtype=x.dtype, device=x.device)
         random_tensor.floor_()  # binarize
-        random_tensor.view(2, 10)
 
         choice_mask = random_tensor.any(dim=0) \
             .repeat(((self.num_inputs,) + (1,) * (x.ndim - 1))) \
             .logical_not()
         choice_mask = rearrange(choice_mask, "(i b) ... -> i b ...", i=len(inputs))
 
-        choice = F.one_hot(self.c.sample([x.shape[0]]), num_classes=self.num_inputs).T.reshape(choice_mask.shape)
+        choice = F.one_hot(self.c.sample([x.shape[0]]).to(x.device), num_classes=self.num_inputs)\
+            .T.reshape(choice_mask.shape)
 
         mask = choice_mask.logical_and(choice)
         random_tensor = mask.logical_or(random_tensor)

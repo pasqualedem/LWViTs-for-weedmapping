@@ -133,3 +133,21 @@ def values_to_number(collec) -> Any:
         except (ValueError, TypeError):
             pass
     return collec
+
+
+def filter_none(collec) -> Any:
+    """
+    Filter out None values from a dictionary or list
+    """
+    if isinstance(collec, collections.abc.Mapping):
+        for key in list(collec.keys()):
+            value = filter_none(collec[key])
+            if value is None:
+                del collec[key]
+            else:
+                collec[key] = value
+        return collec
+    elif isinstance(collec, list):
+        return [filter_none(v) for v in collec if v is not None]
+    else:
+        return collec
