@@ -1,7 +1,7 @@
 experiment:
   name: weeddetection
-  group: DLPretrainedDrop
-  continue_with_errors: False
+  group: DoubleLaweedPretrained
+  continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
@@ -74,7 +74,7 @@ parameters:
         ]]
 
   model:
-    name: [doublelawin]
+    name: [doublelaweed]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]

@@ -1,7 +1,7 @@
 from wd.models.regseg import RegSeg48
 from wd.models.segnet import SegNet
 from wd.models.random import Random
-from wd.models.lawin import Lawin, Laweed, DoubleLawin
+from wd.models.lawin import Lawin, Laweed, DoubleLawin, DoubleLaweed
 
 MODELS = {
     'segnet': SegNet,
@@ -9,5 +9,6 @@ MODELS = {
     'random': Random,
     'lawin': Lawin,
     'laweed': Laweed,
-    'doublelawin': DoubleLawin
+    'doublelawin': DoubleLawin,
+    "doublelaweed": DoubleLaweed
 }

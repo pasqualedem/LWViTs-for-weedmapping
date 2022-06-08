@@ -195,25 +195,35 @@ class MiT(nn.Module):
 
 
 class FusionBlock(nn.Module):
-    def __init__(self, channels, p_local=0.1, p_glob=0.5):
+    def __init__(self, channels, fusion_type="conv_sum", p_local=0.1, p_glob=0.5):
         super().__init__()
         self.conv1 = ConvModule(channels, channels, k=1, p=0)
         self.conv2 = ConvModule(channels, channels, k=1, p=0)
-        self.multi_drop = MultiDropPath(num_inputs=2, p=p_glob)
-        self.drop = DropPath(p_local)
+        if fusion_type == "conv_sum_drop":
+            self.multi_drop = MultiDropPath(num_inputs=2, p=p_glob)
+            self.drop = DropPath(p_local)
+            self.forward = self.drop_forward
+        else:
+            self.forward = self.base_forward
 
-    def forward(self, x1, x2):
+    def base_forward(self, x1, x2):
+        return self.conv1(x1) + self.conv2(x2)
+
+    def drop_forward(self, x1, x2):
         y1 = x1 + self.drop(self.conv1(x1))
         y2 = x2 + self.drop(self.conv2(x2))
         return sum(self.multi_drop([y1, y2]))
 
 
 class MiTFusion(nn.Module):
-    def __init__(self, channel_dims: list, p_local=0.1, p_glob=0.5):
+    def __init__(self, channel_dims: list, p_local=0.1, p_glob=0.5, fusion_type="conv_sum"):
         super().__init__()
         self.channel_dims = channel_dims
         for i in range(len(channel_dims)):
-            setattr(self, f'fusion_{i}', FusionBlock(channel_dims[i], p_local=p_local, p_glob=p_glob))
+            setattr(self, f'fusion_{i}', FusionBlock(channel_dims[i],
+                                                     fusion_type=fusion_type,
+                                                     p_local=p_local,
+                                                     p_glob=p_glob))
 
     def forward(self, x: Tuple[List]) -> List:
         y = [getattr(self, f"fusion_{i}")(f1, f2)
