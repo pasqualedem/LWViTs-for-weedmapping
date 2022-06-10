@@ -100,6 +100,52 @@ class DoubleLaweed(BaseDoubleLawin):
         super().__init__(arch_params, LaweedHead)
 
 
+class BaseSplitLawin(BaseLawin):
+    def __init__(self, arch_params, lawin_class) -> None:
+        backbone = get_param(arch_params, "backbone", 'MiT-B0')
+        main_channels = get_param(arch_params, "main_channels", None)
+        if main_channels is None:
+            raise ValueError("Please provide main_channels")
+        self.side_channels = arch_params['input_channels'] - main_channels
+        self.side_pretrained = get_param(arch_params, "side_pretrained", None)
+        self.main_channels = main_channels
+        arch_params['input_channels'] = arch_params['main_channels']
+        super().__init__(arch_params, lawin_class)
+        self.side_backbone = self.eval_backbone(backbone, self.side_channels,
+                                                n_blocks=1,
+                                                pretrained=bool(self.side_pretrained))
+        if self.side_pretrained is not None:
+            if isinstance(self.side_pretrained, str):
+                self.side_pretrained = [self.side_pretrained] * self.side_channels
+            self.side_backbone.init_pretrained_weights(self.side_pretrained)
+        p_local = get_param(arch_params, "p_local", None)
+        p_glob = get_param(arch_params, "p_glob", None)
+        fusion_type = get_param(arch_params, "fusion_type", None)
+        self.fusion = MiTFusion(self.backbone.channels,
+                                **filter_none({"p_local": p_local, "p_glob": p_glob, "fusion_type": fusion_type}))
+
+    def forward(self, x: Tensor) -> Tensor:
+        main_channels = x[:, :self.main_channels, ::].contiguous()
+        side_channels = x[:, self.main_channels:, ::].contiguous()
+        first_feat_side = self.side_backbone(side_channels)
+        first_feat_main = self.backbone.partial_forward(main_channels, slice(0, 1))
+        first_feat = self.fusion((first_feat_main, first_feat_side))[0]
+        feat = (first_feat,) + self.backbone.partial_forward(first_feat, slice(1, 4))
+        y = self.decode_head(feat)   # 4x reduction in image size
+        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
+        return y
+
+
+class SplitLawin(BaseSplitLawin):
+    def __init__(self, arch_params) -> None:
+        super().__init__(arch_params, LawinHead)
+
+
+class SplitLaweed(BaseSplitLawin):
+    def __init__(self, arch_params) -> None:
+        super().__init__(arch_params, LaweedHead)
+
+
 if __name__ == '__main__':
     model = Lawin('MiT-B1')
     model.eval()

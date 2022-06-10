@@ -2,7 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      group: RedEdge
+      group: Laweed
 #      config.in_params.dataset.channels: ["NDVI"]
     updated_config:
       null

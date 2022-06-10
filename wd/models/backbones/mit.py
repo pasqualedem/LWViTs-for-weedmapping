@@ -5,7 +5,6 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 from wd.models.layers import DropPath, ConvModule, MultiDropPath
 from transformers import SegformerModel, SegformerConfig
-from einops import rearrange
 
 
 CHANNEL_PRETRAIN = {'R': 0, 'G': 1, 'B': 2}
@@ -109,7 +108,7 @@ mit_settings = {
 class MiT(nn.Module):
     pretrained_url = ("nvidia/segformer-", "-finetuned-ade-512-512")
 
-    def __init__(self, model_name: str = 'B0', input_channels=3, pretrained=False):
+    def __init__(self, model_name: str = 'B0', input_channels=3, n_blocks=4, pretrained=False):
         super().__init__()
         if not pretrained:
             assert model_name in mit_settings.keys(), f"MiT model name should be in {list(mit_settings.keys())}"
@@ -118,38 +117,37 @@ class MiT(nn.Module):
             self.channels = embed_dims
 
             # patch_embed
-            self.patch_embed1 = PatchEmbed(input_channels, embed_dims[0], 7, 4)
-            self.patch_embed2 = PatchEmbed(embed_dims[0], embed_dims[1], 3, 2)
-            self.patch_embed3 = PatchEmbed(embed_dims[1], embed_dims[2], 3, 2)
-            self.patch_embed4 = PatchEmbed(embed_dims[2], embed_dims[3], 3, 2)
+            patch_sizes = [7, 3, 3, 3]
+            paddings = [4, 2, 2, 2]
+            for i in range(n_blocks):
+                c_in = input_channels if i == 0 else embed_dims[i-1]
+                setattr(self, f"patch_embed{i+1}", PatchEmbed(c_in, embed_dims[i], patch_sizes[i], paddings[i]))
 
             dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
 
+            heads = [1, 2, 5, 8]
+            ratios = [8, 4, 2, 1]
             cur = 0
-            self.block1 = nn.ModuleList([Block(embed_dims[0], 1, 8, dpr[cur + i]) for i in range(depths[0])])
-            self.norm1 = nn.LayerNorm(embed_dims[0])
-
-            cur += depths[0]
-            self.block2 = nn.ModuleList([Block(embed_dims[1], 2, 4, dpr[cur + i]) for i in range(depths[1])])
-            self.norm2 = nn.LayerNorm(embed_dims[1])
-
-            cur += depths[1]
-            self.block3 = nn.ModuleList([Block(embed_dims[2], 5, 2, dpr[cur + i]) for i in range(depths[2])])
-            self.norm3 = nn.LayerNorm(embed_dims[2])
-
-            cur += depths[2]
-            self.block4 = nn.ModuleList([Block(embed_dims[3], 8, 1, dpr[cur + i]) for i in range(depths[3])])
-            self.norm4 = nn.LayerNorm(embed_dims[3])
+            for i in range(n_blocks):
+                setattr(self, f"block{i+1}",
+                        nn.ModuleList([Block(embed_dims[i], heads[i], ratios[i], dpr[cur + k]) for k in range(depths[i])]))
+                setattr(self, f"norm{i+1}", nn.LayerNorm(embed_dims[i]))
+                cur += depths[i]
             self.forward = self.base_forward
+            self.partial_forward = self.base_partial_forward
+            self.n_blocks = n_blocks
         else:
             url = self.pretrained_url[0] + model_name.lower() + self.pretrained_url[1]
             self.url = url
             config = SegformerConfig().from_pretrained(url)
+            config.num_encoder_blocks = n_blocks
             config.num_channels = input_channels
             self.config = config
             self.channels = config.hidden_sizes
             self.encoder = SegformerModel(config)
             self.forward = self.hug_forward
+            self.partial_forward = self.hug_partial_forward
+            self.n_blocks = n_blocks
 
     def init_pretrained_weights(self, channel_to_load=None):
         if channel_to_load is None:
@@ -158,6 +156,9 @@ class MiT(nn.Module):
             channel_to_load = [CHANNEL_PRETRAIN[x] for x in channel_to_load]
 
         weights = SegformerModel.from_pretrained(self.url).state_dict()
+        keys = weights.keys()
+        fkeys = [k for k in keys if int(k.split('.')[2]) < self.n_blocks]
+        weights = {k: weights[k] for k in fkeys}
         weights['encoder.patch_embeddings.0.proj.weight'] = \
             weights['encoder.patch_embeddings.0.proj.weight'][:, channel_to_load]
         self.encoder.load_state_dict(weights)
@@ -165,33 +166,47 @@ class MiT(nn.Module):
     def hug_forward(self, x):
         return self.encoder(x, output_hidden_states=True).hidden_states
 
-    def base_forward(self, x: Tensor) -> Tensor:
+    def base_partial_forward(self, x: Tensor, block_slice) -> Tensor:
         B = x.shape[0]
-        # stage 1
-        x, H, W = self.patch_embed1(x)
-        for blk in self.block1:
-            x = blk(x, H, W)
-        x1 = self.norm1(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
 
-        # stage 2
-        x, H, W = self.patch_embed2(x1)
-        for blk in self.block2:
-            x = blk(x, H, W)
-        x2 = self.norm2(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
+        outputs = []
+        for i in range(self.n_blocks)[block_slice]:
+            x, H, W = getattr(self, f"patch_embed{i+1}")(x)
+            for blk in getattr(self, f"block{i+1}"):
+                x = blk(x, H, W)
+            x = getattr(self, f"norm{i+1}")(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
+            outputs.append(x)
+        return outputs
 
-        # stage 3
-        x, H, W = self.patch_embed3(x2)
-        for blk in self.block3:
-            x = blk(x, H, W)
-        x3 = self.norm3(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
+    def base_forward(self, x):
+        return self.base_partial_forward(x, slice(self.n_blocks))
 
-        # stage 4
-        x, H, W = self.patch_embed4(x3)
-        for blk in self.block4:
-            x = blk(x, H, W)
-        x4 = self.norm4(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
-
-        return x1, x2, x3, x4
+    def hug_partial_forward(self, pixel_values, block_slice):
+        batch_size = pixel_values.shape[0]
+        all_hidden_states = ()
+        hidden_states = pixel_values
+        output_attentions = False
+        for idx, x in list(enumerate(zip(
+                self.encoder.encoder.patch_embeddings,
+                self.encoder.encoder.block,
+                self.encoder.encoder.layer_norm
+        )))[block_slice]:
+            embedding_layer, block_layer, norm_layer = x
+            # first, obtain patch embeddings
+            hidden_states, height, width = embedding_layer(hidden_states)
+            # second, send embeddings through blocks
+            for i, blk in enumerate(block_layer):
+                layer_outputs = blk(hidden_states, height, width, output_attentions)
+                hidden_states = layer_outputs[0]
+            # third, apply layer norm
+            hidden_states = norm_layer(hidden_states)
+            # fourth, optionally reshape back to (batch_size, num_channels, height, width)
+            if idx != len(self.encoder.encoder.patch_embeddings) - 1 or (
+                idx == len(self.encoder.encoder.patch_embeddings) - 1 and self.encoder.encoder.config.reshape_last_stage
+            ):
+                hidden_states = hidden_states.reshape(batch_size, height, width, -1).permute(0, 3, 1, 2).contiguous()
+            all_hidden_states = all_hidden_states + (hidden_states,)
+        return all_hidden_states
 
 
 class FusionBlock(nn.Module):

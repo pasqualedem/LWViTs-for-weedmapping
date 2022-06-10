@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: DoubleLaweedPrDropBatch
+  group: SplitLaweedBatch
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
@@ -74,13 +74,13 @@ parameters:
         ]]
 
   model:
-    name: [doublelaweed]
+    name: [splitlaweed]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]
       main_channels: [2]
       side_pretrained: ['G']
-      fusion_type: ['conv_sum_drop']
+      fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]
@@ -89,7 +89,7 @@ parameters:
     hor_flip: [True]
     ver_flip: [True]
     channels: [['R', 'G', 'NIR', 'RE'], ['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE']]
-    batch_size: [12]
+    batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]

@@ -44,6 +44,6 @@ class BaseModel(nn.Module):
         return [{'named_params': self.named_parameters()}]
 
     @classmethod
-    def eval_backbone(cls, backbone: str, input_channels: int, pretrained: bool = False) -> nn.Module:
+    def eval_backbone(cls, backbone: str, input_channels: int, n_blocks:int = 4, pretrained: bool = False) -> nn.Module:
         backbone, variant = backbone.split('-')
-        return eval(backbone)(variant, input_channels, pretrained)
+        return eval(backbone)(variant, input_channels, n_blocks=n_blocks, pretrained=pretrained)
