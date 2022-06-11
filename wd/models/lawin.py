@@ -1,5 +1,6 @@
 import torch
-from super_gradients.training.utils import get_param
+from super_gradients.training.utils import get_param, HpmStruct
+from super_gradients.training import utils as sg_utils
 from torch import Tensor
 from torch.nn import functional as F
 
@@ -134,6 +135,18 @@ class BaseSplitLawin(BaseLawin):
         y = self.decode_head(feat)   # 4x reduction in image size
         y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
         return y
+
+    def initialize_param_groups(self, lr: float, training_params: HpmStruct) -> list:
+        """
+
+        :return: list of dictionaries containing the key 'named_params' with a list of named params
+        """
+        def f(x):
+            return not (x[0].startswith('backbone') and int(x[0].split('.')[4]) == 0)
+        freeze_pretrained = sg_utils.get_param(training_params, 'freeze_pretrained', False)
+        if self.backbone_pretrained and freeze_pretrained:
+            return [{'named_params': list(filter(f, list(self.named_parameters())))}]
+        return [{'named_params': self.named_parameters()}]
 
 
 class SplitLawin(BaseSplitLawin):
