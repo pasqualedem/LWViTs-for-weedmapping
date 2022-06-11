@@ -61,4 +61,5 @@ class MultiDropPath(nn.Module):
 
         mask = choice_mask.logical_and(choice)
         random_tensor = mask.logical_or(random_tensor)
-        return [inputs[i].div(kp + (1-kp)/self.num_inputs) * random_tensor[i] for i in range(len(inputs))]
+        return [inputs[i].div(kp + ((1-kp)**self.num_inputs)/self.num_inputs) * random_tensor[i]
+                for i in range(len(inputs))]
