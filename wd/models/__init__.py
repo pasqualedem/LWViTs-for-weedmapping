@@ -11,5 +11,6 @@ MODELS = {
     'laweed': Laweed,
     'doublelawin': DoubleLawin,
     "doublelaweed": DoubleLaweed,
+    "splitlawin": SplitLawin,
     'splitlaweed': SplitLaweed
 }
