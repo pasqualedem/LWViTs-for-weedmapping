@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: SplitLaweed
+  group: SplitLawin
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
@@ -74,7 +74,7 @@ parameters:
         ]]
 
   model:
-    name: [splitlaweed]
+    name: [splitlawin]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]
