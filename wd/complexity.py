@@ -57,15 +57,18 @@ def seg_inference_inference_per_second(model, n_channels, batch_size, device, mo
             timings[rep] = curr_time
     mean_syn = np.sum(timings) / repetitions
     std_syn = np.std(timings)
-    print(f"Mean inference time: {mean_syn}")
+    print(f"Mean inference time: {mean_syn} ms")
+    print(f"Time per example {mean_syn / batch_size} ms")
 
 
 if __name__ == '__main__':
     channels = 3
     models = [
         ('lawin', {}),
-        ('doublelawin', {'main_channels': 2}),
         ('laweed', {}),
+        ('splitlawin', {'main_channels': 2}),
+        ('splitlaweed', {'main_channels': 2}),
+        ('doublelawin', {'main_channels': 2}),
         ('doublelaweed', {'main_channels': 2}),
     ]
     per_layer_stats = False
@@ -76,4 +79,5 @@ if __name__ == '__main__':
             seg_model_flops(model, channels, verbose, per_layer_stats, args)
             seg_inference_throughput(model, channels, batch_size, 'cuda', args)
             seg_inference_inference_per_second(model, channels, batch_size, 'cuda', args)
+            torch.cuda.empty_cache()
             print()

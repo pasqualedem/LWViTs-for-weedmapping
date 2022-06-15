@@ -169,13 +169,13 @@ class MiT(nn.Module):
     def base_partial_forward(self, x: Tensor, block_slice) -> Tensor:
         B = x.shape[0]
 
-        outputs = []
+        outputs = ()
         for i in range(self.n_blocks)[block_slice]:
             x, H, W = getattr(self, f"patch_embed{i+1}")(x)
             for blk in getattr(self, f"block{i+1}"):
                 x = blk(x, H, W)
             x = getattr(self, f"norm{i+1}")(x).reshape(B, H, W, -1).permute(0, 3, 1, 2)
-            outputs.append(x)
+            outputs = outputs + (x,)
         return outputs
 
     def base_forward(self, x):
