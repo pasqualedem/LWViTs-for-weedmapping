@@ -16,6 +16,7 @@ from wd.transforms import \
     PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0, \
     PairFlip, PairFourCrop
 from wd.data.sequoia_stats import STATS as SEQUOIA_STATS
+from wd.data.rededge_stats import STATS as REDEDGE_STATS
 from sklearn.model_selection import train_test_split
 
 from torch.utils.data.distributed import DistributedSampler
@@ -27,15 +28,23 @@ from super_gradients.common.abstractions.abstract_logger import get_logger
 logger = get_logger(__name__)
 
 
-class SequoiaDatasetInterface(DatasetInterface):
-    STATS = SEQUOIA_STATS
+class WeedMapDatasetInterface(DatasetInterface):
+    STATS = {
+        'sequoia': SEQUOIA_STATS,
+        'rededge': REDEDGE_STATS
+    }
 
-    def __init__(self, dataset_params, name="sequoia"):
-        super(SequoiaDatasetInterface, self).__init__(dataset_params)
+    def __init__(self, dataset_params, name=None):
+        super(WeedMapDatasetInterface, self).__init__(dataset_params)
         channels = dataset_params['channels']
+        if name == None:
+            name = os.path.basename(os.path.normpath(dataset_params.root)).lower()
+        else:
+            if name != os.path.basename(os.path.normpath(dataset_params.root)).lower():
+                raise ValueError(f'Warning! Dataset name should match the dataset, found: {name}, {dataset_params.root}')
         self.dataset_name = name
 
-        mean, std = self.get_mean_std(dataset_params['train_folders'], channels)
+        mean, std = self.get_mean_std(dataset_params['train_folders'], channels, name)
 
         self.lib_dataset_params = {
             'mean': mean,
@@ -56,7 +65,7 @@ class SequoiaDatasetInterface(DatasetInterface):
             squeeze0,
             ToLong(),
             FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
+            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
         ]
 
         target_transform = [
@@ -64,7 +73,7 @@ class SequoiaDatasetInterface(DatasetInterface):
             squeeze0,
             ToLong(),
             FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
+            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
         ]
         period = 1
 
@@ -108,21 +117,21 @@ class SequoiaDatasetInterface(DatasetInterface):
         self.train_folders = dataset_params['train_folders']
         self.test_folders = dataset_params['test_folders']
 
-        train_index = SequoiaDataset.build_index(self.dataset_params.root, self.train_folders, channels)
-        test_index = SequoiaDataset.build_index(self.dataset_params.root, self.test_folders, channels)
+        train_index = WeedMapDataset.build_index(self.dataset_params.root, self.train_folders, channels)
+        test_index = WeedMapDataset.build_index(self.dataset_params.root, self.test_folders, channels)
         train_index, val_index = train_test_split(train_index, test_size=0.2)
 
-        self.trainset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
+        self.trainset = WeedMapDataset(root=self.dataset_params.root, channels=channels,
                                        batch_size=self.dataset_params.batch_size, index=train_index,
                                        transform=input_transform, target_transform=target_transform,
                                        return_path=dataset_params['return_path'])
 
-        self.valset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
+        self.valset = WeedMapDataset(root=self.dataset_params.root, channels=channels,
                                      batch_size=self.dataset_params.val_batch_size, index=val_index,
                                      transform=input_transform, target_transform=target_transform,
                                      return_path=dataset_params['return_path'])
 
-        self.testset = SequoiaDataset(root=self.dataset_params.root, channels=channels,
+        self.testset = WeedMapDataset(root=self.dataset_params.root, channels=channels,
                                       batch_size=self.dataset_params.test_batch_size, index=test_index,
                                       transform=test_transform, target_transform=test_target_transform,
                                       return_path=dataset_params['return_path'], period=period)
@@ -131,18 +140,19 @@ class SequoiaDatasetInterface(DatasetInterface):
         return (Denormalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std'])(x) * 255).type(torch.uint8)
 
     @classmethod
-    def get_mean_std(cls, train_folders, channels):
+    def get_mean_std(cls, train_folders, channels, dataset_name):
+        stats = cls.STATS[dataset_name]
         if channels == 'CIR':
             channels = ['NIR', 'G', 'R']
         if len(train_folders) == 1:
             f = train_folders[0]
-            return list(zip(*[(cls.STATS[f][c]['mean'], cls.STATS[f][c]['std']) for c in channels]))
+            return list(zip(*[(stats[f][c]['mean'], stats[f][c]['std']) for c in channels]))
         else:
             sums = {
-                **{c + '_sum': sum([cls.STATS[f][c]['sum'] for f in train_folders]) for c in channels},
-                **{c + '_sum_sq': sum([cls.STATS[f][c]['sum_sq'] for f in train_folders]) for c in channels}
+                **{c + '_sum': sum([stats[f][c]['sum'] for f in train_folders]) for c in channels},
+                **{c + '_sum_sq': sum([stats[f][c]['sum_sq'] for f in train_folders]) for c in channels}
             }
-            count = sum([cls.STATS[f]['count'] for f in train_folders])
+            count = sum([stats[f]['count'] for f in train_folders])
             means = [sums[c + '_sum'] / count for c in channels]
             stds = [np.sqrt((sums[c + '_sum_sq'] / count) - (means[i] ** 2))
                     for i, c in enumerate(channels)]
@@ -247,7 +257,7 @@ class SequoiaDatasetInterface(DatasetInterface):
         folders = folders if folders is not None else self.test_folders
         root = root if root is not None else self.dataset_params.root
 
-        index = SequoiaDataset.build_index(root, folders, self.dataset_params.channels)
+        index = WeedMapDataset.build_index(root, folders, self.dataset_params.channels)
         input_transform = [
             transforms.Normalize(self.lib_dataset_params['mean'], self.lib_dataset_params['std']),
         ]
@@ -257,7 +267,7 @@ class SequoiaDatasetInterface(DatasetInterface):
             squeeze0,
             ToLong(),
             FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(SequoiaDataset.CLASS_LABELS.keys()))
+            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
         ]
 
         if core_utils.get_param(self.dataset_params, 'size', default_val='same') != 'same':
@@ -268,7 +278,7 @@ class SequoiaDatasetInterface(DatasetInterface):
         target_transform = transforms.Compose(target_transform)
         input_transform = transforms.Compose(input_transform)
 
-        runset = SequoiaDataset(root=self.dataset_params.root, channels=self.dataset_params.channels,
+        runset = WeedMapDataset(root=self.dataset_params.root, channels=self.dataset_params.channels,
                                 batch_size=self.dataset_params.test_batch_size, index=index,
                                 transform=input_transform, target_transform=target_transform)
 
@@ -280,7 +290,7 @@ class SequoiaDatasetInterface(DatasetInterface):
         return loader
 
 
-class SequoiaDataset(VisionDataset):
+class WeedMapDataset(VisionDataset):
     CLASS_LABELS = {0: "background", 1: "crop", 2: 'weed'}
     classes = ['background', 'crop', 'weed']
 

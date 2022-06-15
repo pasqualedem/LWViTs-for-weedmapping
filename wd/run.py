@@ -16,7 +16,7 @@ from ruamel.yaml import YAML
 
 from utils.utils import nested_dict_update, dict_to_yaml_string
 from wd.callbacks import SegmentationVisualizationCallback, WandbCallback
-from wd.data.sequoia import SequoiaDatasetInterface
+from wd.data.sequoia import WeedMapDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
 from wd.utils.grid import make_grid
@@ -79,7 +79,7 @@ def run(params: dict):
         seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
                                           ckpt_root_dir=params['experiment']['tracking_dir']
                                           if params['experiment']['tracking_dir'] else 'wandb')
-        dataset = SequoiaDatasetInterface(dataset_params)
+        dataset = WeedMapDatasetInterface(dataset_params)
         seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
         seg_trainer.init_model(params, False, None)
         seg_trainer.init_loggers({"in_params": params}, train_params)
@@ -223,7 +223,7 @@ def resume(settings):
                 seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
                                                   ckpt_root_dir=params['experiment']['tracking_dir']
                                                   if params['experiment']['tracking_dir'] else 'wandb')
-                dataset = SequoiaDatasetInterface(dataset_params)
+                dataset = WeedMapDatasetInterface(dataset_params)
                 seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
                 checkpoint_path_group = os.path.join('wandb', run.group, 'wandb')
                 run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torchvision.transforms import transforms
 from torchvision.transforms import functional as F, InterpolationMode
 
-from wd.data.sequoia import SequoiaDataset
+from wd.data.sequoia import WeedMapDataset
 
 WORKERS = multiprocessing.cpu_count()
 WEED_CLASS = 2
@@ -31,13 +31,13 @@ def get_crops(img, size):
 
 
 def generate_train(root, target_root, train_folders, channels):
-    index = SequoiaDataset.build_index(
+    index = WeedMapDataset.build_index(
         root,
         macro_folders=train_folders,
         channels=channels,
     )
 
-    sq = SequoiaDataset("./dataset/processed/Sequoia",
+    sq = WeedMapDataset("./dataset/processed/Sequoia",
                         transform=lambda x: x,
                         target_transform=lambda x: x,
                         index=index,
@@ -77,13 +77,13 @@ def generate_train(root, target_root, train_folders, channels):
 
 
 def generate_test(root, target_root, test_folders, channels):
-    index = SequoiaDataset.build_index(
+    index = WeedMapDataset.build_index(
         root,
         macro_folders=test_folders,
         channels=channels,
     )
 
-    sq = SequoiaDataset("./dataset/processed/Sequoia",
+    sq = WeedMapDataset("./dataset/processed/Sequoia",
                         transform=lambda x: x,
                         target_transform=lambda x: x,
                         index=index,

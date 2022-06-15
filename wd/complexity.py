@@ -10,7 +10,6 @@ def seg_model_flops(model, n_channels, verbose=False, per_layer_stats=False, mod
     net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, **model_args})
     macs, params = get_model_complexity_info(net, (n_channels, 256, 256), as_strings=True,
                                              print_per_layer_stat=per_layer_stats, verbose=verbose)
-    print(model)
     print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
@@ -62,20 +61,42 @@ def seg_inference_inference_per_second(model, n_channels, batch_size, device, mo
 
 
 if __name__ == '__main__':
-    channels = 3
     models = [
-        ('lawin', {}),
-        ('laweed', {}),
-        ('splitlawin', {'main_channels': 2}),
-        ('splitlaweed', {'main_channels': 2}),
-        ('doublelawin', {'main_channels': 2}),
-        ('doublelaweed', {'main_channels': 2}),
+        ('lawin', 1, {}),
+        ('lawin', 2, {}),
+        ('lawin', 3, {}),
+        ('lawin', 4, {}),
+
+        ('lawin', 1, {'backbone': 'MiT-B1'}),
+        ('lawin', 2, {'backbone': 'MiT-B1'}),
+        ('lawin', 3, {'backbone': 'MiT-B1'}),
+        ('lawin', 4, {'backbone': 'MiT-B1'}),
+
+        ('laweed', 1, {}),
+        ('laweed', 2, {}),
+        ('laweed', 3, {}),
+        ('laweed', 4, {}),
+
+
+        ('splitlawin', 3, {'main_channels': 2}),
+        ('splitlawin', 4, {'main_channels': 2}),
+
+        ('splitlaweed', 3, {'main_channels': 2}),
+        ('splitlaweed', 4, {'main_channels': 2}),
+
+        ('doublelawin', 3,  {'main_channels': 2}),
+        ('doublelawin', 4, {'main_channels': 2}),
+
+        ('doublelaweed', 3, {'main_channels': 2}),
+        ('doublelaweed', 4, {'main_channels': 2}),
     ]
     per_layer_stats = False
     verbose = False
-    batch_size = 8
-    for model, args in models:
+    batch_size = 6
+    for model, channels, args in models:
         with torch.cuda.device(0):
+            print(f"Model: {model}")
+            print(f"N. Channels: {channels}")
             seg_model_flops(model, channels, verbose, per_layer_stats, args)
             seg_inference_throughput(model, channels, batch_size, 'cuda', args)
             seg_inference_inference_per_second(model, channels, batch_size, 'cuda', args)
