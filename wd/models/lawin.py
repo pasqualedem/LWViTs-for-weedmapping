@@ -26,8 +26,8 @@ class BaseLawin(BaseModel):
         self.apply(self._init_weights)
         if backbone_pretrained:
             if isinstance(pretrained_channels, str):
-                self.side_pretrained = [pretrained_channels] * input_channels
-            self.backbone.init_pretrained_weights(pretrained_channels)
+                self.main_pretrained = [pretrained_channels] * input_channels
+            self.backbone.init_pretrained_weights(self.main_pretrained)
 
     def forward(self, x: Tensor) -> Tensor:
         y = self.backbone(x)

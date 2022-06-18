@@ -38,7 +38,7 @@ class WeedMapDatasetInterface(DatasetInterface):
         super(WeedMapDatasetInterface, self).__init__(dataset_params)
         channels = dataset_params['channels']
         if name == None:
-            name = os.path.basename(os.path.normpath(dataset_params.root)).lower()
+            name = os.path.basename(os.path.normpath(dataset_params['root'])).lower()
         else:
             if name != os.path.basename(os.path.normpath(dataset_params.root)).lower():
                 raise ValueError(f'Warning! Dataset name should match the dataset, found: {name}, {dataset_params.root}')
