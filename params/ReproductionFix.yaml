@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: ReproductionCrop
+  group: ReproductionFix
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[reproduction, crop]]
+  tags: [[reproduction_fix]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -74,8 +74,7 @@ parameters:
 
   model:
     name: [segnet]
-    params:
-      backbone: [null]
+    params: [{}]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
@@ -95,7 +94,6 @@ parameters:
     num_classes: [3]
     return_path: [True]
     size: [same]
-    crop_size: [[256, 256]]
 
   run_params:
     batch_size: [24]

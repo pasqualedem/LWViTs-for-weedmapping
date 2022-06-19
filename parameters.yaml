@@ -1,25 +1,25 @@
 experiment:
   name: weeddetection
-  group: G_NDVI
-  continue_with_errors: True
-  start_from_grid: 0
+  group: ReproductionCrop
+  continue_with_errors: False
+  start_from_grid: 3
   start_from_run: 0
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[]]
+  tags: [[reproduction, crop]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.0001]
-    optimizer: [Adam]
+    initial_lr: [0.001]
+    optimizer: [SGD]
     optimizer_params:
-      weight_decay: [0]
+      weight_decay: [0.0005]
     loss:
       name: [cross_entropy]
       params:
@@ -30,7 +30,6 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -74,30 +73,29 @@ parameters:
         ]]
 
   model:
-    name: [laweed, splitlaweed, doublelaweed, lawin, splitlawin, doublelawin]
+    name: [segnet]
     params:
-      backbone: [MiT-B0]
-      backbone_pretrained: [True]
-      main_channels: [1]
-      main_pretrained: ['G']
-      side_pretrained: ['G']
-      fusion_type: ['conv_sum']
+      backbone: [null]
 
   dataset:
-    root: ["dataset/4_rotations_processed_005_test/Sequoia"]
+    root: ["dataset/processed/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
     hor_flip: [True]
-    ver_flip: [True]
-    channels: [['G', 'NDVI']]
-    batch_size: [6]
+    ver_flip: [False]
+    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G', 'RE', 'NIR']]
+    # channels: [['R', 'G']]
+    channels: [['NDVI']]
+    batch_size: [5]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
     return_path: [True]
     size: [same]
-    crop_size: [same]
+    crop_size: [[256, 256]]
 
   run_params:
     batch_size: [24]
@@ -107,37 +105,24 @@ parameters:
 other_grids:
   -
     train_params:
-      freeze_pretrained: [True]
       loss:
-        name: [ focal ]
         params:
-          gamma: [ 2.0 ]
+          weight: [null]
+    dataset:
+      channels: ['CIR', ['G', 'NIR', 'R']]
   -
-    model:
-      params:
-        fusion_type: ['conv_sum_drop']
-  -
-    model:
-      params:
-        fusion_type: ['conv_sum_drop']
     train_params:
-      freeze_pretrained: [ True ]
       loss:
-        name: [ focal ]
         params:
-          gamma: [ 2.0 ]
-
+          weight: [[0.0273, 1.0, 4.3802]]
+    dataset:
+      batch_size: [5, 6]
+      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
   -
-    model:
-      name: [lawin, laweed]
     train_params:
-      freeze_pretrained: [False]
-  -
-    model:
-      name: [lawin, laweed]
-    train_params:
-      freeze_pretrained: [False]
       loss:
-        name: [ focal ]
         params:
-          gamma: [ 2.0 ]
+          weight: [null, [0.0273, 1.0, 4.3802]]
+    dataset:
+      batch_size: [6]
+      channels: [['NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE']]
