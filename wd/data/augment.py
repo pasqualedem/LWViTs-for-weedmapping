@@ -73,7 +73,7 @@ def generate_train(root, target_root, train_folders, channels):
             F.to_pil_image(torch.stack([input_crop[CIR[0]], input_crop[CIR[1]], input_crop[CIR[2]]])) \
                 .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}.png"))
 
-    print(f"{images_with_weed} images with weed")  # 363 images with weed
+    print(f"{images_with_weed} images with weed on {len(sq)} images")  # 363 images with weed
 
 
 def generate_test(root, target_root, test_folders, channels):
