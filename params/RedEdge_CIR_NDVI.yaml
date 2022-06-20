@@ -76,7 +76,7 @@ parameters:
   model:
     name: [lawin]
     params:
-      backbone: [MiT-B0]
+      backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [1]
       main_pretrained: [['G']]
