@@ -25,8 +25,11 @@ class BaseLawin(BaseModel):
         self.decode_head = lawin_class(self.backbone.channels, 256 if 'B0' in backbone else 512, num_classes)
         self.apply(self._init_weights)
         if backbone_pretrained:
+            self.main_pretrained = pretrained_channels
             if isinstance(pretrained_channels, str):
                 self.main_pretrained = [pretrained_channels] * input_channels
+            else:
+                self.main_pretrained = pretrained_channels
             self.backbone.init_pretrained_weights(self.main_pretrained)
 
     def forward(self, x: Tensor) -> Tensor:
