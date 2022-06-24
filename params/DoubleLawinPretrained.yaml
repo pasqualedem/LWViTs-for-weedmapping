@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: DoubleLawinPretrained
+  group: DLPretrainedDropB1
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
@@ -76,7 +76,7 @@ parameters:
   model:
     name: [doublelawin]
     params:
-      backbone: [MiT-B0]
+      backbone: [MiT-B10, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [2]
       side_pretrained: ['G']
