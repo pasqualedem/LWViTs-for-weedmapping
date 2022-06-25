@@ -1,25 +1,25 @@
 experiment:
   name: weeddetection
-  group: ReproductionCrop
-  continue_with_errors: False
+  group: Laweed
+  continue_with_errors: True
   start_from_grid: 3
-  start_from_run: 0
+  start_from_run: 1
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[reproduction, crop]]
+  tags: [[]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.001]
-    optimizer: [SGD]
+    initial_lr: [0.0001]
+    optimizer: [Adam]
     optimizer_params:
-      weight_decay: [0.0005]
+      weight_decay: [0]
     loss:
       name: [cross_entropy]
       params:
@@ -30,6 +30,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
+    freeze_pretrained: [True, False]
 
   early_stopping:
     enabled: [True]
@@ -73,29 +74,29 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
+    name: [laweed]
     params:
-      backbone: [null]
+      backbone: [MiT-B0]
+      backbone_pretrained: [True]
+      main_channels: [1]
+      main_pretrained: [null]
+      side_pretrained: [null]
 
   dataset:
-    root: ["dataset/processed/Sequoia"]
+    root: ["dataset/4_rotations_processed_005_test/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
     hor_flip: [True]
-    ver_flip: [False]
-    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G', 'RE', 'NIR']]
-    # channels: [['R', 'G']]
+    ver_flip: [True]
     channels: [['NDVI']]
-    batch_size: [5]
+    batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
     return_path: [True]
     size: [same]
-    crop_size: [[256, 256]]
+    crop_size: [same]
 
   run_params:
     batch_size: [24]
@@ -104,25 +105,72 @@ parameters:
 
 other_grids:
   -
+    tags: [[]]
     train_params:
       loss:
+        name: [ focal ]
         params:
-          weight: [null]
-    dataset:
-      channels: ['CIR', ['G', 'NIR', 'R']]
+          gamma: [ 2.0 ]
+  # CIR
   -
-    train_params:
-      loss:
-        params:
-          weight: [[0.0273, 1.0, 4.3802]]
+    model:
+      params:
+        main_channels: [3]
+        main_pretrained: [['G', 'G', 'R']]
     dataset:
-      batch_size: [5, 6]
-      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+      channels: ['CIR']
   -
+    model:
+      params:
+        main_channels: [3]
+        main_pretrained: [['G', 'G', 'R']]
+    dataset:
+      channels: ['CIR']
+    tags: [[]]
     train_params:
       loss:
+        name: [ focal ]
         params:
-          weight: [null, [0.0273, 1.0, 4.3802]]
+          gamma: [ 2.0 ]
+  # R, G
+  -
+    model:
+      params:
+        main_channels: [2]
+        main_pretrained: [null]
     dataset:
-      batch_size: [6]
-      channels: [['NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE']]
+      channels: [['R', 'G']]
+  -
+    model:
+      params:
+        main_channels: [2]
+        main_pretrained: [null]
+    dataset:
+      channels: [['R', 'G']]
+    tags: [[]]
+    train_params:
+      loss:
+        name: [ focal ]
+        params:
+          gamma: [ 2.0 ]
+#  # R G NIR RE
+#  -
+#    model:
+#      params:
+#        main_channels: [4]
+#        main_pretrained: [['R', 'G', 'G', 'G']]
+#    dataset:
+#      channels:  [["R", "G", "NIR", "RE"]]
+#  -
+#    model:
+#      params:
+#        main_channels: [4]
+#        main_pretrained: [['R', 'G', 'G', 'G']]
+#    dataset:
+#      channels: [["R", "G", "NIR", "RE"]]
+#    tags: [[]]
+#    train_params:
+#      loss:
+#        name: [ focal ]
+#        params:
+#          gamma: [ 2.0 ]
