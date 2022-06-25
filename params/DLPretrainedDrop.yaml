@@ -76,10 +76,11 @@ parameters:
   model:
     name: [doublelawin]
     params:
-      backbone: [MiT-B0]
+      backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [2]
       side_pretrained: ['G']
+      fusion_type: ['conv_sum_drop']
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]
