@@ -7,7 +7,7 @@ from models import MODELS
 
 def seg_model_flops(model, n_channels, verbose=False, per_layer_stats=False, model_args={}):
 
-    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, **model_args})
+    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, "output_channels": 3, **model_args})
     macs, params = get_model_complexity_info(net, (n_channels, 256, 256), as_strings=True,
                                              print_per_layer_stat=per_layer_stats, verbose=verbose)
     print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
@@ -15,7 +15,7 @@ def seg_model_flops(model, n_channels, verbose=False, per_layer_stats=False, mod
 
 
 def seg_inference_throughput(model, n_channels, batch_size, device, model_args={}):
-    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, **model_args}).to(device)
+    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, "output_channels": 3, **model_args}).to(device)
     dummy_input = torch.randn(batch_size, n_channels, 256, 256, dtype=torch.float).to(device)
     repetitions = 100
     warmup = 50
@@ -36,13 +36,13 @@ def seg_inference_throughput(model, n_channels, batch_size, device, model_args={
 
 
 def seg_inference_inference_per_second(model, n_channels, batch_size, device, model_args={}):
-    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, **model_args}).to(device)
+    net = MODELS[model]({'input_channels': n_channels, 'num_classes': 3, "output_channels": 3, **model_args}).to(device)
     dummy_input = torch.randn(batch_size, n_channels, 256, 256, dtype=torch.float).to(device)
     starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
-    repetitions = 300
+    repetitions = 500
     timings = np.zeros((repetitions, 1))
     # GPU-WARM-UP
-    for _ in range(10):
+    for _ in range(50):
         _ = net(dummy_input)
     # MEASURE PERFORMANCE
     with torch.no_grad():
@@ -62,43 +62,56 @@ def seg_inference_inference_per_second(model, n_channels, batch_size, device, mo
 
 if __name__ == '__main__':
     models = [
-        ('lawin', 1, {}),
-        ('lawin', 2, {}),
-        ('lawin', 3, {}),
-        ('lawin', 4, {}),
-
-        ('lawin', 1, {'backbone': 'MiT-B1'}),
-        ('lawin', 2, {'backbone': 'MiT-B1'}),
-        ('lawin', 3, {'backbone': 'MiT-B1'}),
-        ('lawin', 4, {'backbone': 'MiT-B1'}),
-
-        ('laweed', 1, {}),
-        ('laweed', 2, {}),
-        ('laweed', 3, {}),
-        ('laweed', 4, {}),
-
-
-        ('splitlawin', 3, {'main_channels': 2}),
-        ('splitlawin', 4, {'main_channels': 2}),
-
-        ('splitlaweed', 3, {'main_channels': 2}),
-        ('splitlaweed', 4, {'main_channels': 2}),
-
-        ('doublelawin', 3,  {'main_channels': 2}),
-        ('doublelawin', 4, {'main_channels': 2}),
-
-        ('doublelaweed', 3, {'main_channels': 2}),
-        ('doublelaweed', 4, {'main_channels': 2}),
+        # ('lawin', 1, {'backbone_pretrained': True}),
+        # ('lawin', 2, {'backbone_pretrained': True}),
+        # ('lawin', 3, {'backbone_pretrained': True}),
+        # ('lawin', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G']}),
+        #
+        # ('lawin', 1, {'backbone': 'MiT-B1'}),
+        # ('lawin', 2, {'backbone': 'MiT-B1'}),
+        # ('lawin', 3, {'backbone': 'MiT-B1'}),
+        # ('lawin', 4, {'backbone': 'MiT-B1'}),
+        #
+        # ('laweed', 1, {'backbone_pretrained': True}),
+        # ('laweed', 2, {'backbone_pretrained': True}),
+        # ('laweed', 3, {'backbone_pretrained': True}),
+        # ('laweed', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G']}),
+        #
+        ('laweed', 1, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        ('laweed', 2, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        ('laweed', 3, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        ('laweed', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G'], 'backbone': 'MiT-B1'}),
+        #
+        #
+        # ('splitlawin', 3, {'main_channels': 2}),
+        # ('splitlawin', 4, {'main_channels': 2}),
+        # ('splitlawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        # ('splitlawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        #
+        # ('splitlaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        # ('splitlaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        #
+        # ('doublelawin', 3, {'main_channels': 2}),
+        # ('doublelawin', 4, {'main_channels': 2}),
+        # ('doublelawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        # ('doublelawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        #
+        # ('doublelaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        # ('doublelaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        # ('segnet', 1, {}),
+        # ('segnet', 2, {}),
+        # ('segnet', 3, {}),
+        # ('segnet', 4, {}),
     ]
     per_layer_stats = False
     verbose = False
-    batch_size = 6
+    batch_size = 2
     for model, channels, args in models:
         with torch.cuda.device(0):
             print(f"Model: {model}")
             print(f"N. Channels: {channels}")
-            seg_model_flops(model, channels, verbose, per_layer_stats, args)
-            seg_inference_throughput(model, channels, batch_size, 'cuda', args)
+            # seg_model_flops(model, channels, verbose, per_layer_stats, args)
+            # seg_inference_throughput(model, channels, batch_size, 'cuda', args)
             seg_inference_inference_per_second(model, channels, batch_size, 'cuda', args)
             torch.cuda.empty_cache()
             print()

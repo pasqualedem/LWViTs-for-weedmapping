@@ -1,0 +1,229 @@
+laweed = lawin + attention con context molto ampio
+double = doppio encoder
+split = primo blocco dell'encoder duplicato
+
+batch size = 8
+batch size per doublelaweed = 6 (per motivi di memoria)
+throughput = frames per seconds
+numero di canali = 4
+Scheda video = Nvidia GeForce 1660ti 6GB
+
+ENCODER Mit-B0
+
+Model: lawin
+N. Channels: 1
+Computational complexity:       2.0 GMac
+Number of parameters:           4.92 M  
+Final Throughput: 70.52193486593113
+Mean inference time: 110.45314529418945 ms
+Time per example 13.806643161773682 ms
+
+Model: lawin
+N. Channels: 2
+Computational complexity:       2.01 GMac
+Number of parameters:           4.93 M  
+Final Throughput: 73.81113967983732
+Mean inference time: 109.57739250183106 ms
+Time per example 13.697174062728882 ms
+
+Model: lawin
+N. Channels: 3
+Computational complexity:       2.01 GMac
+Number of parameters:           4.93 M  
+Final Throughput: 73.33852931151081
+Mean inference time: 110.00091008504232 ms
+Time per example 13.75011376063029 ms
+
+Model: lawin
+N. Channels: 4
+Computational complexity:       2.02 GMac
+Number of parameters:           4.93 M  
+Final Throughput: 65.03351734946685
+Mean inference time: 112.6990963490804 ms
+Time per example 14.08738704363505 ms
+
+Model: laweed
+N. Channels: 1
+Computational complexity:       2.09 GMac
+Number of parameters:           5.0 M
+Some weights of the model checkpoint at nvidia/segformer-b0-finetuned-ade-512-512 were not used when initializing SegformerModel: ['decode_head.linear_fuse.weight', 'decode_head.linear_c.1.proj.weight', 'decode_head.linear_c.2.proj.bias', 'decode_head.batch_norm.weight', 'decode_head.linear_c.0.proj.bias', 'decode_head.batch_norm.bias', 'decode_head.linear_c.0.proj.weight', 'decode_head.batch_norm.running_var', 'decode_head.classifier.bias', 'decode_head.linear_c.2.proj.weight', 'decode_head.batch_norm.num_batches_tracked', 'decode_head.batch_norm.running_mean', 'decode_head.classifier.weight', 'decode_head.linear_c.3.proj.weight', 'decode_head.linear_c.1.proj.bias', 'decode_head.linear_c.3.proj.bias']
+Mean inference time: 185.12322528076172 ms
+Time per example 30.85387088012695 ms
+
+Model: laweed
+N. Channels: 2
+Computational complexity:       2.1 GMac
+Number of parameters:           5.0 M
+Mean inference time: 183.84439010620116 ms
+Time per example 30.64073168436686 ms
+
+Model: laweed
+N. Channels: 3
+Computational complexity:       2.11 GMac
+Number of parameters:           5.0 M
+Some weights of the model checkpoint at nvidia/segformer-b0-finetuned-ade-512-512 were not used when initializing SegformerModel: ['decode_head.linear_fuse.weight', 'decode_head.linear_c.1.proj.weight', 'decode_head.linear_c.2.proj.bias', 'decode_head.batch_norm.weight', 'decode_head.linear_c.0.proj.bias', 'decode_head.batch_norm.bias', 'decode_head.linear_c.0.proj.weight', 'decode_head.batch_norm.running_var', 'decode_head.classifier.bias', 'decode_head.linear_c.2.proj.weight', 'decode_head.batch_norm.num_batches_tracked', 'decode_head.batch_norm.running_mean', 'decode_head.classifier.weight', 'decode_head.linear_c.3.proj.weight', 'decode_head.linear_c.1.proj.bias', 'decode_head.linear_c.3.proj.bias']
+Mean inference time: 186.94971990966798 ms
+Time per example 31.15828665161133 ms
+
+Model: laweed
+N. Channels: 4
+Computational complexity:       2.11 GMac
+Number of parameters:           5.0 M
+Mean inference time: 183.8743473815918 ms
+Time per example 30.645724563598634 ms
+
+Model: splitlawin
+N. Channels: 3
+Computational complexity:       2.12 GMac
+Number of parameters:           5.28 M  
+Final Throughput: 65.90275811649363
+Mean inference time: 123.12530349731445 ms
+Time per example 15.390662937164306 ms
+
+Model: splitlawin
+N. Channels: 4
+Computational complexity:       2.13 GMac
+Number of parameters:           5.28 M  
+Final Throughput: 66.06241159670016
+Mean inference time: 122.18606569925944 ms
+Time per example 15.27325821240743 ms
+
+Model: splitlaweed
+N. Channels: 3
+Computational complexity:       2.22 GMac
+Number of parameters:           5.35 M  
+Final Throughput: 31.240430295097664
+Mean inference time: 447.69105173746743 ms
+Time per example 55.96138146718343 ms
+
+Model: splitlaweed
+N. Channels: 4
+Computational complexity:       2.22 GMac
+Number of parameters:           5.35 M  
+Final Throughput: 31.42052847613945
+Mean inference time: 446.40952850341796 ms
+Time per example 55.801191062927245 ms
+
+Model: doublelawin
+N. Channels: 3
+Computational complexity:       2.58 GMac
+Number of parameters:           8.44 M  
+Final Throughput: 60.223375853445674
+Mean inference time: 134.0765357462565 ms
+Time per example 16.759566968282062 ms
+
+Model: doublelawin
+N. Channels: 4
+Computational complexity:       2.58 GMac
+Number of parameters:           8.44 M  
+Final Throughput: 59.41299758262947
+Mean inference time: 136.3603381347656 ms
+Time per example 17.0450422668457 ms
+
+Model: doublelaweed
+N. Channels: 3
+Computational complexity:       2.67 GMac
+Number of parameters:           8.51 M
+Mean inference time: 198.62207879638672 ms
+Time per example 33.10367979939779 ms
+
+Model: doublelaweed
+N. Channels: 4
+Computational complexity:       2.68 GMac
+Number of parameters:           8.51 M
+Mean inference time: 200.6986720275879 ms
+Time per example 33.449778671264646 ms
+
+
+Process finished with exit code 0
+
+26
+
+26.ENCODER Mit-B1
+
+Model: lawin
+N. Channels: 1
+Computational complexity:       7.62 GMac
+Number of parameters:           18.49 M 
+Final Throughput: 38.49657870536456
+Mean inference time: 156.68845606486002 ms
+Time per example 26.11474267747667 ms
+
+Model: lawin
+N. Channels: 2
+Computational complexity:       7.63 GMac
+Number of parameters:           18.49 M 
+Final Throughput: 38.01977308599393
+Mean inference time: 160.23970809936523 ms
+Time per example 26.70661801656087 ms
+
+Model: lawin
+N. Channels: 3
+Computational complexity:       7.64 GMac
+Number of parameters:           18.49 M 
+Final Throughput: 36.74664018823235
+Mean inference time: 165.54730840047202 ms
+Time per example 27.591218066745338 ms
+
+Model: lawin
+N. Channels: 4
+Computational complexity:       7.66 GMac
+Number of parameters:           18.5 M  
+Final Throughput: 35.75716821254748
+Mean inference time: 164.62992497762045 ms
+Time per example 27.43832082960341 ms
+
+Model: laweed
+N. Channels: 1
+Mean inference time: 120.17740245056153 ms
+Time per example 60.088701225280765 ms
+
+Model: laweed
+N. Channels: 2
+Mean inference time: 120.9050348815918 ms
+Time per example 60.4525174407959 ms
+
+Model: laweed
+N. Channels: 3
+Mean inference time: 122.30578269958497 ms
+Time per example 61.15289134979248 ms
+
+Model: laweed
+N. Channels: 4
+Mean inference time: 123.41059771728516 ms
+Time per example 61.70529885864258 ms
+
+
+
+Model: segnet
+Computational complexity:       40.11 GMac
+Number of parameters:           29.44 M
+Final Throughput: 44.04402505284171
+Mean inference time: 184.52961095174155 ms
+Time per example 23.066201368967693 ms
+
+Model: segnet
+N. Channels: 2
+Computational complexity:       40.15 GMac
+Number of parameters:           29.44 M
+Final Throughput: 43.06024501546175
+Mean inference time: 187.40581049601238 ms
+Time per example 23.425726312001547 ms
+
+Model: segnet
+N. Channels: 3
+Computational complexity:       40.19 GMac
+Number of parameters:           29.44 M
+Final Throughput: 42.010474878190664
+Mean inference time: 195.15553359985353 ms
+Time per example 24.39444169998169 ms
+
+Model: segnet
+N. Channels: 4
+Computational complexity:       40.22 GMac
+Number of parameters:           29.45 M
+Final Throughput: 40.8003171531123
+Mean inference time: 199.18292841593424 ms
+Time per example 24.89786605199178 ms
+
+
