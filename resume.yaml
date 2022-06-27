@@ -2,9 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      $or:
-        - group: RandomRotation
-        - group: RRotationPatience
+      display_name: jumping-music-895
     stage: "test"
     updated_config:
       null

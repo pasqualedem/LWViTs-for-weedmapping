@@ -2,8 +2,8 @@ experiment:
   name: weeddetection
   group: Laweed
   continue_with_errors: True
-  start_from_grid: 0
-  start_from_run: 0
+  start_from_grid: 5
+  start_from_run: 1
   tracking_dir: null
   entity: pasqualedem
   excluded_files: "*.pth"
