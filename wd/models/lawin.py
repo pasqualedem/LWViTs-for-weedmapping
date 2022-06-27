@@ -4,7 +4,7 @@ from super_gradients.training import utils as sg_utils
 from torch import Tensor
 from torch.nn import functional as F
 
-from utils.utils import filter_none
+from wd.utils.utilities import filter_none
 from .backbones.mit import MiTFusion
 from wd.models.base import BaseModel
 from wd.models.heads.lawin import LawinHead

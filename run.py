@@ -14,13 +14,13 @@ from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
-from wd.utils.utils import nested_dict_update, dict_to_yaml_string
+from wd.utils.utilities import nested_dict_update, dict_to_yaml_string
 from wd.callbacks import SegmentationVisualizationCallback, WandbCallback
 from wd.data.sequoia import WeedMapDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
 from wd.utils.grid import make_grid
-from wd.utils.utils import values_to_number
+from wd.utils.utilities import values_to_number
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.learning.wandb_logger import WandBSGLogger
 

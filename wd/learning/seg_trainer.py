@@ -17,7 +17,7 @@ from tqdm import tqdm
 from wd.learning.wandb_logger import WandBSGLogger
 from wd.callbacks import SegmentationVisualizationCallback
 from wd.models import MODELS as MODELS_DICT
-from wd.utils.utils import MLRun
+from wd.utils.utilities import MLRun
 
 logger = get_logger(__name__)
 
