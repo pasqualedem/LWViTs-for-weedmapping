@@ -3,7 +3,7 @@ runs:
   -
     filters:
       display_name: jumping-music-895
-    stage: "test"
+    stage: ["train", "test"]
     updated_config:
       null
     updated_meta:

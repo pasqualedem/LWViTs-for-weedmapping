@@ -231,9 +231,9 @@ def resume(settings):
                 checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
                 seg_trainer.init_model(params, True, checkpoint_path)
                 seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
-                if stage == 'train':
+                if 'train' in stage:
                     train(seg_trainer, train_params, dataset, early_stop)
-                elif stage == 'test':
+                elif 'test' in stage:
                     test_metrics = seg_trainer.test(**test_params)
             finally:
                 if seg_trainer is not None:
