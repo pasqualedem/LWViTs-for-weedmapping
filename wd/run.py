@@ -227,7 +227,8 @@ def resume(settings):
                 seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
                 checkpoint_path_group = os.path.join('wandb', run.group, 'wandb')
                 run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
-                checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', 'ckpt_best.pth')
+                ckpt = 'ckpt_latest.pth' if 'train' in stage else 'ckpt_best.pth'
+                checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
                 seg_trainer.init_model(params, True, checkpoint_path)
                 seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
                 if stage == 'train':
