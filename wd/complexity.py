@@ -77,10 +77,10 @@ if __name__ == '__main__':
         # ('laweed', 3, {'backbone_pretrained': True}),
         # ('laweed', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G']}),
         #
-        ('laweed', 1, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
-        ('laweed', 2, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
-        ('laweed', 3, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
-        ('laweed', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G'], 'backbone': 'MiT-B1'}),
+        # ('laweed', 1, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        # ('laweed', 2, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        # ('laweed', 3, {'backbone_pretrained': True, 'backbone': 'MiT-B1'}),
+        # ('laweed', 4, {'backbone_pretrained': True, 'main_pretrained': ['R', 'G', 'G', 'G'], 'backbone': 'MiT-B1'}),
         #
         #
         # ('splitlawin', 3, {'main_channels': 2}),
@@ -88,8 +88,8 @@ if __name__ == '__main__':
         # ('splitlawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         # ('splitlawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         #
-        # ('splitlaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
-        # ('splitlaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        ('splitlaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        ('splitlaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
         #
         # ('doublelawin', 3, {'main_channels': 2}),
         # ('doublelawin', 4, {'main_channels': 2}),
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     ]
     per_layer_stats = False
     verbose = False
-    batch_size = 2
+    batch_size = 6
     for model, channels, args in models:
         with torch.cuda.device(0):
             print(f"Model: {model}")

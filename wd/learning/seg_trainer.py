@@ -126,32 +126,33 @@ class SegmentationTrainer(SgModel):
                                      rows=list(self.dataset_interface.testset.CLASS_LABELS.values())
                                      )
         self.sg_logger.add_summary(metrics)
-        logger.info('Computing ROC curve...')
-        roc = test_metrics['auc'].get_roc()
-        fpr_tpr = [(roc[0][i], roc[1][i]) for i in range(len(roc))]
-        skip = [x[0].shape.numel() // 1000 for x in fpr_tpr]
-        fpr_tpr = [(fpr[::sk], tpr[::sk]) for (fpr, tpr), sk in zip(fpr_tpr, skip)]
-        fprs, tprs = zip(*fpr_tpr)
-        fprs = torch.cat(fprs)
-        tprs = torch.cat(tprs)
-        classes = list(self.dataset_interface.testset.CLASS_LABELS.values())
-        cls = [[classes[i]] * len(fpr)
-               for i, (fpr, tpr) in enumerate(fpr_tpr)]
-        cls = [item for sublist in cls for item in sublist]
-        df = pd.DataFrame({'class': cls, 'fpr': fprs, 'tpr': tprs})
-        table = wandb.Table(columns=["class", "fpr", "tpr"], dataframe=df)
-        plt = wandb.plot_table(
-            "wandb/area-under-curve/v0",
-            table,
-            {"x": "fpr", "y": "tpr", "class": "class"},
-            {
-                "title": "ROC",
-                "x-axis-title": "False positive rate",
-                "y-axis-title": "True positive rate",
-            },
-        )
-        logger.info('ROC curve computed.')
-        wandb.log({"roc": plt})
+        if 'auc' in metrics.keys():
+            logger.info('Computing ROC curve...')
+            roc = test_metrics['auc'].get_roc()
+            fpr_tpr = [(roc[0][i], roc[1][i]) for i in range(len(roc))]
+            skip = [x[0].shape.numel() // 1000 for x in fpr_tpr]
+            fpr_tpr = [(fpr[::sk], tpr[::sk]) for (fpr, tpr), sk in zip(fpr_tpr, skip)]
+            fprs, tprs = zip(*fpr_tpr)
+            fprs = torch.cat(fprs)
+            tprs = torch.cat(tprs)
+            classes = list(self.dataset_interface.testset.CLASS_LABELS.values())
+            cls = [[classes[i]] * len(fpr)
+                   for i, (fpr, tpr) in enumerate(fpr_tpr)]
+            cls = [item for sublist in cls for item in sublist]
+            df = pd.DataFrame({'class': cls, 'fpr': fprs, 'tpr': tprs})
+            table = wandb.Table(columns=["class", "fpr", "tpr"], dataframe=df)
+            plt = wandb.plot_table(
+                "wandb/area-under-curve/v0",
+                table,
+                {"x": "fpr", "y": "tpr", "class": "class"},
+                {
+                    "title": "ROC",
+                    "x-axis-title": "False positive rate",
+                    "y-axis-title": "True positive rate",
+                },
+            )
+            logger.info('ROC curve computed.')
+            wandb.log({"roc": plt})
         return metrics
 
     def _initialize_sg_logger_objects(self):

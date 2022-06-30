@@ -99,10 +99,8 @@ Time per example 55.96138146718343 ms
 Model: splitlaweed
 N. Channels: 4
 Computational complexity:       2.22 GMac
-Number of parameters:           5.35 M  
-Final Throughput: 31.42052847613945
-Mean inference time: 446.40952850341796 ms
-Time per example 55.801191062927245 ms
+Number of parameters:           5.35 M
+Time per example 32.44 ms
 
 Model: doublelawin
 N. Channels: 3
@@ -110,7 +108,7 @@ Computational complexity:       2.58 GMac
 Number of parameters:           8.44 M  
 Final Throughput: 60.223375853445674
 Mean inference time: 134.0765357462565 ms
-Time per example 16.759566968282062 ms
+Time per example 32.61553713480632 ms
 
 Model: doublelawin
 N. Channels: 4
