@@ -111,6 +111,20 @@ other_grids:
         name: [ focal ]
         params:
           gamma: [ 2.0 ]
+  -
+    model:
+      params:
+        main_pretrained: [null]
+  -
+    model:
+      params:
+        main_pretrained: [null]
+    tags: [[]]
+    train_params:
+      loss:
+        name: [ focal ]
+        params:
+          gamma: [ 2.0 ]
   # CIR
   -
     model:
@@ -124,6 +138,26 @@ other_grids:
       params:
         main_channels: [3]
         main_pretrained: [null]
+    dataset:
+      channels: ['CIR']
+    tags: [[]]
+    train_params:
+      loss:
+        name: [ focal ]
+        params:
+          gamma: [ 2.0 ]
+  -
+    model:
+      params:
+        main_channels: [3]
+        main_pretrained: [['G', 'G', 'R']]
+    dataset:
+      channels: ['CIR']
+  -
+    model:
+      params:
+        main_channels: [3]
+        main_pretrained: [['G', 'G', 'R']]
     dataset:
       channels: ['CIR']
     tags: [[]]
@@ -147,6 +181,27 @@ other_grids:
         main_pretrained: [['R', 'G', 'G', 'G']]
     dataset:
       channels: [["R", "G", "NIR", "RE"]]
+    tags: [[]]
+    train_params:
+      loss:
+        name: [ focal ]
+        params:
+          gamma: [ 2.0 ]
+  # R, G
+  -
+    model:
+      params:
+        main_channels: [2]
+        main_pretrained: [null]
+    dataset:
+      channels: [['R', 'G']]
+  -
+    model:
+      params:
+        main_channels: [2]
+        main_pretrained: [null]
+    dataset:
+      channels: [['R', 'G']]
     tags: [[]]
     train_params:
       loss:
