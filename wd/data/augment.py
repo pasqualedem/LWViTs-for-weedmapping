@@ -37,7 +37,7 @@ def generate_train(root, target_root, train_folders, channels):
         channels=channels,
     )
 
-    sq = WeedMapDataset("./dataset/processed/Sequoia",
+    sq = WeedMapDataset(root,
                         transform=lambda x: x,
                         target_transform=lambda x: x,
                         index=index,
@@ -83,7 +83,7 @@ def generate_test(root, target_root, test_folders, channels):
         channels=channels,
     )
 
-    sq = WeedMapDataset("./dataset/processed/Sequoia",
+    sq = WeedMapDataset(root,
                         transform=lambda x: x,
                         target_transform=lambda x: x,
                         index=index,
@@ -108,16 +108,22 @@ def calculate():
     Calculate the mean and the standard deviation of a dataset
     """
     torch.manual_seed(42)
-    root = "./dataset/processed/Sequoia"
 
-    train_folders = ['006', '007']
-    test_folders = ['005']
+    # Sequoia
+    # root = "./dataset/processed/Sequoia"
+    # train_folders = ['006', '007']
+    # test_folders = ['005']
+    # target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
+    # channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
 
-    target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
+    # RedEdge
+    root = "./dataset/processed/RedEdge"
+    train_folders = ['000', '001', '002', '004']
+    test_folders = ['003']
+    target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/RedEdge"
+    channels = ['R', 'G', 'B', 'NDVI', 'NIR', 'RE']
 
     os.makedirs(target_root, exist_ok=True)
-    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
-
     for f in train_folders + test_folders:
         os.makedirs(os.path.join(target_root, f), exist_ok=True)
         for c in channels:
@@ -125,7 +131,7 @@ def calculate():
         os.makedirs(os.path.join(target_root, f, "groundtruth"), exist_ok=True)
         os.makedirs(os.path.join(target_root, f, "tile", "CIR"), exist_ok=True)
 
-    generate_train(root, target_root, train_folders, channels)
+    # generate_train(root, target_root, train_folders, channels)
     generate_test(root, target_root, test_folders, channels)
 
 
