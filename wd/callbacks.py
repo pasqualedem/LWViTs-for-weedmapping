@@ -120,42 +120,42 @@ class SegmentationVisualization:
                 table.add_data(names[i], img)
 
 
-class MlflowCallback(PhaseCallback):
-    """
-    A callback that logs metrics to MLFlow.
-    """
-
-    def __init__(self, phase: Phase, freq: int,
-                 client: MLRun,
-                 params: Mapping = None
-                 ):
-        """
-        param phase: phase to log metrics for
-        param freq: frequency of logging
-        param client: MLFlow client
-        """
-
-        if phase == Phase.TRAIN_EPOCH_END:
-            self.prefix = 'train_'
-        elif phase == Phase.VALIDATION_EPOCH_END:
-            self.prefix = 'val_'
-        else:
-            raise NotImplementedError('Unrecognized Phase')
-
-        super(MlflowCallback, self).__init__(phase)
-        self.freq = freq
-        self.client = client
-
-        if params:
-            self.client.log_params(params)
-
-    def __call__(self, context: PhaseContext):
-        """
-        Logs metrics to MLFlow.
-            param context: context of the current phase
-        """
-        if context.epoch % self.freq == 0:
-            self.client.log_metrics({self.prefix + k: v for k, v in context.metrics_dict.items()})
+# class MlflowCallback(PhaseCallback):
+#     """
+#     A callback that logs metrics to MLFlow.
+#     """
+#
+#     def __init__(self, phase: Phase, freq: int,
+#                  client: MLRun,
+#                  params: Mapping = None
+#                  ):
+#         """
+#         param phase: phase to log metrics for
+#         param freq: frequency of logging
+#         param client: MLFlow client
+#         """
+#
+#         if phase == Phase.TRAIN_EPOCH_END:
+#             self.prefix = 'train_'
+#         elif phase == Phase.VALIDATION_EPOCH_END:
+#             self.prefix = 'val_'
+#         else:
+#             raise NotImplementedError('Unrecognized Phase')
+#
+#         super(MlflowCallback, self).__init__(phase)
+#         self.freq = freq
+#         self.client = client
+#
+#         if params:
+#             self.client.log_params(params)
+#
+#     def __call__(self, context: PhaseContext):
+#         """
+#         Logs metrics to MLFlow.
+#             param context: context of the current phase
+#         """
+#         if context.epoch % self.freq == 0:
+#             self.client.log_metrics({self.prefix + k: v for k, v in context.metrics_dict.items()})
 
 
 class WandbCallback(PhaseCallback):

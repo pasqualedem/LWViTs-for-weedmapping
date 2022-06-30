@@ -5,3 +5,6 @@ try1
 
 .idea
 .stignore
+
+!dataset/raw/.keep
+!dataset/processed/.keep
