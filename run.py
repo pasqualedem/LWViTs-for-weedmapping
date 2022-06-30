@@ -243,18 +243,25 @@ def resume(settings):
 parser = argparse.ArgumentParser(description='Train and test models')
 parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the run(s)', default=False)
+parser.add_argument('-d', '--dir', required=False, type=str,
+                    help='Set the local tracking directory', default=None)
 
 if __name__ == '__main__':
     args = parser.parse_args()
+
+    track_dir = args.dir
 
     if args.resume:
         param_path = 'resume.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
+        if track_dir is not None:
+            settings['experiment']['tracking_dir'] = track_dir
         resume(settings)
     else:
         param_path = 'parameters.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
-
+        if track_dir is not None:
+            settings['experiment']['tracking_dir'] = track_dir
         experiment(settings)

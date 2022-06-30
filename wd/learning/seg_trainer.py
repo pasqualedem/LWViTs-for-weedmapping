@@ -3,8 +3,11 @@ from typing import Mapping
 
 import pandas as pd
 import wandb
+from piptools.scripts.sync import _get_installed_distributions
 
 from super_gradients.common.abstractions.abstract_logger import get_logger
+from super_gradients.common.sg_loggers import SG_LOGGERS, BaseSGLogger
+from super_gradients.common.sg_loggers.abstract_sg_logger import AbstractSGLogger
 from super_gradients.training import SgModel, StrictLoad
 from super_gradients.training.params import TrainingParams
 from super_gradients.training.utils.callbacks import Phase, PhaseContext, CallbackHandler
@@ -17,7 +20,7 @@ from tqdm import tqdm
 from wd.learning.wandb_logger import WandBSGLogger
 from wd.callbacks import SegmentationVisualizationCallback
 from wd.models import MODELS as MODELS_DICT
-from wd.utils.utilities import MLRun
+from wd.learning.wandb_logger import BaseSGLogger as BaseLogger
 
 logger = get_logger(__name__)
 
@@ -172,7 +175,50 @@ class SegmentationTrainer(SgModel):
             sg_logger = WandBSGLogger(**sg_logger_params, **general_sg_logger_params)
             self.checkpoints_dir_path = sg_logger.local_dir()
             self.training_params.override(sg_logger=sg_logger)
-            super()._initialize_sg_logger_objects()
+            sg_logger = core_utils.get_param(self.training_params, 'sg_logger')
+
+            # OVERRIDE SOME PARAMETERS TO MAKE SURE THEY MATCH THE TRAINING PARAMETERS
+            general_sg_logger_params = {'experiment_name': self.experiment_name,
+                                        'storage_location': self.model_checkpoints_location,
+                                        'resumed': self.load_checkpoint,
+                                        'training_params': self.training_params,
+                                        'checkpoints_dir_path': self.checkpoints_dir_path}
+
+            if sg_logger is None:
+                raise RuntimeError('sg_logger must be defined in training params (see default_training_params)')
+
+            if isinstance(sg_logger, AbstractSGLogger):
+                self.sg_logger = sg_logger
+            elif isinstance(sg_logger, str):
+                sg_logger_params = core_utils.get_param(self.training_params, 'sg_logger_params', {})
+                if issubclass(SG_LOGGERS[sg_logger], BaseSGLogger):
+                    sg_logger_params = {**sg_logger_params, **general_sg_logger_params}
+                if sg_logger not in SG_LOGGERS:
+                    raise RuntimeError('sg_logger not defined in SG_LOGGERS')
+
+                self.sg_logger = SG_LOGGERS[sg_logger](**sg_logger_params)
+            else:
+                raise RuntimeError('sg_logger can be either an sg_logger name (str) or a subcalss of AbstractSGLogger')
+
+            if not (isinstance(self.sg_logger, BaseSGLogger) or isinstance(self.sg_logger, BaseLogger)):
+                logger.warning(
+                    "WARNING! Using a user-defined sg_logger: files will not be automatically written to disk!\n"
+                    "Please make sure the provided sg_logger writes to disk or compose your sg_logger to BaseSGLogger")
+
+            # IN CASE SG_LOGGER UPDATED THE DIR PATH
+            self.checkpoints_dir_path = self.sg_logger.local_dir()
+            additional_log_items = {'num_devices': self.num_devices,
+                                    'multi_gpu': str(self.multi_gpu),
+                                    'device_type': torch.cuda.get_device_name(
+                                        0) if torch.cuda.is_available() else 'cpu'}
+
+            # ADD INSTALLED PACKAGE LIST + THEIR VERSIONS
+            if self.training_params.log_installed_packages:
+                pkg_list = list(map(lambda pkg: str(pkg), _get_installed_distributions()))
+                additional_log_items['installed_packages'] = pkg_list
+
+            self.sg_logger.add_config("additional_log_items", additional_log_items)
+            self.sg_logger.flush()
 
     def init_loggers(self,
                      in_params: Mapping = None,
