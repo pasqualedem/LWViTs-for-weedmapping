@@ -1,4 +1,4 @@
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Tuple
 
 import torch
 from torch import nn, Tensor
@@ -72,7 +72,7 @@ class PatchEmbed(nn.Module):
         self.proj = nn.Conv2d(c1, c2, patch_size, stride, patch_size // 2)  # padding=(ps[0]//2, ps[1]//2)
         self.norm = nn.LayerNorm(c2)
 
-    def forward(self, x: Tensor) -> tuple[Any, Any, Any]:
+    def forward(self, x: Tensor) -> Tuple[Any, Any, Any]:
         x = self.proj(x)
         _, _, H, W = x.shape
         x = x.flatten(2).transpose(1, 2)
