@@ -8,8 +8,6 @@ from super_gradients.training.utils.callbacks import PhaseCallback, Phase, Phase
 from super_gradients.training.utils.utils import AverageMeter
 from PIL import ImageColor, Image
 
-from wd.utils.utilities import MLRun
-
 
 class SegmentationVisualizationCallback(PhaseCallback):
     """
