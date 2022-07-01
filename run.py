@@ -246,8 +246,10 @@ parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the run(s)', default=False)
 parser.add_argument('-d', '--dir', required=False, type=str,
                     help='Set the local tracking directory', default=None)
-parser.add_argument('-f', "--filters", type=json.loads)
-parser.add_argument('-s', "--stage", type=json.loads)
+
+parser.add_argument('-f', "--filters", type=json.loads, help="Filters to query in the resuming mode")
+parser.add_argument('-s', "--stage", type=json.loads, help="Stages to execute in the resuming mode")
+parser.add_argument('-p', "--path", type=json.loads, help="Path to the tracking url in the resuming mode")
 
 if __name__ == '__main__':
     args = parser.parse_args()
