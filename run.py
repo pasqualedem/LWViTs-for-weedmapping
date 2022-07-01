@@ -249,7 +249,7 @@ parser.add_argument('-d', '--dir', required=False, type=str,
 
 parser.add_argument('-f', "--filters", type=json.loads, help="Filters to query in the resuming mode")
 parser.add_argument('-s', "--stage", type=json.loads, help="Stages to execute in the resuming mode")
-parser.add_argument('-p', "--path", type=json.loads, help="Path to the tracking url in the resuming mode")
+parser.add_argument('-p', "--path", type=str, help="Path to the tracking url in the resuming mode")
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -257,6 +257,7 @@ if __name__ == '__main__':
     track_dir = args.dir
     filters = args.filters
     stage = args.stage
+    path = args.path
 
     if args.resume:
         param_path = 'resume.yaml'
@@ -264,6 +265,7 @@ if __name__ == '__main__':
             settings = YAML().load(param_stream)
             settings['runs'][0]['filters'] = update_collection(settings['runs'][0]['filters'], filters)
             settings['runs'][0]['stage'] = update_collection(settings['runs'][0]['stage'], stage)
+            settings['path'] = update_collection(settings, {'path': path})
         resume(settings)
     else:
         param_path = 'parameters.yaml'
