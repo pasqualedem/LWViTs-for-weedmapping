@@ -148,10 +148,14 @@ def filter_none(collec) -> Any:
         return collec
 
 
-def update_collection(collec, value):
+def update_collection(collec, value, key=None):
     if isinstance(collec, dict):
-        collec = {**collec, **value} \
-            if value is not None else collec
+        if key is not None:
+            if value is not None:
+                collec[key] = value
+        else:
+            collec = {**collec, **value} \
+                if value is not None else collec
     else:
         collec = value if value is not None else collec
     return collec

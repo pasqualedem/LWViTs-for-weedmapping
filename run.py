@@ -247,6 +247,9 @@ parser.add_argument('--resume', required=False, action='store_true',
 parser.add_argument('-d', '--dir', required=False, type=str,
                     help='Set the local tracking directory', default=None)
 
+parser.add_argument("--grid", type=int, help="Select the first grid to start from")
+parser.add_argument("--run", type=int, help="Select the run in grid to start from")
+
 parser.add_argument('-f', "--filters", type=json.loads, help="Filters to query in the resuming mode")
 parser.add_argument('-s', "--stage", type=json.loads, help="Stages to execute in the resuming mode")
 parser.add_argument('-p', "--path", type=str, help="Path to the tracking url in the resuming mode")
@@ -263,14 +266,15 @@ if __name__ == '__main__':
         param_path = 'resume.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
-            settings['runs'][0]['filters'] = update_collection(settings['runs'][0]['filters'], filters)
-            settings['runs'][0]['stage'] = update_collection(settings['runs'][0]['stage'], stage)
-            settings['path'] = update_collection(settings, {'path': path})
+        settings['runs'][0]['filters'] = update_collection(settings['runs'][0]['filters'], filters)
+        settings['runs'][0]['stage'] = update_collection(settings['runs'][0]['stage'], stage)
+        settings = update_collection(settings, path, key="path")
         resume(settings)
     else:
         param_path = 'parameters.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
-        if track_dir is not None:
-            settings['experiment']['tracking_dir'] = track_dir
+        settings['experiment'] = update_collection(settings['experiment'], args.grid, key='start_from_grid')
+        settings['experiment'] = update_collection(settings['experiment'], args.run, key='start_from_run')
+        settings['experiment'] = update_collection(settings['experiment'], track_dir, key='tracking_dir')
         experiment(settings)
