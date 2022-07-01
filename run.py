@@ -227,7 +227,8 @@ def resume(settings):
                                                   if params['experiment']['tracking_dir'] else 'wandb')
                 dataset = WeedMapDatasetInterface(dataset_params)
                 seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-                checkpoint_path_group = os.path.join('wandb', run.group, 'wandb')
+                track_dir = run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
+                checkpoint_path_group = os.path.join(track_dir, run.group, 'wandb')
                 run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
                 ckpt = 'ckpt_latest.pth' if 'train' in stage else 'ckpt_best.pth'
                 checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
