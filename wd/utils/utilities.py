@@ -146,3 +146,12 @@ def filter_none(collec) -> Any:
         return [filter_none(v) for v in collec if v is not None]
     else:
         return collec
+
+
+def update_collection(collec, value):
+    if isinstance(collec, dict):
+        collec = {**collec, **value} \
+            if value is not None else collec
+    else:
+        collec = value if value is not None else collec
+    return collec

@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from typing import Mapping
 
@@ -14,7 +15,7 @@ from super_gradients.training.utils.callbacks import Phase
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
-from wd.utils.utilities import nested_dict_update, dict_to_yaml_string
+from wd.utils.utilities import nested_dict_update, dict_to_yaml_string, update_collection
 from wd.callbacks import SegmentationVisualizationCallback, WandbCallback
 from wd.data.sequoia import WeedMapDatasetInterface
 from wd.loss import LOSSES as LOSSES_DICT
@@ -245,18 +246,22 @@ parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the run(s)', default=False)
 parser.add_argument('-d', '--dir', required=False, type=str,
                     help='Set the local tracking directory', default=None)
+parser.add_argument('-f', "--filters", type=json.loads)
+parser.add_argument('-s', "--stage", type=json.loads)
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
     track_dir = args.dir
+    filters = args.filters
+    stage = args.stage
 
     if args.resume:
         param_path = 'resume.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
-        if track_dir is not None:
-            settings['experiment']['tracking_dir'] = track_dir
+            settings['runs'][0]['filters'] = update_collection(settings['runs'][0]['filters'], filters)
+            settings['runs'][0]['stage'] = update_collection(settings['runs'][0]['stage'], stage)
         resume(settings)
     else:
         param_path = 'parameters.yaml'

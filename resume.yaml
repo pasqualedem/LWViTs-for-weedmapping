@@ -2,7 +2,7 @@ path: "pasqualedem/weeddetection"
 runs:
   -
     filters:
-      display_name: jumping-music-895
+      null
     stage: ["train", "test"]
     updated_config:
       null
