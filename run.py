@@ -142,8 +142,9 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     other_grids = settings['other_grids']
     starting_grid = exp_settings['start_from_grid']
     starting_run = exp_settings['start_from_run']
+    track_dir = exp_settings['tracking_dir']
 
-    exp_log = open('exp_log.txt', 'a')
+    exp_log = open(os.path.join(track_dir if track_dir is not None else '', 'exp_log.txt'), 'a')
     exp_log.write('---\n')
     exp_log.flush()
 
