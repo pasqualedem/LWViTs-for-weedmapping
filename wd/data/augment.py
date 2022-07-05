@@ -12,7 +12,8 @@ from wd.data.sequoia import WeedMapDataset
 
 WORKERS = multiprocessing.cpu_count()
 WEED_CLASS = 2
-ROTATIONS = 4
+ROTATIONS_REDEDGE = 0
+ROTATIONS_SEQUOIA = 4
 CROP_SIZE = [256, 256]
 CIR = [3, 1, 0]
 
@@ -108,15 +109,18 @@ def calculate():
     Calculate the mean and the standard deviation of a dataset
     """
     torch.manual_seed(42)
+    global ROTATIONS
 
-    # Sequoia
+    # Sequoia 277 images with weed on 337 (x4) images
+    # ROTATIONS = ROTATIONS_SEQUOIA
     # root = "./dataset/processed/Sequoia"
     # train_folders = ['006', '007']
     # test_folders = ['005']
     # target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
     # channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
 
-    # RedEdge
+    # RedEdge 1285 images with weed on 455 (x4) images
+    ROTATIONS = ROTATIONS_REDEDGE
     root = "./dataset/processed/RedEdge"
     train_folders = ['000', '001', '002', '004']
     test_folders = ['003']
@@ -131,7 +135,7 @@ def calculate():
         os.makedirs(os.path.join(target_root, f, "groundtruth"), exist_ok=True)
         os.makedirs(os.path.join(target_root, f, "tile", "CIR"), exist_ok=True)
 
-    # generate_train(root, target_root, train_folders, channels)
+    generate_train(root, target_root, train_folders, channels)
     generate_test(root, target_root, test_folders, channels)
 
 
