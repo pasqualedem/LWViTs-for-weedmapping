@@ -80,7 +80,7 @@ parameters:
       backbone_pretrained: [True]
 
   dataset:
-    root: ["dataset/4_rotations_processed_003_test/RedEdge"]
+    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
     train_folders: [['000', '001', '002', '004']]
     test_folders: [['003']]
     hor_flip: [True]
