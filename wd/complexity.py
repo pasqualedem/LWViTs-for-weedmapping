@@ -88,13 +88,13 @@ if __name__ == '__main__':
         # ('splitlawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         # ('splitlawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         #
-        ('splitlaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
-        ('splitlaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        # ('splitlaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
+        # ('splitlaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
         #
         # ('doublelawin', 3, {'main_channels': 2}),
         # ('doublelawin', 4, {'main_channels': 2}),
-        # ('doublelawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
-        # ('doublelawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        ('doublelawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        ('doublelawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         #
         # ('doublelaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
         # ('doublelaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),

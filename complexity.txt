@@ -192,6 +192,16 @@ Mean inference time: 123.41059771728516 ms
 Time per example 61.70529885864258 ms
 
 
+Model: doublelawin
+N. Channels: 3
+Mean inference time: 185.74417083740235 ms
+Time per example 30.957361806233724 ms
+
+Model: doublelawin
+N. Channels: 4
+Mean inference time: 191.5707685852051 ms
+Time per example 31.928461430867515 ms
+
 
 Model: segnet
 Computational complexity:       40.11 GMac
