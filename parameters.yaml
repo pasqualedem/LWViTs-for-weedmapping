@@ -78,7 +78,7 @@ parameters:
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
-      main_channels: [2]
+      main_channels: [3]
       side_pretrained: ['G']
       fusion_type: ['conv_sum', 'conv_sum_drop']
 
@@ -88,7 +88,7 @@ parameters:
     test_folders: [['003']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
+    channels: [['R', 'G', 'B', 'NIR'], ['R', 'G', 'B', 'NDVI'], ['R', 'G', 'B', 'RE'], ['R', 'G', 'B', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
