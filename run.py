@@ -237,7 +237,7 @@ def resume(settings):
                 if 'train' in stage:
                     train(seg_trainer, train_params, dataset, early_stop)
                 elif 'test' in stage:
-                    test_metrics = seg_trainer.tes--t(**test_params)
+                    test_metrics = seg_trainer.test(**test_params)
             finally:
                 if seg_trainer is not None:
                     seg_trainer.sg_logger.close(really=True)
