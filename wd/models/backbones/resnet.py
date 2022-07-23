@@ -58,7 +58,8 @@ resnet_settings = {
 
 
 class ResNet(nn.Module):
-    def __init__(self, model_name: str = '50') -> None:
+    def __init__(self, args) -> None:
+        model_name = args.get('model_name') or '50'
         super().__init__()
         assert model_name in resnet_settings.keys(), f"ResNet model name should be in {list(resnet_settings.keys())}"
         block, depths, channels = resnet_settings[model_name]

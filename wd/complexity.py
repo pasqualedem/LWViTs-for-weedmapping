@@ -95,8 +95,8 @@ if __name__ == '__main__':
         #
         # ('doublelawin', 3, {'main_channels': 2}),
         # ('doublelawin', 4, {'main_channels': 2}),
-        ('doublelawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
-        ('doublelawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        # ('doublelawin', 3, {'main_channels': 2, 'backbone': 'MiT-B1'}),
+        # ('doublelawin', 4, {'main_channels': 2, 'backbone': 'MiT-B1'}),
         #
         # ('doublelaweed', 3, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
         # ('doublelaweed', 4, {'main_channels': 2, 'main_pretrained': ['R', 'G'], 'side_pretrained': 'G'}),
@@ -104,10 +104,11 @@ if __name__ == '__main__':
         # ('segnet', 2, {}),
         # ('segnet', 3, {}),
         # ('segnet', 4, {}),
+        ('resnet', 3, {"model_name": "50"}),
     ]
     per_layer_stats = False
     verbose = False
-    batch_size = 6
+    batch_size = 32
     wh = (512, 512)
     for model, channels, args in models:
         with torch.cuda.device(0):

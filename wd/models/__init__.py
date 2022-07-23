@@ -1,4 +1,5 @@
 from wd.models.regseg import RegSeg48
+from wd.models.backbones import ResNet
 from wd.models.segnet import SegNet
 from wd.models.random import Random
 from wd.models.lawin import Lawin, Laweed, DoubleLawin, DoubleLaweed, SplitLawin, SplitLaweed
@@ -12,5 +13,6 @@ MODELS = {
     'doublelawin': DoubleLawin,
     "doublelaweed": DoubleLaweed,
     'splitlaweed': SplitLaweed,
-    'splitlawin': SplitLawin
+    'splitlawin': SplitLawin,
+    'resnet': ResNet
 }
