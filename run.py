@@ -158,20 +158,19 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
             [nested_dict_update(copy.deepcopy(base_grid), other_run) for other_run in other_grids]
     logger.info(f'There are {len(complete_grids)} grids')
 
+    grids = [make_grid(grid) for grid in complete_grids]
+
     if resume:
-        starting_grid, starting_run, resume_last = retrieve_run_to_resume(exp_settings, complete_grids)
+        starting_grid, starting_run, resume_last = retrieve_run_to_resume(exp_settings, grids)
     else:
         resume_last = False
         starting_grid = exp_settings['start_from_grid']
         starting_run = exp_settings['start_from_run']
 
-    grids = []
-    for i, grid in enumerate(complete_grids):
-        grid_runs = make_grid(grid)
-        info = f'Found {len(grid_runs)} runs from grid {i}'
+    for i, grid in enumerate(grids):
+        info = f'Found {len(grid)} runs from grid {i}'
         if i < starting_grid:
-            info += f', skipping grid {i} with {len(grid_runs)} runs'
-        grids = grids + [grid_runs]
+            info += f', skipping grid {i} with {len(grid)} runs'
         logger.info(info)
 
     total_runs = sum(len(grid) for grid in grids)
@@ -241,7 +240,7 @@ def retrieve_run_to_resume(settings, grids):
 def resume_last_run(input_settings):
     namespace = input_settings["name"]
     group = input_settings["group"]
-    last_run = wandb.Api().runs(path=namespace, filters={"group": group,}, order="-created_at")
+    last_run = wandb.Api().runs(path=namespace, filters={"group": group,}, order="-created_at")[0]
     resume_settings = {
         "path": namespace,
         "runs": [
