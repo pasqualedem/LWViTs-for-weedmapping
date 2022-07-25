@@ -140,9 +140,8 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_settings = settings['experiment']
     base_grid = settings['parameters']
     other_grids = settings['other_grids']
-    starting_grid = exp_settings['start_from_grid']
-    starting_run = exp_settings['start_from_run']
     track_dir = exp_settings['tracking_dir']
+    resume = exp_settings['resume']
 
     exp_log = open(os.path.join(track_dir if track_dir is not None else '', 'exp_log.txt'), 'a')
     exp_log.write('---\n')
@@ -158,6 +157,14 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
         complete_grids += \
             [nested_dict_update(copy.deepcopy(base_grid), other_run) for other_run in other_grids]
     logger.info(f'There are {len(complete_grids)} grids')
+
+    if resume:
+        starting_grid, starting_run, resume_last = retrieve_run_to_resume(exp_settings, complete_grids)
+        if resume_last:
+            resume_last_run(exp_settings)
+    else:
+        starting_grid = exp_settings['start_from_grid']
+        starting_run = exp_settings['start_from_run']
 
     grids = []
     for i, grid in enumerate(complete_grids):
@@ -186,11 +193,12 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
         for j in range(starting_run, len(grid)):
             params = grid[j]
             try:
+                exp_log.write(f'{i} {j},')
                 logger.info(f'Running grid {i} out of {len(grids) - 1}')
                 logger.info(f'Running run {j} out of {len(grid) - 1} '
                             f'({sum([len(grids[k]) for k in range(i)]) + j} / {total_runs - 1})')
                 run({'experiment': exp_settings, **params})
-                exp_log.write(f'{i} {j}, finished \n')
+                exp_log.write(f' finished \n')
                 exp_log.flush()
                 gc.collect()
             except Exception as e:
@@ -202,7 +210,46 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
     exp_log.close()
 
 
-def resume(settings):
+def retrieve_run_to_resume(settings, grids):
+    grid_list = [(i, j) for i in range(len(grids)) for j in range(len(grids[i]))]
+    dir = settings['tracking_dir']
+    dir_file_path = os.path.join(dir if dir is not None else '', 'exp_log.txt')
+    with open(dir_file_path, 'r') as f:
+        last_ran = f.readlines()[-1]
+    code, status = last_ran.split(",")
+    i, j = map(int, code.split(" "))
+    index = grid_list.index((i, j))
+    try:
+        start_grid, start_run = grid_list[index + 1]
+    except IndexError as e:
+        if status == "finished \n":
+            logger.info(e)
+            raise ValueError('No experiment to resume!!')
+        else:
+            return len(grids), None, True
+    resume_last = True if status != "finished \n" else False
+    return start_grid, start_run, resume_last
+
+
+def resume_last_run(input_settings):
+    namespace = input_settings["name"]
+    group = input_settings["group"]
+    last_run = wandb.Api().runs(path=namespace, filters={"group": group,}, order="-created_at")
+    resume_settings = {
+        "path": namespace,
+        "runs": [
+            {
+                "filters": {"group": group, "name": last_run.id},
+                "stage": ["train", "test"],
+                "updated_config": None,
+                "updated_meta": None
+            }
+        ]
+    }
+    resume_run(resume_settings)
+
+
+def resume_run(settings):
     queries = settings['runs']
     path = settings['path']
     for query in queries:
@@ -244,8 +291,11 @@ def resume(settings):
 
 
 parser = argparse.ArgumentParser(description='Train and test models')
-parser.add_argument('--resume', required=False, action='store_true',
+parser.add_argument('--resume_run', required=False, action='store_true',
                     help='Resume the run(s)', default=False)
+parser.add_argument('--resume', required=False, action='store_true',
+                    help='Resume the experiment', default=False)
+
 parser.add_argument('-d', '--dir', required=False, type=str,
                     help='Set the local tracking directory', default=None)
 
@@ -264,18 +314,19 @@ if __name__ == '__main__':
     stage = args.stage
     path = args.path
 
-    if args.resume:
+    if args.resume_run:
         param_path = 'resume.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
         settings['runs'][0]['filters'] = update_collection(settings['runs'][0]['filters'], filters)
         settings['runs'][0]['stage'] = update_collection(settings['runs'][0]['stage'], stage)
         settings = update_collection(settings, path, key="path")
-        resume(settings)
+        resume_run(settings)
     else:
         param_path = 'parameters.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
+        settings['experiment'] = update_collection(settings['experiment'], args.resume, key='resume')
         settings['experiment'] = update_collection(settings['experiment'], args.grid, key='start_from_grid')
         settings['experiment'] = update_collection(settings['experiment'], args.run, key='start_from_run')
         settings['experiment'] = update_collection(settings['experiment'], track_dir, key='tracking_dir')
