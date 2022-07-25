@@ -160,9 +160,8 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
 
     if resume:
         starting_grid, starting_run, resume_last = retrieve_run_to_resume(exp_settings, complete_grids)
-        if resume_last:
-            resume_last_run(exp_settings)
     else:
+        resume_last = False
         starting_grid = exp_settings['start_from_grid']
         starting_run = exp_settings['start_from_run']
 
@@ -186,6 +185,9 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
 
     continue_with_errors = exp_settings.pop('continue_with_errors')
 
+    if resume_last:
+        logger.info("+ another run to finish!")
+        resume_last_run(exp_settings)
     for i in range(starting_grid, len(grids)):
         grid = grids[i]
         if i != starting_grid:
