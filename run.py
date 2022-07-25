@@ -217,7 +217,12 @@ def retrieve_run_to_resume(settings, grids):
     dir = settings['tracking_dir']
     dir_file_path = os.path.join(dir if dir is not None else '', 'exp_log.txt')
     with open(dir_file_path, 'r') as f:
-        last_ran = f.readlines()[-1]
+        lines = f.readlines()
+        i = 1
+        while lines[-i] == '---\n':
+            i += 1
+        last_ran = lines[-i]
+
     code, status = last_ran.split(",")
     i, j = map(int, code.split(" "))
     index = grid_list.index((i, j))
