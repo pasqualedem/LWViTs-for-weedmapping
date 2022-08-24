@@ -2,11 +2,11 @@ import os
 
 import wandb
 
-from data.sequoia import WeedMapDatasetInterface
-from experiment.experiment import parse_params, train
-from learning.seg_trainer import SegmentationTrainer
-from run import logger
-from utils.utilities import values_to_number, nested_dict_update
+from wd.data.sequoia import WeedMapDatasetInterface
+from wd.experiment.experiment import parse_params, train
+from wd.learning.seg_trainer import SegmentationTrainer
+from wd.run import logger
+from wd.utils.utilities import values_to_number, nested_dict_update
 
 
 def resume_run(settings):

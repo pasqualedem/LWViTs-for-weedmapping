@@ -9,16 +9,16 @@ import torch
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.training.utils.early_stopping import EarlyStop
 
-from callbacks import WandbCallback, SegmentationVisualizationCallback
-from data.sequoia import WeedMapDatasetInterface
-from experiment.resume import resume_last_run, retrieve_run_to_resume
-from learning.seg_trainer import SegmentationTrainer
-from learning.wandb_logger import WandBSGLogger
-from loss import LOSSES as LOSSES_DICT
-from metrics import metrics_factory
-from run import logger
-from utils.grid import make_grid
-from utils.utilities import nested_dict_update, dict_to_yaml_string
+from wd.callbacks import WandbCallback, SegmentationVisualizationCallback
+from wd.data.sequoia import WeedMapDatasetInterface
+from wd.experiment.resume import resume_last_run, retrieve_run_to_resume
+from wd.learning.seg_trainer import SegmentationTrainer
+from wd.learning.wandb_logger import WandBSGLogger
+from wd.loss import LOSSES as LOSSES_DICT
+from wd.metrics import metrics_factory
+from wd.run import logger
+from wd.utils.grid import make_grid
+from wd.utils.utilities import nested_dict_update, dict_to_yaml_string
 
 
 def experiment(settings: Mapping, param_path: str = "local variable"):
