@@ -5,8 +5,11 @@ import wandb
 from wd.data.sequoia import WeedMapDatasetInterface
 from wd.experiment.experiment import parse_params, train
 from wd.learning.seg_trainer import SegmentationTrainer
-from wd.run import logger
 from wd.utils.utilities import values_to_number, nested_dict_update
+
+from super_gradients.common.abstractions.abstract_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def resume_run(settings):

@@ -1,14 +1,12 @@
 import argparse
 import json
 
-from super_gradients.common.abstractions.abstract_logger import get_logger
 from ruamel.yaml import YAML
 
 from wd.experiment import experiment
 from wd.experiment.resume import resume_run
 from wd.utils.utilities import update_collection
 
-logger = get_logger(__name__)
 
 parser = argparse.ArgumentParser(description='Train and test models')
 parser.add_argument('--resume_run', required=False, action='store_true',

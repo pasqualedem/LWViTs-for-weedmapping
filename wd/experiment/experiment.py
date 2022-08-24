@@ -16,9 +16,11 @@ from wd.learning.seg_trainer import SegmentationTrainer
 from wd.learning.wandb_logger import WandBSGLogger
 from wd.loss import LOSSES as LOSSES_DICT
 from wd.metrics import metrics_factory
-from wd.run import logger
 from wd.utils.grid import make_grid
 from wd.utils.utilities import nested_dict_update, dict_to_yaml_string
+from super_gradients.common.abstractions.abstract_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def experiment(settings: Mapping, param_path: str = "local variable"):
