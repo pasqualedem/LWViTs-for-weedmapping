@@ -3,9 +3,9 @@ import torch
 from super_gradients.training.utils.callbacks import Phase
 from super_gradients.training.utils.early_stopping import EarlyStop
 
-from learning.wandb_logger import WandBSGLogger
-from loss import LOSSES as LOSSES_DICT
-from metrics import metrics_factory
+from wd.learning.wandb_logger import WandBSGLogger
+from wd.loss import LOSSES as LOSSES_DICT
+from wd.metrics import metrics_factory
 
 
 def parse_params(params: dict) -> (dict, dict, dict, list):
