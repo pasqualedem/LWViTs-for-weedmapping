@@ -1,14 +1,16 @@
 import gc
 
+from super_gradients.common.abstractions.abstract_logger import get_logger
 from super_gradients.training.utils.callbacks import Phase
 
 from wd.callbacks import WandbCallback, SegmentationVisualizationCallback
 from wd.data.sequoia import WeedMapDatasetInterface
-from wd.experiment.experiment import logger
 from wd.experiment.parameters import parse_params
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.utils.utilities import dict_to_yaml_string
 
+
+logger = get_logger(__name__)
 
 def run(params: dict):
     seg_trainer = None
