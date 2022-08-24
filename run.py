@@ -3,7 +3,7 @@ import json
 
 from ruamel.yaml import YAML
 
-from wd.experiment import experiment
+from wd.experiment.experiment import experiment
 from wd.experiment.resume import resume_run
 from wd.utils.utilities import update_collection
 

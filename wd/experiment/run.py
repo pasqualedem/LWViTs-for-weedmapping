@@ -12,6 +12,7 @@ from wd.utils.utilities import dict_to_yaml_string
 
 logger = get_logger(__name__)
 
+
 def run(params: dict):
     seg_trainer = None
     try:
