@@ -3,19 +3,13 @@ import gc
 import os
 from typing import Mapping
 
-import numpy as np
-import torch
-
 from super_gradients.training.utils.callbacks import Phase
-from super_gradients.training.utils.early_stopping import EarlyStop
 
+from wd.experiment.parameters import parse_params
 from wd.callbacks import WandbCallback, SegmentationVisualizationCallback
 from wd.data.sequoia import WeedMapDatasetInterface
 from wd.experiment.resume import resume_last_run, retrieve_run_to_resume
 from wd.learning.seg_trainer import SegmentationTrainer
-from wd.learning.wandb_logger import WandBSGLogger
-from wd.loss import LOSSES as LOSSES_DICT
-from wd.metrics import metrics_factory
 from wd.utils.grid import make_grid
 from wd.utils.utilities import nested_dict_update, dict_to_yaml_string
 from super_gradients.common.abstractions.abstract_logger import get_logger
@@ -96,48 +90,6 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
                 if not continue_with_errors:
                     raise e
     exp_log.close()
-
-
-def parse_params(params: dict) -> (dict, dict, dict, list):
-    # Set Random seeds
-    torch.manual_seed(params['train_params']['seed'])
-    np.random.seed(params['train_params']['seed'])
-
-    # Instantiate loss
-    input_train_params = params['train_params']
-    loss_params = params['train_params']['loss']
-    loss = LOSSES_DICT[loss_params['name']](**loss_params['params'])
-
-    # metrics
-    train_metrics = metrics_factory(params['train_metrics'])
-    test_metrics = metrics_factory(params['test_metrics'])
-
-    # dataset params
-    dataset_params = params['dataset']
-
-    train_params = {
-        **input_train_params,
-        "train_metrics_list": list(train_metrics.values()),
-        "valid_metrics_list": list(test_metrics.values()),
-        "loss": loss,
-        "loss_logging_items_names": ["loss"],
-        "sg_logger": WandBSGLogger,
-        'sg_logger_params': {
-            'entity': params['experiment']['entity'],
-            'tags': params['tags'],
-            'project_name': params['experiment']['name'],
-        }
-    }
-
-    test_params = {
-        "test_metrics": test_metrics,
-    }
-
-    # early stopping
-    early_stop = [EarlyStop(Phase.VALIDATION_EPOCH_END, **params['early_stopping']['params'])] \
-        if params['early_stopping']['enabled'] else []
-
-    return train_params, test_params, dataset_params, early_stop
 
 
 def run(params: dict):

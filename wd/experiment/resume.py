@@ -3,7 +3,8 @@ import os
 import wandb
 
 from wd.data.sequoia import WeedMapDatasetInterface
-from wd.experiment.experiment import parse_params, train
+from wd.experiment.experiment import train
+from wd.experiment.parameters import parse_params
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.utils.utilities import values_to_number, nested_dict_update
 
