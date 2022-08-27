@@ -23,7 +23,7 @@ parser.add_argument('-f', '--file', required=False, type=str,
 parser.add_argument("--grid", type=int, help="Select the first grid to start from")
 parser.add_argument("--run", type=int, help="Select the run in grid to start from")
 
-parser.add_argument('-f', "--filters", type=json.loads, help="Filters to query in the resuming mode")
+parser.add_argument("--filters", type=json.loads, help="Filters to query in the resuming mode")
 parser.add_argument('-s', "--stage", type=json.loads, help="Stages to execute in the resuming mode")
 parser.add_argument('-p', "--path", type=str, help="Path to the tracking url in the resuming mode")
 
