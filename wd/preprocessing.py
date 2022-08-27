@@ -55,15 +55,20 @@ def copy_dataset(inpath, outpath):
     print('Dataset copied')
 
 
-if __name__ == '__main__':
-    # SEQUOIA
-    # channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE']
-    # path = 'dataset/raw/Sequoia'
-    # outpath = 'dataset/processed/Sequoia'
-
-    # REDEDGE 413 removed
-    channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE', 'B']
-    path = 'dataset/raw/RedEdge'
-    outpath = 'dataset/processed/RedEdge'
-    copy_dataset(path, outpath)
+def preprocess(subset):
+    if subset == "SEQUOIA":
+        # SEQUOIA
+        channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE']
+        path = 'dataset/raw/Sequoia'
+        outpath = 'dataset/processed/Sequoia'
+    elif subset == "REDEDGE":
+        # REDEDGE 413 removed
+        channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE', 'B']
+        path = 'dataset/raw/RedEdge'
+        outpath = 'dataset/processed/RedEdge'
+        copy_dataset(path, outpath)
+    else:
+        raise NotImplementedError()
     delete_empty_imgs(outpath, channels, tempdir_check='tmp')
+
+

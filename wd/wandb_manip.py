@@ -98,7 +98,7 @@ def delete_artifacts(run, artifacts_to_delete: Union[list, str]):
     print(f"Artifacts remained: {to_delete}")
 
 
-if __name__ == '__main__':
+def manipulate():
     param_path = 'manip.yaml'
     with open(param_path, 'r') as param_stream:
         settings = YAML().load(param_stream)
@@ -140,3 +140,4 @@ if __name__ == '__main__':
                     print("No artifacts to delete")
                 else:
                     delete_artifacts(run, artifacts_to_delete)
+
