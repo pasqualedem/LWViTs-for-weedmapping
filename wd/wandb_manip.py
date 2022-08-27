@@ -3,7 +3,7 @@ from typing import Union
 import wandb
 from ruamel.yaml import YAML
 
-from utils.utilities import values_to_number, nested_dict_update
+from wd.utils.utilities import values_to_number, nested_dict_update
 from tqdm import tqdm
 
 
