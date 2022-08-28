@@ -87,7 +87,7 @@ def retrieve_run_to_resume(settings, grids):
     i, j = map(int, code.split(" "))
     index = grid_list.index((i, j))
     try:
-        start_grid, start_run = grid_list[index + 1]
+        start_grid, start_run = grid_list[index + 2]  # Skip interrupted run
     except IndexError as e:
         if status == "finished \n":
             logger.info(e)
