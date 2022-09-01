@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection-rededge
-  group: SplitLawin
+  group: SplitLaweed
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
