@@ -109,6 +109,12 @@ def dict_to_yaml_string(mapping: Mapping) -> str:
     return output_str
 
 
+def load_yaml(path):
+    with open(path, 'r') as param_stream:
+        d = YAML().load(param_stream)
+    return d
+
+
 def values_to_number(collec) -> Any:
     """
     Convert all values in a dictionary or list to numbers

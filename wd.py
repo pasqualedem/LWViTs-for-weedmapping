@@ -2,17 +2,11 @@ import argparse
 import json
 
 from ruamel.yaml import YAML
-
-from wd.experiment.experiment import experiment
-from wd.experiment.resume import resume_run
 from wd.utils.utilities import update_collection
-from wd.preprocessing import preprocess
-from wd.wandb_manip import manipulate
-
 
 parser = argparse.ArgumentParser(description='Train and test models')
 parser.add_argument('action',
-                    help='Choose the action to do from: experiment, resume, resume_run, preprocess, manipulate',
+                    help='Choose the action to do from: experiment, resume, resume_run, preprocess, manipulate, app',
                     default="experiment", type=str)
 parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the experiment', default=False)
@@ -40,6 +34,7 @@ if __name__ == '__main__':
     file = args.file
 
     if action == "resume_run":
+        from wd.experiment.resume import resume_run
         param_path = args.file or 'resume.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
@@ -48,6 +43,7 @@ if __name__ == '__main__':
         settings = update_collection(settings, path, key="path")
         resume_run(settings)
     elif action == 'experiment':
+        from wd.experiment.experiment import experiment
         param_path = args.file or 'parameters.yaml'
         with open(param_path, 'r') as param_stream:
             settings = YAML().load(param_stream)
@@ -57,8 +53,13 @@ if __name__ == '__main__':
         settings['experiment'] = update_collection(settings['experiment'], track_dir, key='tracking_dir')
         experiment(settings)
     elif action == 'preprocess':
+        from wd.preprocessing import preprocess
         preprocess(subset=args.subset)
     elif action == 'manipulation':
+        from wd.wandb_manip import manipulate
         manipulate()
+    elif action in ['app', 'webapp', 'frontend']:
+        from wd.app import frontend
+        frontend()
     else:
         raise ValueError("Action not recognized")

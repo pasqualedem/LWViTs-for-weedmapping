@@ -108,3 +108,4 @@ zipp==3.7.0
 wandb
 transformers
 einops
+gradio
