@@ -38,7 +38,15 @@ class Inferencer:
     def __call__(self, image, preprocess=True):
         if preprocess:
             image = self.preprocess(image)
+        if next(self.model.parameters()).is_cuda:
+            image = image.cuda()
         return self.model(image)
+
+    def cuda(self):
+        self.model.cuda()
+
+    def cpu(self):
+        self.model.cpu()
 
 
 class WandbInferencer(Inferencer):

@@ -24,6 +24,7 @@ DEFAULT_CMAP = {
 }
 
 TITLE = "# Weed Mapping"
+TEXT = "Load config and model to select image channels"
 DIV = "---"
 
 
@@ -37,7 +38,7 @@ class Interface:
             with gr.Row():
                 model = gr.components.File(type='file', label="Model checkpoint in Wandb folder")
                 config = gr.components.File(type='file', label="Wandb config input")
-            text = gr.Textbox("Load config to select image channels", show_label=False)
+            text = gr.Textbox(TEXT, show_label=False)
             divider = gr.Markdown(DIV)
             with gr.Row() as self.input_images_row:
                 self.input_channels = {
@@ -51,6 +52,10 @@ class Interface:
                           inputs=[model, config, use_gpu],
                           outputs=[*self.input_channels.values(), text],
                           )
+            model.change(self.set_model,
+                         inputs=[model, config, use_gpu],
+                         outputs=[*self.input_channels.values(), text],
+                         )
             submit = gr.Button(variant="primary")
             segmentation = gr.Image(label="Segmentation")
 
@@ -60,9 +65,9 @@ class Interface:
 
     def predict(self, use_gpu, *inputs):
         if use_gpu:
-            self.inferencer.model.cuda()
+            self.inferencer.cuda()
         else:
-            self.inferencer.model.cpu()
+            self.inferencer.cpu()
         inputs = filter(lambda x: x is not None, inputs)
         image = compose_images(list(inputs))
         pred = self.inferencer(image)
@@ -70,12 +75,12 @@ class Interface:
         return segmentation
 
     def segment(self, pred: torch.Tensor):
-        pred = pred.squeeze(0).argmax(dim=0)
+        pred = pred.squeeze(0).argmax(dim=0).cpu()
         return tensor_to_segmentation_image(pred, DEFAULT_CMAP)
 
     def set_model(self, model_path_wrapper, config_wrapper, gpu):
         if model_path_wrapper is None or config_wrapper is None:
-            return [gr.update()] * len(self.input_channels)
+            return [gr.update(visible=False) for _ in self.input_channels] + [TEXT]
         self.inferencer = WandbInferencer(model_path_wrapper, config_wrapper, gpu)
         input_channels = []
         for channel, input_form in self.input_channels.items():
