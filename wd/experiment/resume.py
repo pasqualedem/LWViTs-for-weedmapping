@@ -13,7 +13,7 @@ from super_gradients.common.abstractions.abstract_logger import get_logger
 logger = get_logger(__name__)
 
 
-def resume_run(settings):
+def resume_set_of_runs(settings, post_filters=None):
     queries = settings['runs']
     path = settings['path']
     for query in queries:
@@ -22,36 +22,49 @@ def resume_run(settings):
         updated_config = query['updated_config']
         api = wandb.Api()
         runs = api.runs(path=path, filters=filters)
-        if len(runs) == 0:
-            logger.error(f'No runs found for query {filters}')
+        runs = list(filter(post_filters, runs))
+        print("Runs to resume:")
         for run in runs:
-            seg_trainer = None
-            try:
-                params = values_to_number(run.config['in_params'])
-                params = nested_dict_update(params, updated_config)
-                run.config['in_params'] = params
-                run.update()
-                train_params, test_params, dataset_params, early_stop = parse_params(params)
+            print(f"{run.group} \t - \t {run.name}")
+        if len(runs) == 0:
+            logger.error(f'No runs found for query {filters} with post_filters: {post_filters}')
+        for run in runs:
+            resume_run(run, updated_config, stage)
 
-                seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
-                                                  ckpt_root_dir=params['experiment']['tracking_dir']
-                                                  if params['experiment']['tracking_dir'] else 'wandb')
-                dataset = WeedMapDatasetInterface(dataset_params)
-                seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-                track_dir = run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
-                checkpoint_path_group = os.path.join(track_dir, run.group, 'wandb')
-                run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
-                ckpt = 'ckpt_latest.pth' if 'train' in stage else 'ckpt_best.pth'
-                checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
-                seg_trainer.init_model(params, True, checkpoint_path)
-                seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
-                if 'train' in stage:
-                    train(seg_trainer, train_params, dataset, early_stop)
-                elif 'test' in stage:
-                    test_metrics = seg_trainer.test(**test_params)
-            finally:
-                if seg_trainer is not None:
-                    seg_trainer.sg_logger.close(really=True)
+
+def complete_incompleted_runs(settings):
+    print("Going on to complete runs!")
+    resume_set_of_runs(settings, lambda x: 'f1' not in x.summary)
+
+
+def resume_run(run, updated_config, stage):
+    seg_trainer = None
+    try:
+        params = values_to_number(run.config['in_params'])
+        params = nested_dict_update(params, updated_config)
+        run.config['in_params'] = params
+        run.update()
+        train_params, test_params, dataset_params, early_stop = parse_params(params)
+
+        seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
+                                          ckpt_root_dir=params['experiment']['tracking_dir']
+                                          if params['experiment']['tracking_dir'] else 'wandb')
+        dataset = WeedMapDatasetInterface(dataset_params)
+        seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
+        track_dir = run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
+        checkpoint_path_group = os.path.join(track_dir, run.group, 'wandb')
+        run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
+        ckpt = 'ckpt_latest.pth' if 'train' in stage else 'ckpt_best.pth'
+        checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
+        seg_trainer.init_model(params, True, checkpoint_path)
+        seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
+        if 'train' in stage:
+            train(seg_trainer, train_params, dataset, early_stop)
+        elif 'test' in stage:
+            test_metrics = seg_trainer.test(**test_params)
+    finally:
+        if seg_trainer is not None:
+            seg_trainer.sg_logger.close(really=True)
 
 
 def resume_last_run(input_settings):
@@ -69,7 +82,7 @@ def resume_last_run(input_settings):
             }
         ]
     }
-    resume_run(resume_settings)
+    resume_set_of_runs(resume_settings)
 
 
 def retrieve_run_to_resume(settings, grids):
