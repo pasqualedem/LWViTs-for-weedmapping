@@ -111,7 +111,7 @@ def dict_to_yaml_string(mapping: Mapping) -> str:
 
 def load_yaml(path):
     with open(path, 'r') as param_stream:
-        d = YAML().load(param_stream)
+        d = YAML(typ='safe', pure=True).load(param_stream)
     return d
 
 

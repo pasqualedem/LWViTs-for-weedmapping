@@ -1,1 +1,1 @@
-from .main import frontend
+from .gui import frontend

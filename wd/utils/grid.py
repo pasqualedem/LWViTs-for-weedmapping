@@ -21,6 +21,15 @@ def linearize(dictionary: Mapping):
     return exps
 
 
+def linearized_to_string(lin_dict):
+    def linearize_key(key):
+        if type(key) == tuple:
+            return f"{key[0]}.{linearize_key(key[1])}"
+        return key
+
+    return [(linearize_key(key), value) for key, value in lin_dict]
+
+
 def extract(elem: tuple):
     """
     Exctract the element of a single element tuple
@@ -51,10 +60,12 @@ def delinearize(lin_dict):
     return delin_dict
 
 
-def make_grid(dict_of_list):
+def make_grid(dict_of_list, return_cartesian_elements=False):
     """
     Produce a list of dict for each combination of values in the input dict given by the list of values
     :param dict_of_list: a dictionary where values can be lists
+    :params return_cartesian_elements: return elements multiplied
+
     :return: a list of dictionaries given by the cartesian product of values in the input dictionary
     """
     # Linearize the dict to make the cartesian product straight forward
@@ -63,4 +74,8 @@ def make_grid(dict_of_list):
     keys, values = zip(*linearized_dict)
     grid_dict = list(dict(zip(keys, values_list)) for values_list in product(*values))
     # Delinearize the list of dicts
-    return [delinearize(dictionary) for dictionary in grid_dict]
+    grid = [delinearize(dictionary) for dictionary in grid_dict]
+    if return_cartesian_elements:
+        ce = list(filter(lambda x: len(x[1]) > 1, linearized_dict))
+        return grid, ce
+    return grid
