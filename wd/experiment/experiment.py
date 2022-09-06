@@ -71,6 +71,7 @@ def experiment(settings: Mapping, param_path: str = "local variable"):
             params = grid[j]
             try:
                 exp_log.write(f'{i} {j},')
+                exp_log.flush()
                 logger.info(f'Running grid {i} out of {len(grids) - 1}')
                 logger.info(f'Running run {j} out of {len(grid) - 1} '
                             f'({sum([len(grids[k]) for k in range(i)]) + j} / {total_runs - 1})')

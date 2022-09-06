@@ -60,7 +60,7 @@ def resume_run(run, updated_config, stage):
         seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
         if 'train' in stage:
             train(seg_trainer, train_params, dataset, early_stop)
-        elif 'test' in stage:
+        if 'test' in stage:
             test_metrics = seg_trainer.test(**test_params)
     finally:
         if seg_trainer is not None:
@@ -100,7 +100,7 @@ def retrieve_run_to_resume(settings, grids):
     i, j = map(int, code.split(" "))
     index = grid_list.index((i, j))
     try:
-        start_grid, start_run = grid_list[index + 2]  # Skip interrupted run
+        start_grid, start_run = grid_list[index + 1]  # Skip interrupted run
     except IndexError as e:
         if status == "finished \n":
             logger.info(e)
