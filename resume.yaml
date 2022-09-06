@@ -2,12 +2,15 @@ path: "pasqualedem/weeddetection-rededge"
 runs:
   -
     filters:
-      $or:
-        - group: SplitLaweed
-        - group: DLaweedPretrainedDrop
-        - group: Laweed
+      null
     stage: ["test"]
     updated_config:
       null
     updated_meta:
       null
+
+#    filters:
+#      $or:
+#        - group: SplitLaweed
+#        - group: DLaweedPretrainedDrop
+#      - group: Laweed
