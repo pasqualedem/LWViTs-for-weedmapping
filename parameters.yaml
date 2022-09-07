@@ -1,7 +1,7 @@
 experiment:
   name: weeddetection-rededge
-  group: SplitLaweed
-  continue_with_errors: True
+  group: AProva
+  continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
@@ -15,7 +15,7 @@ parameters:
   phases: [[train, test]]
 
   train_params:
-    max_epochs: [500]
+    max_epochs: [1]
     initial_lr: [0.0001]
     optimizer: [Adam]
     optimizer_params:
@@ -74,21 +74,21 @@ parameters:
         ]]
 
   model:
-    name: [splitlaweed]
+    name: [segnet]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]
-      main_channels: [3]
+      main_channels: [2]
       side_pretrained: ['G']
       fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
-    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
-    train_folders: [['000', '001', '002', '004']]
-    test_folders: [['003']]
+    root: ["dataset/processed/Sequoia"]
+    train_folders: [['005', '006']]
+    test_folders: [['007']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'B', 'NIR'], ['R', 'G', 'B', 'NDVI'], ['R', 'G', 'B', 'RE'], ['R', 'G', 'B', 'NIR', 'RE']]
+    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]

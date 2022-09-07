@@ -156,7 +156,10 @@ def filter_none(collec) -> Any:
 
 def update_collection(collec, value, key=None):
     if isinstance(collec, dict):
-        if key is not None:
+        if isinstance(value, dict):
+            for keyv, valuev in value.items():
+                collec = update_collection(collec, keyv, valuev)
+        elif key is not None:
             if value is not None:
                 collec[key] = value
         else:
