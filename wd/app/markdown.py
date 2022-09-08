@@ -32,3 +32,15 @@ def grid_summary_builder(grids, dot_elements):
 
 def title_builder(title):
     return f"## {title}"
+
+
+class MkFailures:
+    def __init__(self):
+        self.value = "## Failures \n\n"
+
+    def get_text(self):
+        return self.value
+
+    def update(self, cur_grid, cur_run, exception):
+        self.value += f"Grid {cur_grid} Run {cur_run} failed with an exception: <br>"
+        self.value += f"{exception} \n\n ---"

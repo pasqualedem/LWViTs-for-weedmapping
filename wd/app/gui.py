@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 import wandb
 
-from wd.app.markdown import grid_summary_builder, exp_summary_builder, title_builder
+from wd.app.markdown import grid_summary_builder, exp_summary_builder, title_builder, MkFailures
 from wd.utils.utilities import load_yaml, update_collection
 from wd.utils.segmentation import tensor_to_segmentation_image
 from wd.app.inference import WandbInferencer, compose_images
@@ -151,14 +151,13 @@ class TrainingInterface:
         self.parameters.change(self.set_parameters_file, inputs=[self.parameters],
                                outputs=[self.group_mk, self.exp_summary, self.grids_dataframe] + parameters_comps)
 
-        with gr.Row():
-            self.stop_btn = gr.Button("Stop!")
-            self.experiment_btn = gr.Button("Experiment!", variant="primary")
+        self.experiment_btn = gr.Button("Experiment!", variant="primary")
         self.progress = gr.Label(value={}, label="Progress")
-        self.json = gr.JSON(label="Current run params")
-        self.experiment_btn.click(self.experiment, inputs=[], outputs=[self.progress, self.json])
-        self.txt = gr.Textbox("no")
-        self.stop_btn.click(self.stop, inputs=[], outputs=[self.txt])
+        with gr.Row():
+            self.json = gr.JSON(label="Current run params")
+            self.failures = MkFailures()
+            self.failures_mk = gr.Markdown(self.failures.get_text())
+        self.experiment_btn.click(self.experiment, inputs=[], outputs=[self.progress, self.json, self.failures_mk])
 
     def experiment(self):
         yield self.update_progress(self.experimenter.exp_settings.start_from_grid,
@@ -169,9 +168,6 @@ class TrainingInterface:
                                    {})
         for out in self.experimenter.execute_runs(callback=self.update_progress):
             yield out
-
-    def stop(self):
-        return "Parallel"
 
     def update_progress(self, cur_grid, cur_run, n_grids, n_runs, status, run_params, exception=None):
         d = {}
@@ -184,7 +180,9 @@ class TrainingInterface:
                 d[f"Grid {i} ({cur_run} / {n_runs})"] = cur_run / n_runs
             else:
                 d[f"Grid {i}"] = 0
-        return d, run_params
+        if status == "crashed":
+            self.failures.update(cur_grid, cur_run, exception)
+        return d, run_params, self.failures.get_text()
 
     def set_parameters_file(self, file):
         if file is None:
