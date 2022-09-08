@@ -158,7 +158,7 @@ def update_collection(collec, value, key=None):
     if isinstance(collec, dict):
         if isinstance(value, dict):
             for keyv, valuev in value.items():
-                collec = update_collection(collec, keyv, valuev)
+                collec = update_collection(collec, valuev, keyv)
         elif key is not None:
             if value is not None:
                 collec[key] = value
@@ -168,3 +168,10 @@ def update_collection(collec, value, key=None):
     else:
         collec = value if value is not None else collec
     return collec
+
+
+def safe_execute(default, exception, function, *args):
+    try:
+        return function(*args)
+    except exception:
+        return default

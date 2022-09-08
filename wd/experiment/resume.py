@@ -3,7 +3,7 @@ import os
 import wandb
 
 from wd.data.sequoia import WeedMapDatasetInterface
-from wd.experiment.run import train
+from wd.experiment.run import train, Run
 from wd.experiment.parameters import parse_params
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.utils.utilities import values_to_number, nested_dict_update
@@ -37,67 +37,35 @@ def complete_incompleted_runs(settings):
     resume_set_of_runs(settings, lambda x: 'f1' not in x.summary)
 
 
-def resume_run(run, updated_config, stage):
-    seg_trainer = None
-    try:
-        params = values_to_number(run.config['in_params'])
-        params = nested_dict_update(params, updated_config)
-        run.config['in_params'] = params
-        run.update()
-        train_params, test_params, dataset_params, early_stop = parse_params(params)
-
-        seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
-                                          ckpt_root_dir=params['experiment']['tracking_dir']
-                                          if params['experiment']['tracking_dir'] else 'wandb')
-        dataset = WeedMapDatasetInterface(dataset_params)
-        seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-        track_dir = run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
-        checkpoint_path_group = os.path.join(track_dir, run.group, 'wandb')
-        run_folder = list(filter(lambda x: str(run.id) in x, os.listdir(checkpoint_path_group)))
-        ckpt = 'ckpt_latest.pth' if 'train' in stage else 'ckpt_best.pth'
-        checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
-        seg_trainer.init_model(params, True, checkpoint_path)
-        seg_trainer.init_loggers({"in_params": params}, train_params, run_id=run.id)
-        if 'train' in stage:
-            train(seg_trainer, train_params, dataset, early_stop)
-        if 'test' in stage:
-            test_metrics = seg_trainer.test(**test_params)
-    finally:
-        if seg_trainer is not None:
-            seg_trainer.sg_logger.close(really=True)
+def resume_run(wandb_run, updated_config, stage):
+    to_resume_run = Run()
+    to_resume_run.resume(wandb_run=wandb_run, updated_config=updated_config, phases=stage)
+    to_resume_run.launch()
 
 
-def resume_last_run(input_settings):
+def get_interrupted_run(input_settings):
     namespace = input_settings["name"]
     group = input_settings["group"]
     last_run = wandb.Api().runs(path=namespace, filters={"group": group,}, order="-created_at")[0]
-    resume_settings = {
-        "path": namespace,
-        "runs": [
-            {
-                "filters": {"group": group, "name": last_run.id},
-                "stage": ["train", "test"],
-                "updated_config": None,
-                "updated_meta": None
-            }
-        ]
-    }
-    resume_set_of_runs(resume_settings)
+    filters = {"group": group, "name": last_run.id}
+    stage = ["train", "test"]
+    updated_config = None
+    api = wandb.Api()
+    runs = api.runs(path=namespace, filters=filters)
+    if len(runs) == 0:
+        raise RuntimeError("No runs found")
+    if len(runs) > 0:
+        raise EnvironmentError("More than 1 run???")
+    to_resume_run = Run()
+    to_resume_run.resume(wandb_run=runs[0], updated_config=updated_config, phases=stage)
+    return to_resume_run
 
 
 def retrieve_run_to_resume(settings, grids):
     grid_list = [(i, j) for i in range(len(grids)) for j in range(len(grids[i]))]
     dir = settings['tracking_dir']
-    dir_file_path = os.path.join(dir if dir is not None else '', 'exp_log.txt')
-    with open(dir_file_path, 'r') as f:
-        lines = f.readlines()
-        i = 1
-        while lines[-i] == '---\n':
-            i += 1
-        last_ran = lines[-i]
-
-    code, status = last_ran.split(",")
-    i, j = map(int, code.split(" "))
+    exp_log = ExpLog(track_dir=dir, mode="r")
+    i, j, status = exp_log.get_last_run()
     index = grid_list.index((i, j))
     try:
         start_grid, start_run = grid_list[index + 1]  # Skip interrupted run
@@ -109,3 +77,43 @@ def retrieve_run_to_resume(settings, grids):
             return len(grids), None, True
     resume_last = True if status != "finished \n" else False
     return start_grid, start_run, resume_last
+
+
+class ExpLog:
+    EXP_END = '---\n'
+    FINISHED = 'finished \n'
+    CRASHED = 'crashed \n'
+
+    def __init__(self, track_dir, mode='a'):
+        self.exp_log = open(os.path.join(track_dir if track_dir is not None else '', 'exp_log.txt'), mode)
+
+    def start(self):
+        self.exp_log.write(self.EXP_END)
+        self.exp_log.flush()
+
+    def write(self, s):
+        self.exp_log.write(s)
+        self.exp_log.flush()
+
+    def close(self):
+        self.exp_log.close()
+
+    def insert_run(self, i, j):
+        self.exp_log.write(f'{i} {j},')
+
+    def finish_run(self):
+        self.exp_log.write(self.FINISHED)
+
+    def crash_run(self):
+        self.exp_log.write(self.CRASHED)
+
+    def get_last_run(self):
+        lines = self.exp_log.readlines()
+        i = 1
+        while lines[-i] in [self.EXP_END, '\n']:
+            i += 1
+        last_ran = lines[-i]
+
+        code, status = last_ran.split(",")
+        i, j = map(int, code.split(" "))
+        return i, j, status

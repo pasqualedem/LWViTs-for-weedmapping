@@ -1,4 +1,5 @@
 import gc
+import os
 
 from super_gradients.common.abstractions.abstract_logger import get_logger
 from super_gradients.training.utils.callbacks import Phase
@@ -7,43 +8,91 @@ from wd.callbacks import WandbCallback, SegmentationVisualizationCallback
 from wd.data.sequoia import WeedMapDatasetInterface
 from wd.experiment.parameters import parse_params
 from wd.learning.seg_trainer import SegmentationTrainer
-from wd.utils.utilities import dict_to_yaml_string
-
+from wd.utils.utilities import dict_to_yaml_string, values_to_number, nested_dict_update
 
 logger = get_logger(__name__)
 
 
-def run(params: dict):
-    seg_trainer = None
-    try:
-        phases = params['phases']
+class Run:
+    def __init__(self):
+        self.params = None
+        self.dataset = None
+        self.early_stop = None
+        self.dataset_params = None
+        self.seg_trainer = None
+        self.train_params = None
+        self.test_params = None
+        self.run_params = None
+        self.phases = None
 
-        train_params, test_params, dataset_params, early_stop = parse_params(params)
+    def init(self, params: dict):
+        self.seg_trainer = None
+        try:
+            self.params = params
+            self.phases = params['phases']
 
-        seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
-                                          ckpt_root_dir=params['experiment']['tracking_dir']
-                                          if params['experiment']['tracking_dir'] else 'wandb')
-        dataset = WeedMapDatasetInterface(dataset_params)
-        seg_trainer.connect_dataset_interface(dataset, data_loader_num_workers=params['dataset']['num_workers'])
-        seg_trainer.init_model(params, False, None)
-        seg_trainer.init_loggers({"in_params": params}, train_params)
-        logger.info(f"Input params: \n\n {dict_to_yaml_string(params)}")
+            self.train_params, self.test_params, self.dataset_params, self.early_stop = parse_params(params)
+            self.run_params = params['run_params']
 
-        if 'train' in phases:
-            train(seg_trainer, train_params, dataset, early_stop)
+            self.seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
+                                                   ckpt_root_dir=params['experiment']['tracking_dir']
+                                                   if params['experiment']['tracking_dir'] else 'wandb')
+            self.dataset = WeedMapDatasetInterface(self.dataset_params)
+            self.seg_trainer.connect_dataset_interface(self.dataset,
+                                                       data_loader_num_workers=params['dataset']['num_workers'])
+            self.seg_trainer.init_model(params, False, None)
+            self.seg_trainer.init_loggers({"in_params": params}, self.train_params)
+            logger.info(f"Input params: \n\n {dict_to_yaml_string(params)}")
+        except Exception as e:
+            if self.seg_trainer is not None:
+                self.seg_trainer.sg_logger.close(True)
+            raise e
 
-        if 'test' in phases:
-            test_metrics = seg_trainer.test(**test_params)
+    def resume(self, wandb_run, updated_config, phases):
+        try:
+            try:
+                self.params = values_to_number(wandb_run.config['in_params'])
+            except KeyError:
+                raise RuntimeError("No params recorded for run, just delete it!")
+            self.params = nested_dict_update(self.params, updated_config)
+            self.phases = phases
+            wandb_run.config['in_params'] = self.params
+            wandb_run.update()
+            self.train_params, self.test_params, self.dataset_params, self.early_stop = parse_params(self.params)
 
-        if 'inference' in phases:
-            inference(seg_trainer, params['run_params'], dataset)
-    finally:
-        if seg_trainer is not None:
-            seg_trainer.sg_logger.close(True)
+            self.seg_trainer = SegmentationTrainer(experiment_name=self.params['experiment']['group'],
+                                              ckpt_root_dir=self.params['experiment']['tracking_dir']
+                                              if self.params['experiment']['tracking_dir'] else 'wandb')
+            self.dataset = WeedMapDatasetInterface(self.dataset_params)
+            self.seg_trainer.connect_dataset_interface(self.dataset, data_loader_num_workers=self.params['dataset']['num_workers'])
+            track_dir = wandb_run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
+            checkpoint_path_group = os.path.join(track_dir, wandb_run.group, 'wandb')
+            run_folder = list(filter(lambda x: str(wandb_run.id) in x, os.listdir(checkpoint_path_group)))
+            ckpt = 'ckpt_latest.pth' if 'train' in phases else 'ckpt_best.pth'
+            checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
+            self.seg_trainer.init_model(self.params, True, checkpoint_path)
+            self.seg_trainer.init_loggers({"in_params": self.params}, self.train_params, run_id=wandb_run.id)
+        except Exception as e:
+            if self.seg_trainer is not None:
+                self.seg_trainer.sg_logger.close(really=True)
+            raise e
+
+    def launch(self):
+        try:
+            if 'train' in self.phases:
+                train(self.seg_trainer, self.train_params, self.dataset, self.early_stop)
+
+            if 'test' in self.phases:
+                test_metrics = self.seg_trainer.test(**self.test_params)
+
+            if 'inference' in self.phases:
+                inference(self.seg_trainer, self.run_params, self.dataset)
+        finally:
+            if self.seg_trainer is not None:
+                self.seg_trainer.sg_logger.close(True)
 
 
 def train(seg_trainer, train_params, dataset, early_stop):
-    # ------------------------ TRAINING PHASE ------------------------
     # Callbacks
     cbcks = [
         WandbCallback(Phase.TRAIN_EPOCH_END, freq=1),
