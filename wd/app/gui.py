@@ -173,7 +173,7 @@ class TrainingInterface:
     def stop(self):
         return "Parallel"
 
-    def update_progress(self, cur_grid, cur_run, n_grids, n_runs, status, run_params):
+    def update_progress(self, cur_grid, cur_run, n_grids, n_runs, status, run_params, exception=None):
         d = {}
         for i in range(n_grids):
             if i < cur_grid:

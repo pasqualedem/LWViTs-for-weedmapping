@@ -54,7 +54,7 @@ def get_interrupted_run(input_settings):
     runs = api.runs(path=namespace, filters=filters)
     if len(runs) == 0:
         raise RuntimeError("No runs found")
-    if len(runs) > 0:
+    if len(runs) > 1:
         raise EnvironmentError("More than 1 run???")
     to_resume_run = Run()
     to_resume_run.resume(wandb_run=runs[0], updated_config=updated_config, phases=stage)
@@ -100,12 +100,15 @@ class ExpLog:
 
     def insert_run(self, i, j):
         self.exp_log.write(f'{i} {j},')
+        self.exp_log.flush()
 
     def finish_run(self):
         self.exp_log.write(self.FINISHED)
+        self.exp_log.flush()
 
     def crash_run(self):
         self.exp_log.write(self.CRASHED)
+        self.exp_log.flush()
 
     def get_last_run(self):
         lines = self.exp_log.readlines()

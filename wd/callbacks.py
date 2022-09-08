@@ -186,6 +186,8 @@ class WandbCallback(PhaseCallback):
         Logs metrics to MLFlow.
             param context: context of the current phase
         """
+        if self.phase == Phase.TRAIN_EPOCH_END:
+            wandb.log({'epoch': context.epoch})
         if context.epoch % self.freq == 0:
             wandb.log({self.prefix + k: v for k, v in context.metrics_dict.items()})
 

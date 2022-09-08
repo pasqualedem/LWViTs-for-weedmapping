@@ -50,7 +50,7 @@ class SegmentationTrainer(SgModel):
             model = model_params['name']
 
         self.build_model(model, arch_params=arch_params)
-        if resume:
+        if resume and checkpoint_path is not None:
             self.checkpoint = load_checkpoint_to_model(ckpt_local_path=checkpoint_path,
                                                        load_backbone=False,
                                                        net=self.net,

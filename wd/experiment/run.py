@@ -10,6 +10,8 @@ from wd.experiment.parameters import parse_params
 from wd.learning.seg_trainer import SegmentationTrainer
 from wd.utils.utilities import dict_to_yaml_string, values_to_number, nested_dict_update
 
+import wd.data
+
 logger = get_logger(__name__)
 
 
@@ -32,12 +34,13 @@ class Run:
             self.phases = params['phases']
 
             self.train_params, self.test_params, self.dataset_params, self.early_stop = parse_params(params)
-            self.run_params = params['run_params']
+            self.run_params = params.get('run_params') or {}
 
             self.seg_trainer = SegmentationTrainer(experiment_name=params['experiment']['group'],
                                                    ckpt_root_dir=params['experiment']['tracking_dir']
                                                    if params['experiment']['tracking_dir'] else 'wandb')
-            self.dataset = WeedMapDatasetInterface(self.dataset_params)
+            dataset_interface = self._get_dataset_interface()
+            self.dataset = dataset_interface(self.dataset_params)
             self.seg_trainer.connect_dataset_interface(self.dataset,
                                                        data_loader_num_workers=params['dataset']['num_workers'])
             self.seg_trainer.init_model(params, False, None)
@@ -63,19 +66,29 @@ class Run:
             self.seg_trainer = SegmentationTrainer(experiment_name=self.params['experiment']['group'],
                                               ckpt_root_dir=self.params['experiment']['tracking_dir']
                                               if self.params['experiment']['tracking_dir'] else 'wandb')
-            self.dataset = WeedMapDatasetInterface(self.dataset_params)
+            dataset_interface = self._get_dataset_interface()
+            self.dataset = dataset_interface(self.dataset_params)
             self.seg_trainer.connect_dataset_interface(self.dataset, data_loader_num_workers=self.params['dataset']['num_workers'])
             track_dir = wandb_run.config.get('in_params').get('experiment').get('tracking_dir') or 'wandb'
             checkpoint_path_group = os.path.join(track_dir, wandb_run.group, 'wandb')
             run_folder = list(filter(lambda x: str(wandb_run.id) in x, os.listdir(checkpoint_path_group)))
-            ckpt = 'ckpt_latest.pth' if 'train' in phases else 'ckpt_best.pth'
-            checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
+            checkpoint_path = None
+            if 'epoch' in wandb_run.summary:
+                ckpt = 'ckpt_latest.pth' if 'train' in phases else 'ckpt_best.pth'
+                checkpoint_path = os.path.join(checkpoint_path_group, run_folder[0], 'files', ckpt)
             self.seg_trainer.init_model(self.params, True, checkpoint_path)
             self.seg_trainer.init_loggers({"in_params": self.params}, self.train_params, run_id=wandb_run.id)
         except Exception as e:
             if self.seg_trainer is not None:
                 self.seg_trainer.sg_logger.close(really=True)
             raise e
+
+    def _get_dataset_interface(self):
+        try:
+            dataset_interface = getattr(wd.data, self.params['dataset_interface'])
+        except AttributeError:
+            raise AttributeError("No interface found!")
+        return dataset_interface
 
     def launch(self):
         try:
