@@ -5,7 +5,7 @@ from wd.utils.utilities import update_collection, load_yaml
 
 parser = argparse.ArgumentParser(description='Train and test models')
 parser.add_argument('action',
-                    help='Choose the action to do from: experiment, resume, resume_run, complete, preprocess, manipulate, app',
+                    help='Choose the action to perform: experiment, resume, resume_run, complete, preprocess, manipulate, app',
                     default="experiment", type=str)
 parser.add_argument('--resume', required=False, action='store_true',
                     help='Resume the experiment', default=False)

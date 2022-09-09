@@ -2,14 +2,13 @@ matplotlib
 numpy
 opencv-python
 Pillow
-# pip==21.2.4
 ruamel.yaml
 scipy
 super-gradients
-torch==1.11.0+cu113
-torchaudio==0.11.0+cu113
+torch
+torchaudio
 torchmetrics
-torchvision==0.12.0+cu113
+torchvision
 tqdm
 wandb
 transformers
