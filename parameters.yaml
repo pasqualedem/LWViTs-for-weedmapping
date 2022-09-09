@@ -11,8 +11,8 @@ experiment:
 parameters:
   tags: [[]]
   # train, test, inference
-  # phases: [[run]]
   phases: [[train, test]]
+  dataset_interface: [WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [1]
@@ -49,8 +49,6 @@ parameters:
   test_metrics:
     jaccard:
       num_classes: [3]
-    auc:
-      num_classes: [3]
     conf_mat:
       num_classes: [3]
     f1:
@@ -65,13 +63,6 @@ parameters:
       average: [macro]
       num_classes: [3]
       mdmc_average: [global]
-    perclassauc:
-      discriminator: # To discriminate between different classes
-        [[
-          ['auc_background', 0],
-          ['auc_crop', 1],
-          ['auc_weed', 2]
-        ]]
 
   model:
     name: [segnet]
