@@ -40,14 +40,14 @@ class ExpSettings(EasyDict):
         self.resume = False
         self.resume_last = False
         self.tracking_dir = ""
-        self.excluded_files = None
+        self.excluded_files = ""
         super().__init__(*args, **kwargs)
 
 
 class Experimenter:
     def __init__(self):
         self.gs = None
-        self.exp_settings = None
+        self.exp_settings = ExpSettings()
         self.grids = None
 
     def calculate_runs(self, settings):
@@ -157,6 +157,8 @@ class Experimenter:
 
     def update_settings(self, d):
         self.exp_settings = update_collection(self.exp_settings, d)
+        if self.gs is None:
+            return
         self.gs.update(self.exp_settings)
         if "resume" in d:
             self.manage_resume()

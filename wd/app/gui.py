@@ -186,8 +186,7 @@ class TrainingInterface:
 
     def set_parameters_file(self, file):
         if file is None:
-            self.experimenter.grids = None
-            self.experimenter.exp_settings = None
+            self.experimenter = Experimenter()
             return DEFAULTS({
                 "group": self.group_txt,
                 "track_dir": self.track_dir,
@@ -199,15 +198,8 @@ class TrainingInterface:
                 "exp_summary": self.exp_summary
             })
         settings = load_yaml(file.name)
-        if self.experimenter is not None:
-            if self.experimenter.exp_settings is not None:
-                d = {
-                    k: self.experimenter.exp_settings.get(k) or DEFAULTS(k) for k in
-                    ['resume', 'tracking_dir', 'group', 'start_from_grid', 'start_from_run', 'continue_with_errors']
-                }
-                settings['experiment'] = update_collection(settings['experiment'], d)
-
         self.experimenter = Experimenter()
+
         sm, grids, dots = self.experimenter.calculate_runs(settings)
         sum_mk = exp_summary_builder(self.experimenter)
         params_mk = grid_summary_builder(grids, dots)
@@ -230,8 +222,6 @@ class TrainingInterface:
     def set_exp_settings(self, name, track_dir, start_grid, start_run, flags):
         if self.experimenter is None:
             self.experimenter = Experimenter()
-        if self.experimenter.exp_settings is None:
-            self.experimenter.exp_settings = {}
         self.experimenter.update_settings({
             "resume": ("resume" in flags),
             "continue_with_errors": ("continue_with_errors" in flags),

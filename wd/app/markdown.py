@@ -1,11 +1,14 @@
 import pandas as pd
 
 from wd.utils.grid import linearized_to_string
-from wd.experiment.experiment import GridSummary, Experimenter
+from wd.experiment.experiment import Experimenter
 
 
 def exp_summary_builder(exp: Experimenter):
     txt = ""
+    if exp.gs is None:
+        return txt
+    txt += "### Experiment summary \n"
     txt += "|Property | Value |\n"
     txt += "|---------|-------|\n"
     txt += f"|Resume experiment            | {exp.exp_settings.resume} |\n"
@@ -26,7 +29,7 @@ def grid_summary_builder(grids, dot_elements):
     dfs = [pd.DataFrame(linearized_to_string(dot_element), columns=[f"Grid {i}", f"N. runs: {len(grid)}"])
            for i, (dot_element, grid) in enumerate(zip(dot_elements, grids))]
     mark_grids = "\n\n".join(df.to_markdown(index=False) for df in dfs)
-
+    mark_grids = "### Most important parameters for each grid \n" + mark_grids
     return mark_grids
 
 
