@@ -4,17 +4,18 @@ from super_gradients.training import utils as sg_utils
 from torch import Tensor
 from torch.nn import functional as F
 
-from wd.utils.utilities import filter_none
-from .backbones.mit import MiTFusion
-from wd.models.base import BaseModel
-from wd.models.heads.lawin import LawinHead
-from wd.models.heads.laweed import LaweedHead
+from ezdl.utils.utilities import filter_none
+from ezdl.models.backbones.mit import MiTFusion
+from ezdl.models.base import BaseModel
+from ezdl.models.heads.lawin import LawinHead
+from ezdl.models.heads.laweed import LaweedHead
 
 
 class BaseLawin(BaseModel):
     """
     Abstract base lawin class with free decoder head lawin based
     """
+
     def __init__(self, arch_params, lawin_class) -> None:
         num_classes = get_param(arch_params, "num_classes")
         input_channels = get_param(arch_params, "input_channels", 3)
@@ -34,8 +35,8 @@ class BaseLawin(BaseModel):
 
     def forward(self, x: Tensor) -> Tensor:
         y = self.backbone(x)
-        y = self.decode_head(y)   # 4x reduction in image size
-        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
+        y = self.decode_head(y)  # 4x reduction in image size
+        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)  # to original image shape
         return y
 
 
@@ -44,6 +45,7 @@ class Lawin(BaseLawin):
     Notes::::: This implementation has larger params and FLOPs than the results reported in the paper.
     Will update the code and weights if the original author releases the full code.
     """
+
     def __init__(self, arch_params) -> None:
         super().__init__(arch_params, LawinHead)
 
@@ -53,6 +55,7 @@ class Laweed(BaseLawin):
     Notes::::: This implementation has larger params and FLOPs than the results reported in the paper.
     Will update the code and weights if the original author releases the full code.
     """
+
     def __init__(self, arch_params) -> None:
         super().__init__(arch_params, LaweedHead)
 
@@ -62,6 +65,7 @@ class BaseDoubleLawin(BaseLawin):
     Notes::::: This implementation has larger params and FLOPs than the results reported in the paper.
     Will update the code and weights if the original author releases the full code.
     """
+
     def __init__(self, arch_params, lawin_class) -> None:
         backbone = get_param(arch_params, "backbone", 'MiT-B0')
         main_channels = get_param(arch_params, "main_channels", None)
@@ -89,8 +93,8 @@ class BaseDoubleLawin(BaseLawin):
         feat_main = self.backbone(main_channels)
         feat_side = self.side_backbone(side_channels)
         feat = self.fusion((feat_main, feat_side))
-        y = self.decode_head(feat)   # 4x reduction in image size
-        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
+        y = self.decode_head(feat)  # 4x reduction in image size
+        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)  # to original image shape
         return y
 
 
@@ -135,8 +139,8 @@ class BaseSplitLawin(BaseLawin):
         first_feat_main = self.backbone.partial_forward(main_channels, slice(0, 1))
         first_feat = self.fusion((first_feat_main, first_feat_side))[0]
         feat = (first_feat,) + self.backbone.partial_forward(first_feat, slice(1, 4))
-        y = self.decode_head(feat)   # 4x reduction in image size
-        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)    # to original image shape
+        y = self.decode_head(feat)  # 4x reduction in image size
+        y = F.interpolate(y, size=x.shape[2:], mode='bilinear', align_corners=False)  # to original image shape
         return y
 
     def initialize_param_groups(self, lr: float, training_params: HpmStruct) -> list:
@@ -144,8 +148,10 @@ class BaseSplitLawin(BaseLawin):
 
         :return: list of dictionaries containing the key 'named_params' with a list of named params
         """
+
         def f(x):
             return not (x[0].startswith('backbone') and int(x[0].split('.')[4]) == 0)
+
         freeze_pretrained = sg_utils.get_param(training_params, 'freeze_pretrained', False)
         if self.backbone_pretrained and freeze_pretrained:
             return [{'named_params': list(filter(f, list(self.named_parameters())))}]
@@ -162,11 +168,10 @@ class SplitLaweed(BaseSplitLawin):
         super().__init__(arch_params, LaweedHead)
 
 
-if __name__ == '__main__':
-    model = Lawin('MiT-B1')
-    model.eval()
-    x = torch.zeros(1, 3, 512, 512)
-    y = model(x)
-    print(y.shape)
-    from fvcore.nn import flop_count_table, FlopCountAnalysis
-    print(flop_count_table(FlopCountAnalysis(model, x)))
+# Legacy names
+lawin = Lawin
+laweed = Laweed
+doublelawin = DoubleLawin
+doublelaweed = DoubleLaweed
+splitlawin = SplitLawin
+splitlaweed = SplitLaweed

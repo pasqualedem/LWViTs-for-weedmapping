@@ -12,7 +12,7 @@ parameters:
   tags: [[]]
   # train, test, inference
   phases: [[train, test]]
-  dataset_interface: [WeedMapDatasetInterface]
+  dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [1]
