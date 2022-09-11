@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 import torch
 from PIL import Image
@@ -70,5 +72,15 @@ def preprocess(subset):
     else:
         raise NotImplementedError()
     delete_empty_imgs(outpath, channels, tempdir_check='tmp')
+
+
+parser = argparse.ArgumentParser(description='Train and test models')
+parser.add_argument('subset',
+                    help='Subset for prepocessing',
+                    default="experiment", type=str)
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    preprocess(subset=args.subset)
 
 
