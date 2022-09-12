@@ -23,7 +23,7 @@ parameters:
     loss:
       name: [focal_loss]
       params:
-        null
+        [{}]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
