@@ -1,0 +1,1 @@
+from weeddata.sequoia import WeedMapDatasetInterface
