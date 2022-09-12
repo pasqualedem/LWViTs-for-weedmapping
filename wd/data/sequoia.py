@@ -15,8 +15,8 @@ from torchvision.transforms import functional as F
 from ezdl.transforms import \
     PairRandomCrop, SegOneHot, ToLong, FixValue, Denormalize, PairRandomFlip, squeeze0, \
     PairFlip, PairFourCrop
-from weeddata.sequoia_stats import STATS as SEQUOIA_STATS
-from weeddata.rededge_stats import STATS as REDEDGE_STATS
+from wd.data.sequoia_stats import STATS as SEQUOIA_STATS
+from wd.data.rededge_stats import STATS as REDEDGE_STATS
 from sklearn.model_selection import train_test_split
 
 from torch.utils.data.distributed import DistributedSampler
