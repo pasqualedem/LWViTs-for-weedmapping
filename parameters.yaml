@@ -21,16 +21,16 @@ parameters:
     optimizer_params:
       weight_decay: [0]
     loss:
-      name: [cross_entropy]
+      name: [focal_loss]
       params:
-        weight: [[0.0273, 1.0, 4.3802]]
+        null
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True, False]
+    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -67,8 +67,9 @@ parameters:
   model:
     name: [wd/models/lawin/lawin]
     params:
-      backbone: [MiT-B0, MiT-B1]
+      backbone: [MiT-B0]
       backbone_pretrained: [True]
+      freeze_pretrained: [True]
 
   dataset:
     root: ["dataset/4_rotations_processed_007_test/Sequoia"]
@@ -80,7 +81,7 @@ parameters:
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['R', 'G'], ['NDVI'], 'CIR']
+    channels: [['R', 'G']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -96,11 +97,4 @@ parameters:
 
 
 other_grids:
-  -
-    tags: [[rotation]]
-    train_params:
-      freeze_pretrained: [True, False]
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]
+  null
