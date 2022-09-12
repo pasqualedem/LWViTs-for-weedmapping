@@ -1,6 +1,6 @@
 experiment:
-  name: weeddetection-rededge
-  group: AProva
+  name: weeddetection
+  group: RR_007_test
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -15,7 +15,7 @@ parameters:
   dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
-    max_epochs: [1]
+    max_epochs: [500]
     initial_lr: [0.0001]
     optimizer: [Adam]
     optimizer_params:
@@ -23,14 +23,14 @@ parameters:
     loss:
       name: [cross_entropy]
       params:
-        weight: [[0.0638, 1.0, 1.6817]]
+        weight: [[0.0273, 1.0, 4.3802]]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True]
+    freeze_pretrained: [True, False]
 
   early_stopping:
     enabled: [True]
@@ -65,21 +65,22 @@ parameters:
       mdmc_average: [global]
 
   model:
-    name: [segnet]
+    name: [wd/models/lawin/lawin]
     params:
-      backbone: [MiT-B0]
+      backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
-      main_channels: [2]
-      side_pretrained: ['G']
-      fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
-    root: ["dataset/processed/Sequoia"]
+    root: ["dataset/4_rotations_processed_007_test/Sequoia"]
     train_folders: [['005', '006']]
     test_folders: [['007']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
+    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G', 'RE', 'NIR']]
+    # channels: [['R', 'G']]
+    channels: [['R', 'G'], ['NDVI'], 'CIR']
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -96,9 +97,9 @@ parameters:
 
 other_grids:
   -
-    tags: [[]]
+    tags: [[rotation]]
     train_params:
-      freeze_pretrained: [True]
+      freeze_pretrained: [True, False]
       loss:
         name: [ focal ]
         params:
