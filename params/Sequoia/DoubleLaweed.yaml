@@ -1,7 +1,7 @@
 experiment:
-  name: weeddetection-rededge
-  group: Laweed
-  continue_with_errors: False
+  name: weeddetection
+  group: DoubleLaweedPrDropBatch
+  continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[rotation]]
+  tags: [[]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -24,14 +24,14 @@ parameters:
     loss:
       name: [cross_entropy]
       params:
-        weight: [[0.0638, 1.0, 1.6817]]
+        weight: [[0.0273, 1.0, 4.3802]]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True, False]
+    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -75,22 +75,21 @@ parameters:
         ]]
 
   model:
-    name: [wd/models/laweed]
+    name: [wd/models/doublelaweed]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]
+      main_channels: [2]
+      side_pretrained: ['G']
+      fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
-    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
-    train_folders: [['000', '001', '002', '004']]
-    test_folders: [['003']]
+    root: ["dataset/4_rotations_processed_005_test/Sequoia"]
+    train_folders: [['006', '007']]
+    test_folders: [['005']]
     hor_flip: [True]
     ver_flip: [True]
-    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G', 'RE', 'NIR']]
-    # channels: [['R', 'G']]
-    channels: [['R', 'G', 'B'], ['NDVI'], 'CIR']
+    channels: [['R', 'G', 'NIR', 'RE'], ['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -107,9 +106,9 @@ parameters:
 
 other_grids:
   -
-    tags: [[rotation]]
+    tags: [[]]
     train_params:
-      freeze_pretrained: [True, False]
+      freeze_pretrained: [True]
       loss:
         name: [ focal ]
         params:
