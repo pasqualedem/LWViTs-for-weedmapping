@@ -13,6 +13,7 @@ parameters:
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
+  dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [500]
@@ -74,7 +75,7 @@ parameters:
         ]]
 
   model:
-    name: [splitlaweed]
+    name: [wd/models/splitlaweed]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]

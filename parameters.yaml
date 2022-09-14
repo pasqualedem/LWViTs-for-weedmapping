@@ -65,7 +65,7 @@ parameters:
       mdmc_average: [global]
 
   model:
-    name: [wd/models/lawin/lawin]
+    name: [wd/models/lawin]
     params:
       backbone: [MiT-B0]
       backbone_pretrained: [True]

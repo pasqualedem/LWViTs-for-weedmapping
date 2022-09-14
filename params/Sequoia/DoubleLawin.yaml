@@ -13,6 +13,7 @@ parameters:
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
+  dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [500]
@@ -74,11 +75,13 @@ parameters:
         ]]
 
   model:
-    name: [doublelawin]
+    name: [wd/models/doublelawin]
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [2]
+      side_pretrained: ['G']
+      fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]

@@ -1,6 +1,6 @@
 experiment:
   name: weeddetection
-  group: LawinAugPatience
+  group: ReproductionFix
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -9,17 +9,18 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[crop, aug, B0, newPatience]]
+  tags: [[reproduction_fix]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
+  dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.001, 0.0001]
-    optimizer: [Adam]
+    initial_lr: [0.001]
+    optimizer: [SGD]
     optimizer_params:
-      weight_decay: [0, 0.0005]
+      weight_decay: [0.0005]
     loss:
       name: [cross_entropy]
       params:
@@ -34,7 +35,7 @@ parameters:
   early_stopping:
     enabled: [True]
     params:
-      patience: [20]
+      patience: [10]
       monitor: [loss]
       mode: [min]
 
@@ -73,29 +74,27 @@ parameters:
         ]]
 
   model:
-    name: [lawin]
-    params:
-      backbone: [MiT-B0]
+    name: [segnet]
+    params: [{}]
 
   dataset:
     root: ["dataset/processed/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
     hor_flip: [True]
-    ver_flip: [True]
+    ver_flip: [False]
     # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['R', 'G'], ['NDVI'], 'CIR', ['G', 'NIR', 'R'], ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    batch_size: [6]
+    channels: [['NDVI']]
+    batch_size: [5]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
     return_path: [True]
     size: [same]
-    crop_size: [[256, 256]]
 
   run_params:
     batch_size: [24]
@@ -103,4 +102,26 @@ parameters:
 
 
 other_grids:
-  null
+  -
+    train_params:
+      loss:
+        params:
+          weight: [null]
+    dataset:
+      channels: ['CIR', ['G', 'NIR', 'R']]
+  -
+    train_params:
+      loss:
+        params:
+          weight: [[0.0273, 1.0, 4.3802]]
+    dataset:
+      batch_size: [5, 6]
+      channels: [['G', 'NDVI', 'NIR', 'R', 'RE']]
+  -
+    train_params:
+      loss:
+        params:
+          weight: [null, [0.0273, 1.0, 4.3802]]
+    dataset:
+      batch_size: [6]
+      channels: [['NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE']]
