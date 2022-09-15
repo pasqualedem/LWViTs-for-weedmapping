@@ -12,6 +12,13 @@ import os
 import shutil
 
 
+INPATH = "dataset/raw"
+OUTPATH = 'dataset/processed'
+
+SEQUOIA_CHANNELS = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE']
+REDEDGE_CHANNELS = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE', 'B']
+
+
 def delete_empty_imgs(root, channels, tempdir_check=None):
     if tempdir_check:
         shutil.rmtree(tempdir_check, ignore_errors=True)
@@ -58,29 +65,17 @@ def copy_dataset(inpath, outpath):
 
 
 def preprocess(subset):
-    if subset == "SEQUOIA":
-        # SEQUOIA
-        channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE']
-        path = 'dataset/raw/Sequoia'
-        outpath = 'dataset/processed/Sequoia'
-    elif subset == "REDEDGE":
+    if subset == "Sequoia":
+        # SEQUOIA 139 removed
+        channels = SEQUOIA_CHANNELS
+    elif subset == "RedEdge":
         # REDEDGE 413 removed
-        channels = ['CIR', 'G', 'NDVI', 'NIR', 'R', 'RE', 'B']
-        path = 'dataset/raw/RedEdge'
-        outpath = 'dataset/processed/RedEdge'
-        copy_dataset(path, outpath)
+        channels = REDEDGE_CHANNELS
     else:
-        raise NotImplementedError()
-    delete_empty_imgs(outpath, channels, tempdir_check='tmp')
+        raise NotImplementedError("Not valid subset")
 
+    copy_dataset(os.path.join(INPATH, subset), OUTPATH)
+    delete_empty_imgs(os.path.join(OUTPATH, subset), channels, tempdir_check='tmp')
 
-parser = argparse.ArgumentParser(description='Train and test models')
-parser.add_argument('subset',
-                    help='Subset for prepocessing',
-                    default="experiment", type=str)
-
-if __name__ == '__main__':
-    args = parser.parse_args()
-    preprocess(subset=args.subset)
 
 

@@ -8,18 +8,32 @@ Recommended to create a Python virtual environment. Install the requirements
 
     pip install -r requirements.txt
 
-## Usage
+## Experiment reproduction
+
+### Download the WeedMap dataset
+    py wd.py download
+
+Or directly download the tiles from [here](https://projects.asl.ethz.ch/datasets/doku.php?id=weedmap:remotesensing2018weedmap)
+
+Directory tree should be like this:
+
+
+    dataset/
+    ├─ raw/
+    │  ├─ RedEdge/
+    │  ├─ Sequoia/
+
 
 ### Preprocessing
 
-    python wd/preprocessing.py <subset>
+    py wd.py preprocess --subset RedEdge
+    py wd.py preprocess --subset Sequoia
 
-where subset can be SEQUOIA or REDEDGE
+### Data augmentation
+
+    py wd.py augment --subset RedEdge
+    py wd.py augment --subset Sequoia
 
 ### Training and Testing
 
-    python ezdl experiment
-
-By default, parameters.yaml will be used. All the experiment yaml files are in the params folders, for example:
-
-    python ezdl experiment --file params/Sequoia/Focal.yaml
+    python wd.py experiment --file params/Sequoia/Focal.yaml

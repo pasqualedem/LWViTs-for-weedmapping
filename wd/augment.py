@@ -104,7 +104,7 @@ def generate_test(root, target_root, test_folders, channels):
                 .save(os.path.join(target_root, f, "tile", 'CIR', f"{name}_{k}.png"))
 
 
-def calculate():
+def augment(subset):
     """
     Calculate the mean and the standard deviation of a dataset
     """
@@ -112,20 +112,23 @@ def calculate():
     global ROTATIONS
 
     # Sequoia 277 images with weed on 337 (x4) images
-    ROTATIONS = ROTATIONS_SEQUOIA
-    root = "./dataset/processed/Sequoia"
-    train_folders = ['006', '005']
-    test_folders = ['007']
-    target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
-    channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
-
-    # RedEdge 1285 images with weed on 455 (x4) images
-    # ROTATIONS = ROTATIONS_REDEDGE
-    # root = "./dataset/processed/RedEdge"
-    # train_folders = ['000', '001', '002', '004']
-    # test_folders = ['003']
-    # target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/RedEdge"
-    # channels = ['R', 'G', 'B', 'NDVI', 'NIR', 'RE']
+    if subset == "Sequoia":
+        ROTATIONS = ROTATIONS_SEQUOIA
+        root = "./dataset/processed/Sequoia"
+        train_folders = ['006', '006']
+        test_folders = ['005']
+        target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/Sequoia"
+        channels = ['R', 'G', 'NDVI', 'NIR', 'RE']
+    elif subset == "RedEdge":
+        # RedEdge 1285 images with weed on 455 (x4) images
+        ROTATIONS = ROTATIONS_REDEDGE
+        root = "./dataset/processed/RedEdge"
+        train_folders = ['000', '001', '002', '004']
+        test_folders = ['003']
+        target_root = f"./dataset/{ROTATIONS}_rotations_processed_{'-'.join(test_folders)}_test/RedEdge"
+        channels = ['R', 'G', 'B', 'NDVI', 'NIR', 'RE']
+    else:
+        raise Exception("Subset not recognized")
 
     os.makedirs(target_root, exist_ok=True)
     for f in train_folders + test_folders:
@@ -138,6 +141,3 @@ def calculate():
     generate_train(root, target_root, train_folders, channels)
     generate_test(root, target_root, test_folders, channels)
 
-
-if __name__ == '__main__':
-    calculate()
