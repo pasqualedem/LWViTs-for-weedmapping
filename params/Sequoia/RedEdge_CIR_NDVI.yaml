@@ -1,11 +1,11 @@
 experiment:
-  name: weeddetection
+  name: weedmapping-sequoia
   group: RedEdge
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
-  entity: pasqualedem
+  entity: null
   excluded_files: "*.pth"
 
 parameters:

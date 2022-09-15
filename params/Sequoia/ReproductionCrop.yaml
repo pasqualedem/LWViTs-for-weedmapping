@@ -1,11 +1,11 @@
 experiment:
-  name: weeddetection
+  name: weedmapping-sequoia
   group: ReproductionCrop
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
-  entity: pasqualedem
+  entity: null
   excluded_files: "*.pth"
 
 parameters:
@@ -79,7 +79,7 @@ parameters:
       backbone: [null]
 
   dataset:
-    root: ["dataset/processed/Sequoia"]
+    root: ["dataset/4_rotations_processed_005_test/Sequoia"]
     train_folders: [['006', '007']]
     test_folders: [['005']]
     hor_flip: [True]

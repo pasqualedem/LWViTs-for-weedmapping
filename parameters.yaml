@@ -1,36 +1,36 @@
 experiment:
-  name: weeddetection
-  group: RR_007_test
+  name: weeddetection-rededge
+  group: ReproductionCrop
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
-  entity: pasqualedem
+  entity: null
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[]]
+  tags: [[reproduction]]
   # train, test, inference
+  # phases: [[run]]
   phases: [[train, test]]
   dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.0001]
-    optimizer: [Adam]
+    initial_lr: [0.001]
+    optimizer: [SGD]
     optimizer_params:
-      weight_decay: [0]
+      weight_decay: [0.0005]
     loss:
-      name: [focal_loss]
+      name: [cross_entropy]
       params:
-        [{}]
+        weight: [[0.0638, 1.0, 1.6817]]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]
@@ -49,6 +49,8 @@ parameters:
   test_metrics:
     jaccard:
       num_classes: [3]
+    auc:
+      num_classes: [3]
     conf_mat:
       num_classes: [3]
     f1:
@@ -63,33 +65,36 @@ parameters:
       average: [macro]
       num_classes: [3]
       mdmc_average: [global]
+    perclassauc:
+      discriminator: # To discriminate between different classes
+        [[
+          ['auc_background', 0],
+          ['auc_crop', 1],
+          ['auc_weed', 2]
+        ]]
 
   model:
-    name: [wd/models/lawin]
-    params:
-      backbone: [MiT-B0]
-      backbone_pretrained: [True]
-      freeze_pretrained: [True]
+    name: [segnet]
+    params: [{}]
 
   dataset:
-    root: ["dataset/4_rotations_processed_007_test/Sequoia"]
-    train_folders: [['005', '006']]
-    test_folders: [['007']]
+    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
+    train_folders: [['000', '001', '002', '004']]
+    test_folders: [['003']]
     hor_flip: [True]
-    ver_flip: [True]
+    ver_flip: [False]
     # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['R', 'G']]
-    batch_size: [6]
+    channels: [['B', 'NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE', 'R', 'G', 'B']]
+    batch_size: [6, 4]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
     return_path: [True]
     size: [same]
-    crop_size: [same]
 
   run_params:
     batch_size: [24]
@@ -97,4 +102,27 @@ parameters:
 
 
 other_grids:
-  null
+  -
+    train_params:
+      loss:
+        params:
+          weight: [null]
+    dataset:
+      batch_size: [6]
+  -
+    dataset:
+      batch_size: [6]
+      channels: [['B', 'NIR', 'G', 'R', 'G', 'NIR', 'R', 'RE', 'R', 'G', 'B']]
+  -
+    dataset:
+      batch_size: [5]
+      channels: [
+        ['B', 'NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE'],
+        ['B', 'G', 'NDVI', 'NIR', 'R', 'RE', 'R', 'G', 'B'],
+        ['G', 'NIR', 'R', 'R', 'G', 'B'],
+        ['NIR', 'R', 'G', 'B'],
+        ['R', 'G', 'B'],
+        ['B', 'G', 'R'],
+        ['NDVI'],
+        ['NIR']
+      ]

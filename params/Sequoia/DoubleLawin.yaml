@@ -1,11 +1,11 @@
 experiment:
-  name: weeddetection
+  name: weedmapping-sequoia
   group: DoubleLawin
   continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
-  entity: pasqualedem
+  entity: null
   excluded_files: "*.pth"
 
 parameters:
@@ -31,7 +31,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True, False]
+    freeze_pretrained: [True]
 
   early_stopping:
     enabled: [True]

@@ -1,6 +1,6 @@
 experiment:
   name: weedmapping-rededge
-  group: Reproduction
+  group: ReproductionCrop
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -78,7 +78,7 @@ parameters:
     params: [{}]
 
   dataset:
-    root: ["dataset/processed/RedEdge"]
+    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
     train_folders: [['000', '001', '002', '004']]
     test_folders: [['003']]
     hor_flip: [True]

@@ -1,5 +1,5 @@
 experiment:
-  name: weeddetection-rededge
+  name: weedmapping-rededge
   group: DLPretrainedDrop
   continue_with_errors: True
   start_from_grid: 0
