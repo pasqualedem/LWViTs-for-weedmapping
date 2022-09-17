@@ -1,6 +1,6 @@
 experiment:
-  name: weeddetection-rededge
-  group: ReproductionCrop
+  name: weedmapping-rededge
+  group: RandomRotation
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[reproduction]]
+  tags: [[rotation]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -17,10 +17,10 @@ parameters:
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.001]
-    optimizer: [SGD]
+    initial_lr: [0.0001]
+    optimizer: [Adam]
     optimizer_params:
-      weight_decay: [0.0005]
+      weight_decay: [0]
     loss:
       name: [cross_entropy]
       params:
@@ -31,6 +31,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
+    freeze_pretrained: [True, False]
 
   early_stopping:
     enabled: [True]
@@ -74,27 +75,30 @@ parameters:
         ]]
 
   model:
-    name: [segnet]
-    params: [{}]
+    name: [wd/models/lawin]
+    params:
+      backbone: [MiT-B0, MiT-B1]
+      backbone_pretrained: [True]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
     train_folders: [['000', '001', '002', '004']]
     test_folders: [['003']]
     hor_flip: [True]
-    ver_flip: [False]
+    ver_flip: [True]
     # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
     # channels: [['R', 'G', 'RE', 'NIR']]
     # channels: [['R', 'G']]
-    channels: [['B', 'NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE', 'R', 'G', 'B']]
-    batch_size: [6, 4]
+    channels: [['R', 'G', 'B', 'NIR', 'RE']]
+    batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
     num_classes: [3]
     return_path: [True]
     size: [same]
+    crop_size: [same]
 
   run_params:
     batch_size: [24]
@@ -103,21 +107,10 @@ parameters:
 
 other_grids:
   -
+    tags: [[rotation]]
     train_params:
+      freeze_pretrained: [True, False]
       loss:
+        name: [ focal ]
         params:
-          weight: [null]
-    dataset:
-      batch_size: [6]
-  -
-    dataset:
-      batch_size: [6]
-      channels: [['B', 'NIR', 'G', 'R', 'G', 'NIR', 'R', 'RE', 'R', 'G', 'B']]
-  -
-    dataset:
-      batch_size: [5]
-      channels: [
-        ['B', 'NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE'],
-        ['B', 'G', 'NDVI', 'NIR', 'R', 'RE', 'R', 'G', 'B'],
-        ['G', 'NIR', 'R', 'R', 'G', 'B'],
-      ]
+          gamma: [ 2.0 ]
