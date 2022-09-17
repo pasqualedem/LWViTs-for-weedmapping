@@ -79,6 +79,9 @@ parameters:
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
+      main_channels: [5]
+      main_pretrained: [['R', 'G', 'B', 'G', 'G']]
+      side_pretrained: [null]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
