@@ -120,9 +120,4 @@ other_grids:
         ['B', 'NIR', 'G', 'R', 'G', 'NDVI', 'NIR', 'R', 'RE'],
         ['B', 'G', 'NDVI', 'NIR', 'R', 'RE', 'R', 'G', 'B'],
         ['G', 'NIR', 'R', 'R', 'G', 'B'],
-        ['NIR', 'R', 'G', 'B'],
-        ['R', 'G', 'B'],
-        ['B', 'G', 'R'],
-        ['NDVI'],
-        ['NIR']
       ]
