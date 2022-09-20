@@ -1,7 +1,7 @@
 experiment:
   name: weedmapping-rededge
-  group: SplitLawinFineTune
-  continue_with_errors: True
+  group: RandomRotation
+  continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
   tracking_dir: null
@@ -9,7 +9,7 @@ experiment:
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[]]
+  tags: [[rotation]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -22,9 +22,10 @@ parameters:
     optimizer_params:
       weight_decay: [0]
     loss:
-      name: [cross_entropy]
+      name: [ focal ]
       params:
-        weight: [[0.0638, 1.0, 1.6817]]
+        gamma: [ 2.0 ]
+        weight: [ [ 0.0638, 1.0, 1.6817 ] ]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -75,13 +76,10 @@ parameters:
         ]]
 
   model:
-    name: [wd/models/splitlawin]
+    name: [wd/models/lawin]
     params:
-      backbone: [MiT-B0, MiT-B1]
+      backbone: [MiT-B0]
       backbone_pretrained: [True]
-      main_channels: [3]
-      side_pretrained: ['G']
-      fusion_type: ['conv_sum', 'conv_sum_drop']
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -89,7 +87,11 @@ parameters:
     test_folders: [['003']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'B', 'NIR'], ['R', 'G', 'B', 'NDVI'], ['R', 'G', 'B', 'RE'], ['R', 'G', 'B', 'NIR', 'RE']]
+    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
+    # channels: [['R', 'G', 'RE', 'NIR']]
+    # channels: [['R', 'G']]
+    channels: [['R', 'G', 'B', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -105,11 +107,3 @@ parameters:
 
 
 other_grids:
-  -
-    tags: [[]]
-    train_params:
-      freeze_pretrained: [False]
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]
