@@ -9,7 +9,6 @@ import torch
 from PIL import Image
 from torchvision.datasets.vision import VisionDataset
 import torchvision.transforms as transforms
-from super_gradients.training.datasets.dataset_interfaces import DatasetInterface
 from torchvision.transforms import functional as F
 
 from ezdl.transforms import \
@@ -24,6 +23,8 @@ from super_gradients.training import utils as core_utils
 from super_gradients.training.datasets.mixup import CollateMixup
 from super_gradients.training.exceptions.dataset_exceptions import IllegalDatasetParameterException
 from super_gradients.common.abstractions.abstract_logger import get_logger
+
+from ezdl.data import DatasetInterface
 
 logger = get_logger(__name__)
 
