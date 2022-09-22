@@ -1,1 +1,1 @@
-from wd.data.sequoia import WeedMapDatasetInterface
+from wd.data.weedmap import WeedMapDatasetInterface

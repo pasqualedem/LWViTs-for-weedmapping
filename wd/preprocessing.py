@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from wd.data.sequoia import WeedMapDataset
+from wd.data.weedmap import WeedMapDataset
 from tqdm import tqdm
 
 import torchvision.transforms as transforms
