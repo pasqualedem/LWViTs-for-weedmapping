@@ -234,4 +234,7 @@ Final Throughput: 40.8003171531123
 Mean inference time: 199.18292841593424 ms
 Time per example 24.89786605199178 ms
 
-
+Model: deeplabv3_resnet50
+Size: (3, 256, 256)
+Mean inference time: 212.76589318847655 ms
+Time per example 26.59573664855957 ms
