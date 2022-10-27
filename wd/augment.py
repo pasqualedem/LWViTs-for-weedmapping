@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torchvision.transforms import transforms
 from torchvision.transforms import functional as F, InterpolationMode
 
-from weeddata.sequoia import WeedMapDataset
+from wd.data.weedmap import WeedMapDataset
 
 WORKERS = multiprocessing.cpu_count()
 WEED_CLASS = 2
