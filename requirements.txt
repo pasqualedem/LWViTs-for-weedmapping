@@ -1,2 +1,2 @@
 wget
-ezdl
+ezdl==0.0.3
