@@ -1,0 +1,11 @@
+venv
+dataset
+wandb
+
+.idea
+.stignore
+
+!dataset/raw/.keep
+!dataset/processed/.keep
+
+Dockerfile
