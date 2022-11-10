@@ -15,4 +15,4 @@ RUN python3 wd.py preprocess --subset Sequoia
 RUN python3 wd.py augment --subset Sequoia
 RUN python3 wd.py augment --subset Sequoia
 
-CMD ["python3", "wd.py experiment --file ./params/RedEdge/SplitLawin.yaml"]
+CMD ["python3", "wd.py", "experiment", "--file", "./params/RedEdge/SplitLawin.yaml"]
