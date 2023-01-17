@@ -86,7 +86,7 @@ parameters:
       params:
         distillation_loss:
           name: [vis_kldiv_loss]
-        variant: [stanrdad, scaled, mean]
+        variant: [standard, scaled, mean]
 
   model:
     name: [lawin]
