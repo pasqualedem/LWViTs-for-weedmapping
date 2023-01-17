@@ -65,16 +65,14 @@ class WeedMapDatasetInterface(DatasetInterface):
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
+            FixValue(source=10000, target=1)
         ]
 
         target_transform = [
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
+            FixValue(source=10000, target=1)
         ]
         period = 1
 

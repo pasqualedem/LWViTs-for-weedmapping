@@ -1,9 +1,16 @@
 venv
 dataset
 wandb
+tmp
 
 .idea
 .stignore
+.vscode
+**/__pycache__
+**/*.pyc
+**/*.pth
+
+exp_log.csv
 
 !dataset/raw/.keep
 !dataset/processed/.keep

@@ -1,15 +1,16 @@
 experiment:
-  name: weedmapping-rededge
-  group: RandomRotation
+  name: LawinKD
+  group: VIL/LawinL0
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
+  logger: clearml
   tracking_dir: null
   entity: null
   excluded_files: "*.pth"
 
 parameters:
-  tags: [[rotation]]
+  tags: [[]]
   # train, test, inference
   # phases: [[run]]
   phases: [[train, test]]
@@ -22,10 +23,10 @@ parameters:
     optimizer_params:
       weight_decay: [0]
     loss:
-      name: [ focal ]
+      name: [focal]
       params:
-        gamma: [ 2.0 ]
-        weight: [ [ 0.0638, 1.0, 1.6817 ] ]
+        weight: [[0.0273, 1.0, 4.3802]]
+        gamma: [2.0]
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -35,11 +36,9 @@ parameters:
     freeze_pretrained: [False]
 
   early_stopping:
-    enabled: [True]
-    params:
-      patience: [10]
-      monitor: [loss]
-      mode: [min]
+    patience: [10]
+    monitor: [loss]
+    mode: [min]
 
   train_metrics:
     jaccard:
@@ -50,8 +49,6 @@ parameters:
       mdmc_average: [global]
   test_metrics:
     jaccard:
-      num_classes: [3]
-    auc:
       num_classes: [3]
     conf_mat:
       num_classes: [3]
@@ -67,22 +64,34 @@ parameters:
       average: [macro]
       num_classes: [3]
       mdmc_average: [global]
-    perclassauc:
-      discriminator: # To discriminate between different classes
-        [[
-          ['auc_background', 0],
-          ['auc_crop', 1],
-          ['auc_weed', 2]
-        ]]
+
+  kd:
+    module:
+      name: [variational_information_distillation]
+      params:
+
+    teacher:
+      name: [splitlawin]
+      params:
+        backbone: [MiT-B1]
+        backbone_pretrained: [True]
+        main_channels: [3]
+        side_pretrained: ['G']
+        fusion_type: ['conv_sum']
+
+      checkpoint_path: ["checkpoints/SplitLawin.pth"]
+
+    loss:
+      name: [variational_information_logits_loss]
+      params:
+        distillation_loss:
+          name: [vis_kldiv_loss]
+        variant: [stanrdad, scaled, mean]
 
   model:
-    name: [wd/models/lawin]
+    name: [lawin]
     params:
-      backbone: [MiT-B0]
-      backbone_pretrained: [True]
-      main_channels: [5]
-      main_pretrained: [['R', 'G', 'B', 'G', 'G']]
-      side_pretrained: [null]
+      backbone: [MiT-L0]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -90,10 +99,6 @@ parameters:
     test_folders: [['003']]
     hor_flip: [True]
     ver_flip: [True]
-    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G', 'RE', 'NIR']]
-    # channels: [['R', 'G']]
     channels: [['R', 'G', 'B', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
