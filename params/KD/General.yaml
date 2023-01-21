@@ -1,6 +1,6 @@
 experiment:
   name: LawinKD
-  group: NoDistillation
+  group: General
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -65,12 +65,34 @@ parameters:
       num_classes: [3]
       mdmc_average: [global]
 
+  kd:
+    module:
+      name: [variational_information_distillation]
+      params:
+
+    teacher:
+      name: [splitlawin]
+      params:
+        backbone: [MiT-B1]
+        backbone_pretrained: [True]
+        main_channels: [3]
+        side_pretrained: ['G']
+        fusion_type: ['conv_sum']
+
+      checkpoint_path: ["checkpoints/SplitLawin.pth"]
+
+    loss:
+      name: [variational_information_logits_loss]
+      params:
+        distillation_loss:
+          name: [vis_kldiv_loss]
+        variant: [standard, scaled, mean]
+
 
   model:
     name: [lawin]
     params:
       backbone: [MiT-LT]
-      backbone_pretrained: [False]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -95,3 +117,14 @@ parameters:
 
 
 other_grids:
+  - kd:
+      module:
+        name: [feature_distillation_conv_adapter]
+      loss:
+        name: [KDFeatureLogitsLoss]
+        params:
+          distillation_loss:
+            name: [vis_kldiv_loss]
+          feature_loss:
+            name: [MSELoss]
+          variant: 
