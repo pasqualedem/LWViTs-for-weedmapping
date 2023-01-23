@@ -1,5 +1,5 @@
 experiment:
-  name: LawinKD
+  name: WeedMapKDRedEdge
   group: Logits
   continue_with_errors: False
   start_from_grid: 0

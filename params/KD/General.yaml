@@ -92,7 +92,7 @@ parameters:
   model:
     name: [lawin]
     params:
-      backbone: [MiT-LT]
+      backbone: [MiT-LT, MiT-LD, MiT-L0, MiT-L1]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -121,7 +121,7 @@ other_grids:
       module:
         name: [feature_distillation_conv_adapter]
       loss:
-        name: [KDFeatureLogitsLoss]
+        name: [kd_feature_logits_loss]
         params:
           distillation_loss:
             name: [vis_kldiv_loss]

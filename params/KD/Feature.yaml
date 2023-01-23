@@ -1,6 +1,6 @@
 experiment:
-  name: LawinKD
-  group: Logits
+  name: WeedMapKDRedEdge
+  group: Feature
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -67,7 +67,7 @@ parameters:
 
   kd:
     module:
-      name: [logits_distillation]
+      name: [variational_information_distillation]
       params:
 
     teacher:
@@ -82,11 +82,12 @@ parameters:
       checkpoint_path: ["checkpoints/SplitLawin.pth"]
 
     loss:
-      name: [kd_logits_loss]
+      name: [variational_information_logits_loss]
       params:
         distillation_loss:
           name: [vis_kldiv_loss]
-        distillation_loss_coeff: [0.8]
+        variant: [standard, scaled, mean]
+
 
   model:
     name: [lawin]
@@ -116,3 +117,14 @@ parameters:
 
 
 other_grids:
+  - kd:
+      module:
+        name: [feature_distillation_conv_adapter]
+      loss:
+        name: [kd_feature_logits_loss]
+        params:
+          distillation_loss:
+            name: [vis_kldiv_loss]
+          feature_loss:
+            name: [MSELoss]
+          variant: 

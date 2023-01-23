@@ -46,6 +46,9 @@ def cli():
         settings['experiment'] = update_collection(settings['experiment'], args.run, key='start_from_run')
         settings['experiment'] = update_collection(settings['experiment'], track_dir, key='tracking_dir')
         experiment(settings)
+    elif action == 'complexity':
+        from ezdl.complexity import complexity
+        complexity()
     else:
         raise ValueError("Action not recognized")
 

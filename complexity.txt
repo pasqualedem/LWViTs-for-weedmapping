@@ -238,3 +238,56 @@ Model: deeplabv3_resnet50
 Size: (3, 256, 256)
 Mean inference time: 212.76589318847655 ms
 Time per example 26.59573664855957 ms
+
+
+RTX 3080
+
+Model: lawin
+args: {'backbone': 'MiT-B0'}
+Batches: 16
+Size: (5, 256, 256)
+Computational complexity:       2.03 GMac
+Number of parameters:           4.93 M  
+4,931,155 total parameters.
+Mean inference time: 60.33557879638672 ms
+Time per example 3.77097367477417 ms
+
+Model: lawin
+args: {'backbone': 'MiT-B1'}
+Batches: 8
+Size: (5, 256, 256)
+Computational complexity:       7.67 GMac
+Number of parameters:           18.5 M  
+18,499,443 total parameters.
+Mean inference time: 53.378290374755856 ms
+Time per example 6.672286296844482 ms
+
+Model: lawin
+args: {'backbone': 'MiT-LD'}
+Batches: 32
+Size: (5, 256, 256)
+Computational complexity:       560.19 MMac
+Number of parameters:           1.34 M  
+1,342,275 total parameters.
+Mean inference time: 72.78957661437988 ms
+Time per example 2.2746742691993713 ms
+
+Model: lawin
+args: {'backbone': 'MiT-L0'}
+Batches: 48
+Size: (5, 256, 256)
+Computational complexity:       500.44 MMac
+Number of parameters:           981.19 k
+981,187 total parameters.
+Mean inference time: 103.02919407653809 ms
+Time per example 2.14644154326121 ms
+
+Model: lawin
+args: {'backbone': 'MiT-L1'}
+Batches: 64
+Size: (5, 256, 256)
+Computational complexity:       150.77 MMac
+Number of parameters:           296.57 k
+296,571 total parameters.
+Mean inference time: 94.8501953125 ms
+Time per example 1.4820343017578126 ms
