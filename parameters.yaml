@@ -1,6 +1,6 @@
 experiment:
-  name: LawinKD
-  group: Logits
+  name: WDRE
+  group: PSA
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -18,7 +18,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.0001]
+    initial_lr: [0.0001, 0.0005]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0]
@@ -32,12 +32,12 @@ parameters:
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
-    metric_to_watch: [loss]
+    metric_to_watch: [FocalLoss]
     freeze_pretrained: [False]
 
   early_stopping:
     patience: [10]
-    monitor: [loss]
+    monitor: [FocalLoss]
     mode: [min]
 
   train_metrics:
@@ -65,33 +65,11 @@ parameters:
       num_classes: [3]
       mdmc_average: [global]
 
-  kd:
-    module:
-      name: [logits_distillation]
-      params:
-
-    teacher:
-      name: [splitlawin]
-      params:
-        backbone: [MiT-B1]
-        backbone_pretrained: [True]
-        main_channels: [3]
-        side_pretrained: ['G']
-        fusion_type: ['conv_sum']
-
-      checkpoint_path: ["checkpoints/SplitLawin.pth"]
-
-    loss:
-      name: [kd_logits_loss]
-      params:
-        distillation_loss:
-          name: [vis_kldiv_loss]
-        distillation_loss_coeff: [0.8]
-
   model:
-    name: [lawin]
+    name: [wd/network/ocrnet/HRNet]
     params:
-      backbone: [MiT-LD, MiT-L0, MiT-L1]
+      pretrained: [True]
+      side_pretrained: ['G']
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -100,7 +78,7 @@ parameters:
     hor_flip: [True]
     ver_flip: [True]
     channels: [['R', 'G', 'B', 'NIR', 'RE']]
-    batch_size: [6]
+    batch_size: [4, 6, 8]
     val_batch_size: [12]
     test_batch_size: [12]
     num_workers: [0]
