@@ -66,19 +66,19 @@ class RMILoss(nn.Module):
         # ignore class
         self.ignore_index = ignore_index
 
-    def forward(self, logits_4D, labels_4D, do_rmi=True):
+    def forward(self, logits_4D, labels_4D):
         # explicitly disable fp16 mode because torch.cholesky and
         # torch.inverse aren't supported by half
         logits_4D.float()
         labels_4D.float()
-        with torch.autocast(logits_4D.device, enabled=False):
-            loss = self.forward_sigmoid(logits_4D, labels_4D, do_rmi=do_rmi)
+        with torch.autocast(logits_4D.device.type, enabled=False):
+            loss = self.forward_sigmoid(logits_4D, labels_4D)
         # if not FP16
         # else:
         #     loss = self.forward_sigmoid(logits_4D, labels_4D, do_rmi=do_rmi)
         return loss
 
-    def forward_sigmoid(self, logits_4D, labels_4D, do_rmi=False):
+    def forward_sigmoid(self, logits_4D, labels_4D):
         """
         Using the sigmiod operation both.
         Args:
@@ -111,8 +111,6 @@ class RMILoss(nn.Module):
                                                          weight=label_mask_flat.unsqueeze(dim=1),
                                                          reduction='sum')
         bce_loss = torch.div(binary_loss, valid_pixels + 1.0)
-        if not do_rmi:
-            return bce_loss
 
         # PART II -- get rmi loss
         # onehot_labels_4D -- [N, C, H, W]
