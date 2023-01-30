@@ -1,6 +1,6 @@
 experiment:
   name: WDRE
-  group: PSA/RMI_Aux
+  group: PSA/RMI
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -18,7 +18,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.0001]
+    initial_lr: [0.0001, 0.00005]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0]
@@ -30,21 +30,14 @@ parameters:
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
-    greater_metric_to_watch_is_better: [False]
-    metric_to_watch: [RMILoss]
+    greater_metric_to_watch_is_better: [True]
+    metric_to_watch: [F1Score]
     freeze_pretrained: [False]
 
-  aux_loss:
-    name: [auxiliary_loss]
-    params:
-      aux_loss: 
-        name: [cross_entropy]
-        params:
-
   early_stopping:
-    patience: [20, 25]
-    monitor: [RMILoss]
-    mode: [min]
+    patience: [10, 20]
+    monitor: [F1Score]
+    mode: [max]
 
   train_metrics:
     jaccard:
@@ -76,7 +69,6 @@ parameters:
     params:
       pretrained: [True]
       side_pretrained: ['G']
-      aux_output: [True]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
@@ -101,16 +93,10 @@ parameters:
 
 
 other_grids:
-  - aux_loss:
-      name: [auxiliary_loss]
-      params:
-        aux_loss: 
-          name: [cross_entropy]
-          params:
-            weight: [[0.0273, 1.0, 4.3802]]
-    train_params:
-      loss:
-        name: [wd/loss/loss/RMILoss]
-        params:
-          num_classes: [3]
-          weight: [[0.0273, 1.0, 4.3802]]
+  - train_params:
+      greater_metric_to_watch_is_better: [False]
+      metric_to_watch: [RMILoss]
+
+    early_stopping:
+      monitor: [RMILoss]
+      mode: [min]

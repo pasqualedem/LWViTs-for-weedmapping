@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 import torch
 
 from torch import nn
+from ezdl.models import ComposedOutput
 
 from wd.network.mynn import initialize_weights, Upsample, scale_as
 from wd.network.mynn import ResizeX
@@ -39,6 +40,7 @@ from wd.network.utils import make_attn_head
 from wd.network.ocr_utils import SpatialGather_Module, SpatialOCR_Module
 from wd.network.config import cfg
 from wd.utils import fmt_scale
+
 
 
 CHANNEL_PRETRAIN = {'R': 0, 'G': 1, 'B': 2}
@@ -113,7 +115,7 @@ class OCRNet(nn.Module):
         cls_out, aux_out, _ = self.ocr(high_level_features)
         aux_out = scale_as(aux_out, x)
         cls_out = scale_as(cls_out, x)
-        return (cls_out, aux_out) if self.aux_output else cls_out
+        return ComposedOutput(cls_out, aux_out) if self.aux_output else cls_out
     
     def init_pretrained_weights(self, weights, channel_to_load=None):
         if channel_to_load is None:
