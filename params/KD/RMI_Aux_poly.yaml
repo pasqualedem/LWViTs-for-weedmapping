@@ -1,6 +1,6 @@
 experiment:
   name: WDRE
-  group: PSA/RMI_weights
+  group: PSA/RMI_Aux_poly
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -18,7 +18,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
-    initial_lr: [0.0001]
+    initial_lr: [0.01, 0.005]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0]
@@ -34,6 +34,19 @@ parameters:
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [RMILoss]
     freeze_pretrained: [False]
+    scheduler:
+      name: [PolyLR]
+      params:
+        power: [2]
+
+  aux_loss:
+    name: [auxiliary_loss]
+    params:
+      aux_loss_coeff: [0.3]
+      aux_loss: 
+        name: [cross_entropy]
+        params:
+          weight: [[0.0273, 1.0, 4.3802]]
 
   early_stopping:
     patience: [25]
@@ -70,6 +83,7 @@ parameters:
     params:
       pretrained: [True]
       side_pretrained: ['G']
+      aux_output: [True]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
