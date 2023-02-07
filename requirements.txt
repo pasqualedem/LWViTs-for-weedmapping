@@ -1,3 +1,4 @@
 wget
 ezdl
 scikit-learn
+git+https://github.com/zsef123/Connected_components_PyTorch.git

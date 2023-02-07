@@ -1,6 +1,6 @@
 experiment:
   name: WDRE
-  group: PSA/HrnetPSAweeder/VariableLoss
+  group: PSA/RMI_Aux_exp
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -18,6 +18,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
+    initial_lr: [0.1, 0.01]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0]
@@ -26,12 +27,6 @@ parameters:
       params:
         num_classes: [3]
         weight: [[0.0273, 1.0, 4.3802]]
-    initial_lr: [0.01]
-    scheduler:
-      name: [ExpLR]
-      params:
-        gamma: [0.9]
-
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -39,22 +34,20 @@ parameters:
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [RMILoss]
     freeze_pretrained: [False]
+    scheduler:
+      name: [ExpLR]
+      params:
+        gamma: [0.5, 0.9]
 
   aux_loss:
-    name: [wd/loss/branch/BranchVariableLoss]
+    name: [auxiliary_loss]
     params:
-      min_threshold: [0.2]
-      max_threshold: [1]
-      aux_loss_weights: [[0.6, 0.2, 0.2]]
+      aux_loss_coeff: [0.3]
       aux_loss: 
         name: [cross_entropy]
         params:
           weight: [[0.0273, 1.0, 4.3802]]
-      branch_loss: 
-        name: [cross_entropy]
-        params:
-          weight: [[0.0273, 1.0, 4.3802]]
-        
+
   early_stopping:
     patience: [25]
     monitor: [RMILoss]
@@ -86,15 +79,11 @@ parameters:
       mdmc_average: [global]
 
   model:
-    name: [wd/network/ocrnet/HRNetWeeder]
+    name: [wd/network/ocrnet/HRNet]
     params:
       pretrained: [True]
       side_pretrained: ['G']
       aux_output: [True]
-      patch_dim: [2]
-      num_heads: [4]
-      embed_div: [1]
-      emb_patch_div: [1]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]

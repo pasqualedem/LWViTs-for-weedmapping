@@ -38,6 +38,7 @@ from wd.network.utils import get_trunk
 from wd.network.utils import BNReLU, get_aspp
 from wd.network.utils import make_attn_head
 from wd.network.ocr_utils import SpatialGather_Module, SpatialOCR_Module
+from wd.network.weeder import WeedLayer
 from wd.network.config import cfg
 from wd.utils import fmt_scale
 
@@ -62,6 +63,7 @@ class OCR_block(nn.Module):
                       kernel_size=3, stride=1, padding=1),
             BNReLU(ocr_mid_channels),
         )
+        self.ocr_mid_channels = ocr_mid_channels
         self.ocr_gather_head = SpatialGather_Module(num_classes)
         self.ocr_distri_head = SpatialOCR_Module(in_channels=ocr_mid_channels,
                                                  key_channels=ocr_key_channels,
@@ -101,10 +103,11 @@ class OCRNet(nn.Module):
     """
     OCR net
     """
-    def __init__(self, in_channels, num_classes, trunk='hrnetv2', aux_output=False, **kwargs):
+    def __init__(self, in_channels, num_classes, trunk='hrnetv2', aux_output=False, ocr_output=False, **kwargs):
         super(OCRNet, self).__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
+        self.ocr_output = ocr_output
         self.backbone, _, _, high_level_ch = get_trunk(trunk, trunk_params={'in_channels': in_channels})
         self.ocr = OCR_block(high_level_ch, num_classes)
         self.aux_output = aux_output
@@ -112,10 +115,18 @@ class OCRNet(nn.Module):
     def forward(self, x):
 
         _, _, high_level_features = self.backbone(x)
-        cls_out, aux_out, _ = self.ocr(high_level_features)
+        cls_out, aux_out, ocr_feats = self.ocr(high_level_features)
         aux_out = scale_as(aux_out, x)
         cls_out = scale_as(cls_out, x)
-        return ComposedOutput(cls_out, aux_out) if self.aux_output else cls_out
+        if self.aux_output:
+            if self.ocr_output:
+                return ComposedOutput(cls_out, (aux_out, ocr_feats))
+            else:
+                return ComposedOutput(cls_out, aux_out)
+        elif self.ocr_output:
+            return ComposedOutput(cls_out, ocr_feats)
+        else:
+            return cls_out
     
     def init_pretrained_weights(self, weights, channel_to_load=None):
         if channel_to_load is None:
@@ -370,6 +381,28 @@ def HRNet(arch_params):
         net.init_pretrained_weights(chk, channel_to_load)
     return net
 
+
+class HRNetWeeder(nn.Module):
+    def __init__(self, arch_params) -> None:
+        super().__init__()
+        arch_params['ocr_output'] = True
+        self.hrnet = HRNet(arch_params)
+        in_channels = self.hrnet.ocr.ocr_mid_channels
+        embed_channels = in_channels // (arch_params.get('embed_div') or 1)
+        num_classes = arch_params['num_classes']
+        patch_dim = arch_params.get('patch_dim') or 16
+        emb_patch_div = arch_params.get('emb_patch_div') or 1
+        num_heads = arch_params.get('num_heads') or 4
+        
+        self.weeder = WeedLayer(in_channels, embed_channels, patch_dim, emb_patch_div, num_heads, num_classes)
+
+    def forward(self, x):
+        probs, (aux, feats) = self.hrnet(x)
+        scaled_probs = scale_as(probs, feats)
+        adjusted_probs = self.weeder(feats, scaled_probs)
+        adjusted_probs = scale_as(adjusted_probs, x)
+        return ComposedOutput(adjusted_probs, (aux, probs))
+        
 
 def HRNet_Mscale(num_classes, criterion):
     return MscaleOCR(num_classes, trunk='hrnetv2', criterion=criterion)

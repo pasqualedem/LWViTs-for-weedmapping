@@ -1,6 +1,6 @@
 experiment:
   name: WDRE
-  group: PSA/HrnetPSAweeder/VariableLoss
+  group: PSA/HrnetPSAweeder
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -18,6 +18,7 @@ parameters:
 
   train_params:
     max_epochs: [500]
+    initial_lr: [0.0001]
     optimizer: [Adam]
     optimizer_params:
       weight_decay: [0]
@@ -26,12 +27,6 @@ parameters:
       params:
         num_classes: [3]
         weight: [[0.0273, 1.0, 4.3802]]
-    initial_lr: [0.01]
-    scheduler:
-      name: [ExpLR]
-      params:
-        gamma: [0.9]
-
     # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
@@ -41,10 +36,8 @@ parameters:
     freeze_pretrained: [False]
 
   aux_loss:
-    name: [wd/loss/branch/BranchVariableLoss]
+    name: [wd/loss/branch/BranchAuxiliaryLoss]
     params:
-      min_threshold: [0.2]
-      max_threshold: [1]
       aux_loss_weights: [[0.6, 0.2, 0.2]]
       aux_loss: 
         name: [cross_entropy]
@@ -91,7 +84,7 @@ parameters:
       pretrained: [True]
       side_pretrained: ['G']
       aux_output: [True]
-      patch_dim: [2]
+      patch_dim: [4]
       num_heads: [4]
       embed_div: [1]
       emb_patch_div: [1]
@@ -119,3 +112,15 @@ parameters:
 
 
 other_grids:
+  - train_params:
+      initial_lr: [0.01]
+      scheduler:
+        name: [PolyLR]
+        params:
+          power: [2]
+  - train_params:
+      initial_lr: [0.01]
+      scheduler:
+        name: [ExpLR]
+        params:
+          gamma: [0.9]
