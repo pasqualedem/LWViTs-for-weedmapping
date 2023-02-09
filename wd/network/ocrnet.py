@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 import torch
 
 from torch import nn
+from super_gradients.training import utils as sg_utils
 from ezdl.models import ComposedOutput
 
 from wd.network.mynn import initialize_weights, Upsample, scale_as
@@ -40,7 +41,7 @@ from wd.network.utils import make_attn_head
 from wd.network.ocr_utils import SpatialGather_Module, SpatialOCR_Module
 from wd.network.weeder import WeedLayer
 from wd.network.config import cfg
-from wd.utils import fmt_scale
+from wd.utils import fmt_scale, load_checkpoint_module_fix, load_weight_from_clearml
 
 
 
@@ -103,11 +104,12 @@ class OCRNet(nn.Module):
     """
     OCR net
     """
-    def __init__(self, in_channels, num_classes, trunk='hrnetv2', aux_output=False, ocr_output=False, **kwargs):
+    def __init__(self, in_channels, num_classes, trunk='hrnetv2', aux_output=False, ocr_output=False, lres_output=False, **kwargs):
         super(OCRNet, self).__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.ocr_output = ocr_output
+        self.lres_output = lres_output
         self.backbone, _, _, high_level_ch = get_trunk(trunk, trunk_params={'in_channels': in_channels})
         self.ocr = OCR_block(high_level_ch, num_classes)
         self.aux_output = aux_output
@@ -117,27 +119,17 @@ class OCRNet(nn.Module):
         _, _, high_level_features = self.backbone(x)
         cls_out, aux_out, ocr_feats = self.ocr(high_level_features)
         aux_out = scale_as(aux_out, x)
-        cls_out = scale_as(cls_out, x)
+        hi_res_cls_out = scale_as(cls_out, x)
+        aux_dict = {}
         if self.aux_output:
-            if self.ocr_output:
-                return ComposedOutput(cls_out, (aux_out, ocr_feats))
-            else:
-                return ComposedOutput(cls_out, aux_out)
-        elif self.ocr_output:
-            return ComposedOutput(cls_out, ocr_feats)
-        else:
-            return cls_out
-    
-    def init_pretrained_weights(self, weights, channel_to_load=None):
-        if channel_to_load is None:
-            channel_to_load = slice(self.in_channels)
-        elif isinstance(channel_to_load, str):
-            extra_channels = self.in_channels - 3 # R, G, B
-            channel_to_load = [0, 1, 2] + [CHANNEL_PRETRAIN[channel_to_load] for _ in range(extra_channels)
-            ]
-        else:
-            channel_to_load = [CHANNEL_PRETRAIN[x] for x in channel_to_load]
-
+            aux_dict['aux'] = aux_out
+        if self.ocr_output:
+            aux_dict['ocr'] = ocr_feats
+        if self.lres_output:
+            aux_dict['lres'] = cls_out
+        return ComposedOutput(hi_res_cls_out, aux_dict) if aux_dict else hi_res_cls_out
+        
+    def _init_from_rgb(self, weights, channel_to_load):
         weights['module.backbone.conv1.weight'] = \
                 weights['module.backbone.conv1.weight'][:, channel_to_load]
 
@@ -158,6 +150,25 @@ class OCRNet(nn.Module):
             raise RuntimeError(f"Missing keys not expected: {res.missing_keys}")
         if res.unexpected_keys:
             raise RuntimeError(f"Unexpected keys: {res.unexpected_keys}")
+    
+    def _init_complete(self, weights):
+        weights = load_checkpoint_module_fix(weights)
+        self.load_state_dict(weights)
+    
+    def init_pretrained_weights(self, weights, channel_to_load=None):
+        if channel_to_load is None:
+            channel_to_load = slice(self.in_channels)
+        elif isinstance(channel_to_load, str):
+            if channel_to_load == 'complete':
+                self._init_complete(weights)
+                return
+            extra_channels = self.in_channels - 3 # R, G, B
+            channel_to_load = [0, 1, 2] + [CHANNEL_PRETRAIN[channel_to_load] for _ in range(extra_channels)
+            ]
+        else:
+            channel_to_load = [CHANNEL_PRETRAIN[x] for x in channel_to_load]
+        self._init_from_rgb(weights, channel_to_load)
+
 
 class OCRNetASPP(nn.Module):
     """
@@ -375,10 +386,15 @@ def HRNet(arch_params):
     pretrained = arch_params.pop('pretrained', False)
     net = OCRNet(**arch_params, trunk='hrnetv2')
     if pretrained:
-        chk = torch.load('checkpoints/best_checkpoint_86.76_PSA_s.pth')
-        chk = chk['state_dict']
-        channel_to_load = arch_params.get('side_pretrained', None)
-        net.init_pretrained_weights(chk, channel_to_load)
+        if pretrained == True:
+            chk = torch.load('checkpoints/best_checkpoint_86.76_PSA_s.pth')
+            chk = chk['state_dict']
+            channel_to_load = arch_params.get('side_pretrained', None)
+            net.init_pretrained_weights(chk, channel_to_load)
+        elif isinstance(pretrained, str):
+            chk = load_weight_from_clearml(pretrained)
+            chk = chk['net']
+            net.init_pretrained_weights(chk, "complete")
     return net
 
 
@@ -386,6 +402,10 @@ class HRNetWeeder(nn.Module):
     def __init__(self, arch_params) -> None:
         super().__init__()
         arch_params['ocr_output'] = True
+        self.pretrained = arch_params.get('pretrained') or False
+        self.aux_output = arch_params.get('aux_output') if arch_params.get('aux_output') is not None else True
+        self.branch_output = arch_params.get('branch_output') if arch_params.get('branch_output') is not None else True
+        arch_params['lres_output'] = True
         self.hrnet = HRNet(arch_params)
         in_channels = self.hrnet.ocr.ocr_mid_channels
         embed_channels = in_channels // (arch_params.get('embed_div') or 1)
@@ -397,12 +417,29 @@ class HRNetWeeder(nn.Module):
         self.weeder = WeedLayer(in_channels, embed_channels, patch_dim, emb_patch_div, num_heads, num_classes)
 
     def forward(self, x):
-        probs, (aux, feats) = self.hrnet(x)
-        scaled_probs = scale_as(probs, feats)
-        adjusted_probs = self.weeder(feats, scaled_probs)
-        adjusted_probs = scale_as(adjusted_probs, x)
-        return ComposedOutput(adjusted_probs, (aux, probs))
+        probs, other = self.hrnet(x)
+        adjusted_probs = self.weeder(other['ocr'], other['lres'])
+        adjusted_probs_hr = scale_as(adjusted_probs, x)
+        aux_output = {}
+        if self.aux_output:
+            aux_output['aux_out'] = other['aux_out']
+        if self.branch_output:  
+            aux_output['branch_out'] = probs
+        return ComposedOutput(adjusted_probs_hr, aux_output) if aux_output else adjusted_probs_hr
         
+    def initialize_param_groups(self, lr: float, training_params) -> list:
+        """
+
+        :return: list of dictionaries containing the key 'named_params' with a list of named params
+        """
+
+        def f(x):
+            return x[0].startswith('weeder')
+
+        freeze_pretrained = sg_utils.get_param(training_params, 'freeze_pretrained', False)
+        if self.pretrained and freeze_pretrained:
+            return [{'named_params': list(filter(f, list(self.named_parameters())))}]
+        return [{'named_params': self.named_parameters()}]
 
 def HRNet_Mscale(num_classes, criterion):
     return MscaleOCR(num_classes, trunk='hrnetv2', criterion=criterion)

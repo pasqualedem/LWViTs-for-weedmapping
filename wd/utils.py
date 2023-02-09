@@ -1,3 +1,8 @@
+import torch
+
+from clearml import Task
+
+
 class AttrDict(dict):
 
     IMMUTABLE = '__immutable__'
@@ -54,3 +59,16 @@ def fmt_scale(prefix, scale):
     scale_str = str(float(scale))
     scale_str.replace('.', '')
     return f'{prefix}_{scale_str}x'
+
+
+def load_weight_from_clearml(task_name, model_name='ckpt_best'):
+    t = Task.get_task(task_name=task_name)
+    model = t.models['output'][model_name]
+    path = model.get_weights()
+    return torch.load(path)
+
+
+def load_checkpoint_module_fix(state_dict):
+    def remove_starts_with_module(x):
+        return remove_starts_with_module(x[7:]) if x.startswith('module.') else x
+    return {remove_starts_with_module(k): v for k, v in state_dict.items()}

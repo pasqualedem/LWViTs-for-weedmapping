@@ -1,5 +1,5 @@
 experiment:
-  name: WDRE
+  name: test/WDRE
   group: PSA/HrnetPSAweeder
   continue_with_errors: False
   start_from_grid: 0
