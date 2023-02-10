@@ -1,0 +1,125 @@
+experiment:
+  name: WDRE
+  group: KD/Lawin
+  continue_with_errors: False
+  start_from_grid: 0
+  start_from_run: 0
+  logger: clearml
+  tracking_dir: null
+  entity: null
+  excluded_files: "*.pth"
+
+parameters:
+  tags: [[]]
+  # train, test, inference
+  # phases: [[run]]
+  phases: [[train, test]]
+  dataset_interface: [wd/data/WeedMapDatasetInterface]
+
+  train_params:
+    max_epochs: [500]
+    initial_lr: [0.0001]
+    optimizer: [Adam]
+    optimizer_params:
+      weight_decay: [0]
+    loss:
+      name: [focal]
+      params:
+        weight: [[0.0273, 1.0, 4.3802]]
+    # ema: True
+    seed: [42]
+    zero_weight_decay_on_bias_and_bn: [True]
+    average_best_models: [False]
+    greater_metric_to_watch_is_better: [False]
+    metric_to_watch: [loss]
+    freeze_pretrained: [True]
+
+  early_stopping:
+    patience: [25]
+    monitor: [loss]
+    mode: [min]
+
+  train_metrics:
+    jaccard:
+      num_classes: [3]
+    f1:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
+  test_metrics:
+    jaccard:
+      num_classes: [3]
+    conf_mat:
+      num_classes: [3]
+    f1:
+      num_classes: [3]
+      average: [macro]
+      mdmc_average: [global]
+    precision:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
+    recall:
+      average: [macro]
+      num_classes: [3]
+      mdmc_average: [global]
+
+  kd:
+    module:
+      name: [logits_distillation]
+      params:
+
+    teacher:
+      name: [wd/network/ocrnet/HRNet]
+      params:
+        pretrained: [mythopoeic-godwit-66]
+        side_pretrained: ['G']
+        aux_output: [False]
+
+    loss:
+      name: [kd_logits_loss]
+      params:
+        distillation_loss:
+          name: [vis_kldiv_loss]
+        distillation_loss_coeff: [0.8]
+
+  model:
+    name: [lawin]
+    params:
+      backbone: [MiT-LD, MiT-L0, MiT-L1]
+
+  dataset:
+    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
+    train_folders: [['000', '001', '002', '004']]
+    test_folders: [['003']]
+    hor_flip: [True]
+    ver_flip: [True]
+    channels: [['R', 'G', 'B', 'NIR', 'RE']]
+    batch_size: [6]
+    val_batch_size: [12]
+    test_batch_size: [12]
+    num_workers: [0]
+    num_classes: [3]
+    return_path: [True]
+    size: [same]
+    crop_size: [same]
+
+  val_callbacks: 
+    SegmentationVisualizationCallback:
+  test_callbacks: 
+    SegmentationVisualizationCallback:
+
+
+other_grids:
+  - train_params:
+      initial_lr: [0.01]
+      scheduler:
+        name: [PolyLR]
+        params:
+          power: [2]
+  - train_params:
+      initial_lr: [0.01]
+      scheduler:
+        name: [ExpLR]
+        params:
+          gamma: [0.9]
