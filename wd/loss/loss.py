@@ -15,6 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ezdl.utils.utilities import substitute_values, instantiate_class
+from ezdl.loss import ComposedLoss
 from wd.loss import rmi_utils
 
 
@@ -218,3 +219,63 @@ class RMILoss(nn.Module):
 
         rmi_loss = torch.sum(rmi_per_class) if _IS_SUM else torch.mean(rmi_per_class)
         return rmi_loss
+
+
+def weighted_bce(bd_pre, target):
+    n, c, h, w = bd_pre.size()
+    log_p = bd_pre.permute(0,2,3,1).contiguous().view(1, -1)
+    target_t = target.view(1, -1)
+
+    pos_index = (target_t == 1)
+    neg_index = (target_t == 0)
+
+    weight = torch.zeros_like(log_p)
+    pos_num = pos_index.sum()
+    neg_num = neg_index.sum()
+    sum_num = pos_num + neg_num
+    weight[pos_index] = neg_num * 1.0 / sum_num
+    weight[neg_index] = pos_num * 1.0 / sum_num
+
+    loss = F.binary_cross_entropy_with_logits(log_p, target_t, weight, reduction='mean')
+
+    return loss
+
+        
+class BondaryLoss(nn.Module):
+    def __init__(self):
+        super(BondaryLoss, self).__init__()
+        
+    def forward(self, bd_pre, bd_gt):
+        return weighted_bce(bd_pre, bd_gt)
+    
+
+class PIDLoss(ComposedLoss):
+    name = 'PID'
+    def __init__(self, task_loss_fn, coeffs: float = (0.4, 21, 1, 0.8), **kwargs):
+        super().__init__()
+        self.coeffs = coeffs
+        self.task_loss_fn = task_loss_fn
+        self.bondary_loss = BondaryLoss()
+        self.aux_loss_coeff = aux_loss_coeff
+
+    @property
+    def component_names(self):
+        """
+        Component names for logging during training.
+        These correspond to 2nd item in the tuple returned in self.forward(...).
+        See super_gradients.Trainer.train() docs for more info.
+        """
+        return [self.name,
+        self.task_loss_fn.__class__.__name__,
+        self.aux_loss_fn.__class__.__name__
+        ]   
+
+    def forward(self, output, target):
+        main, output_dict = output
+        task_loss = self.task_loss_fn(main, target)
+        if isinstance(task_loss, tuple):  # SOME LOSS FUNCTIONS RETURNS LOSS AND LOG_ITEMS
+            task_loss = task_loss[0]
+        aux_loss = self.aux_loss_fn(aux, target)
+        loss = task_loss * (1 - self.aux_loss_coeff) + aux_loss * self.aux_loss_coeff
+
+        return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), aux_loss.unsqueeze(0))).detach()

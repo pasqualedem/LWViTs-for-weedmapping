@@ -3,6 +3,9 @@ import torch
 from clearml import Task
 
 
+CHANNEL_PRETRAIN = {'R': 0, 'G': 1, 'B': 2}
+
+
 class AttrDict(dict):
 
     IMMUTABLE = '__immutable__'
@@ -72,3 +75,23 @@ def load_checkpoint_module_fix(state_dict):
     def remove_starts_with_module(x):
         return remove_starts_with_module(x[7:]) if x.startswith('module.') else x
     return {remove_starts_with_module(k): v for k, v in state_dict.items()}
+
+
+def calculate_channel_to_load(channel_to_load, in_channels):
+    if channel_to_load is None:
+        channel_to_load = slice(in_channels)
+    elif isinstance(channel_to_load, str):
+        if channel_to_load == 'complete':
+            return channel_to_load
+        extra_channels = in_channels - 3 # R, G, B
+        channel_to_load = [0, 1, 2] + [CHANNEL_PRETRAIN[channel_to_load] for _ in range(extra_channels)
+        ]
+    else:
+        channel_to_load = [CHANNEL_PRETRAIN[x] for x in channel_to_load]
+    return channel_to_load
+
+
+def adapt_weights_of_first_operation(weights, first_operation, channels_to_load):
+    weights[first_operation] = \
+        weights[first_operation][:, channels_to_load]
+    return weights
