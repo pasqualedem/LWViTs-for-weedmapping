@@ -240,23 +240,16 @@ def weighted_bce(bd_pre, target):
 
     return loss
 
-        
-class BondaryLoss(nn.Module):
-    def __init__(self):
-        super(BondaryLoss, self).__init__()
-        
-    def forward(self, bd_pre, bd_gt):
-        return weighted_bce(bd_pre, bd_gt)
-    
 
-class PIDLoss(ComposedLoss):
+class SelfAdaptiveDistillationLoss(ComposedLoss):
     name = 'PID'
-    def __init__(self, task_loss_fn, coeffs: float = (0.4, 21, 1, 0.8), **kwargs):
+    def __init__(self, task_loss_fn, distillation_loss_fn, distillation_loss_coeff: float = 0.8, n_steps=10, **kwargs):
         super().__init__()
-        self.coeffs = coeffs
         self.task_loss_fn = task_loss_fn
-        self.bondary_loss = BondaryLoss()
-        self.aux_loss_coeff = aux_loss_coeff
+        self.bondary_loss = distillation_loss_fn
+        self.n_steps = n_steps
+        self.history = []
+        self.history_grad = []
 
     @property
     def component_names(self):
@@ -267,15 +260,31 @@ class PIDLoss(ComposedLoss):
         """
         return [self.name,
         self.task_loss_fn.__class__.__name__,
-        self.aux_loss_fn.__class__.__name__
+        self.distillation_loss.__class__.__name__,
+        "DLW"
         ]   
+    
+    def _calc_reduction_factor(self, dist_loss):
+        from_start = self.history[0] - dist_loss
+        grad = (self.history[-1] - dist_loss)
 
-    def forward(self, output, target):
-        main, output_dict = output
-        task_loss = self.task_loss_fn(main, target)
-        if isinstance(task_loss, tuple):  # SOME LOSS FUNCTIONS RETURNS LOSS AND LOG_ITEMS
-            task_loss = task_loss[0]
-        aux_loss = self.aux_loss_fn(aux, target)
+        self.history_grad.append(grad.item())
+        self.history.append(dist_loss.item()) 
+
+        if len(self.history) < self.n_steps:
+            return 1
+        else:
+            torch.mean(torch.tensor(self.history_grad[-self.n_steps:], device=dist_loss.device)) / from_start
+
+
+    def forward(self, kd_output, target):
+        student = kd_output.student_output
+        teacher = kd_output.teacher_output
+        task_loss = self.task_loss_fn(student, target)
+        dist_loss = self.distillation_loss_fn(student, teacher)
+        
+        weights = self._calc_reduction_factor(dist_loss)
+
         loss = task_loss * (1 - self.aux_loss_coeff) + aux_loss * self.aux_loss_coeff
 
-        return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), aux_loss.unsqueeze(0))).detach()
+        return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), dist_loss.unsqueeze(0), weights)).detach()
