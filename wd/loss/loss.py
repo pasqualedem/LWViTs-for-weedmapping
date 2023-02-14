@@ -242,13 +242,21 @@ def weighted_bce(bd_pre, target):
 
 
 class SelfAdaptiveDistillationLoss(ComposedLoss):
-    name = 'PID'
-    def __init__(self, task_loss_fn, distillation_loss_fn, distillation_loss_coeff: float = 0.8, n_steps=10, **kwargs):
+    name = 'SAD'
+    def __init__(self, task_loss_fn, distillation_loss_fn, warm_up=500, smooth_steps=100, momentum=0.0, min_grad=0.0, **kwargs):
         super().__init__()
         self.task_loss_fn = task_loss_fn
-        self.bondary_loss = distillation_loss_fn
-        self.n_steps = n_steps
-        self.history = []
+        self.distillation_loss_fn = distillation_loss_fn
+        self.warm_up = warm_up
+        self.smooth_steps = smooth_steps
+        self.momentum = momentum
+        self.min_grad = min_grad
+
+        assert warm_up > smooth_steps, "warm_up should be larger than smooth_steps"
+
+        self.is_warmup = True
+        self.first_grad = None
+        self.last_loss = None
         self.history_grad = []
 
     @property
@@ -260,31 +268,48 @@ class SelfAdaptiveDistillationLoss(ComposedLoss):
         """
         return [self.name,
         self.task_loss_fn.__class__.__name__,
-        self.distillation_loss.__class__.__name__,
+        self.distillation_loss_fn.__class__.__name__,
         "DLW"
         ]   
     
-    def _calc_reduction_factor(self, dist_loss):
-        from_start = self.history[0] - dist_loss
-        grad = (self.history[-1] - dist_loss)
+    def _calc_reduction_factor(self, dist_loss, validation=False):
+        if validation:
+            return self._cal_reduction_factor_validation(dist_loss)
 
-        self.history_grad.append(grad.item())
-        self.history.append(dist_loss.item()) 
+        if self.last_loss is not None:
+            grad = (self.last_loss - dist_loss)
+            if len(self.history_grad) > 0:
+                grad = self.momentum * self.history_grad[-1] + (1 - self.momentum) * grad
+            else:
+                grad = grad
+            grad = max(grad.item(), self.min_grad)
+            self.history_grad.append(grad)
+        self.last_loss = dist_loss.item()
 
-        if len(self.history) < self.n_steps:
-            return 1
+        if self.is_warmup:
+            if len(self.history_grad) >= self.warm_up:
+                self.is_warmup = False
+                self.first_grad = torch.mean(torch.tensor(self.history_grad, device=dist_loss.device))
+                self.history_grad = self.history_grad[-self.smooth_steps:]
+            return torch.tensor(1.0, device=dist_loss.device)
         else:
-            torch.mean(torch.tensor(self.history_grad[-self.n_steps:], device=dist_loss.device)) / from_start
+            self.history_grad.pop(0)
+            return (torch.mean(torch.tensor(self.history_grad, device=dist_loss.device)) / self.first_grad)
 
+    def _cal_reduction_factor_validation(self, dist_loss):
+        if self.is_warmup:
+            return torch.tensor(1.0, device=dist_loss.device)
+        else:
+            return (torch.mean(torch.tensor(self.history_grad, device=dist_loss.device)) / self.first_grad)    
 
-    def forward(self, kd_output, target):
+    def forward(self, kd_output, target, validation=False):
         student = kd_output.student_output
         teacher = kd_output.teacher_output
         task_loss = self.task_loss_fn(student, target)
         dist_loss = self.distillation_loss_fn(student, teacher)
         
-        weights = self._calc_reduction_factor(dist_loss)
+        weights = self._calc_reduction_factor(dist_loss, validation=validation)
 
-        loss = task_loss * (1 - self.aux_loss_coeff) + aux_loss * self.aux_loss_coeff
+        loss = task_loss * (1 - weights) + dist_loss * weights
 
-        return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), dist_loss.unsqueeze(0), weights)).detach()
+        return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), dist_loss.unsqueeze(0), weights.unsqueeze(0))).detach()
