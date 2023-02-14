@@ -17,7 +17,7 @@ parameters:
   dataset_interface: [wd/data/WeedMapDatasetInterface]
 
   train_params:
-    max_epochs: [3]
+    max_epochs: [500]
     initial_lr: [0.0001]
     optimizer: [Adam]
     optimizer_params:
