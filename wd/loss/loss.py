@@ -241,16 +241,21 @@ def weighted_bce(bd_pre, target):
     return loss
 
 
-class SelfAdaptiveDistillationLoss(ComposedLoss):
-    name = 'SAD'
-    def __init__(self, task_loss_fn, distillation_loss_fn, warm_up=500, smooth_steps=100, momentum=0.0, min_grad=0.0, **kwargs):
+def shrinked_shifted_sigmoid(x, shrink=40, shift=0.2):
+    return torch.sigmoid((x - shift) / shrink)
+
+
+class AbstractAdaptiveDistillationLoss(ComposedLoss):
+    name = 'AAD'
+    def __init__(self, warm_up=500, smooth_steps=100, momentum=0.0, min_grad=0.0, use_sigmoid=False, shrink=40, shift=40, **kwargs):
         super().__init__()
-        self.task_loss_fn = task_loss_fn
-        self.distillation_loss_fn = distillation_loss_fn
         self.warm_up = warm_up
         self.smooth_steps = smooth_steps
         self.momentum = momentum
         self.min_grad = min_grad
+        self.use_sigmoid = use_sigmoid
+        self.shrink = shrink
+        self.shift = shift
 
         assert warm_up > smooth_steps, "warm_up should be larger than smooth_steps"
 
@@ -259,19 +264,6 @@ class SelfAdaptiveDistillationLoss(ComposedLoss):
         self.last_loss = None
         self.history_grad = []
 
-    @property
-    def component_names(self):
-        """
-        Component names for logging during training.
-        These correspond to 2nd item in the tuple returned in self.forward(...).
-        See super_gradients.Trainer.train() docs for more info.
-        """
-        return [self.name,
-        self.task_loss_fn.__class__.__name__,
-        self.distillation_loss_fn.__class__.__name__,
-        "DLW"
-        ]   
-    
     def _calc_reduction_factor(self, dist_loss, validation=False):
         if validation:
             return self._cal_reduction_factor_validation(dist_loss)
@@ -300,7 +292,34 @@ class SelfAdaptiveDistillationLoss(ComposedLoss):
         if self.is_warmup:
             return torch.tensor(1.0, device=dist_loss.device)
         else:
-            return (torch.mean(torch.tensor(self.history_grad, device=dist_loss.device)) / self.first_grad)    
+            return (torch.mean(torch.tensor(self.history_grad, device=dist_loss.device)) / self.first_grad) 
+
+
+
+class SelfAdaptiveDistillationLoss(AbstractAdaptiveDistillationLoss):
+    name = 'SAD'
+    def __init__(self, task_loss_fn, distillation_loss_fn, warm_up=500, smooth_steps=100, momentum=0.0, min_grad=0.0, use_sigmoid=False, shrink=40, shift=0.2, **kwargs):
+        super().__init__(warm_up, smooth_steps, momentum, min_grad, use_sigmoid, shrink, shift)
+        self.task_loss_fn = task_loss_fn
+        self.distillation_loss_fn = distillation_loss_fn
+
+    @property
+    def component_names(self):
+        """
+        Component names for logging during training.
+        These correspond to 2nd item in the tuple returned in self.forward(...).
+        See super_gradients.Trainer.train() docs for more info.
+        """
+        return [self.name,
+        self.task_loss_fn.__class__.__name__,
+        self.distillation_loss_fn.__class__.__name__,
+        "DLW",
+        "DLWL"
+        ] if self.use_sigmoid else [self.name,
+        self.task_loss_fn.__class__.__name__,
+        self.distillation_loss_fn.__class__.__name__,
+        "DLW"
+        ]   
 
     def forward(self, kd_output, target, validation=False):
         student = kd_output.student_output
@@ -309,7 +328,44 @@ class SelfAdaptiveDistillationLoss(ComposedLoss):
         dist_loss = self.distillation_loss_fn(student, teacher)
         
         weights = self._calc_reduction_factor(dist_loss, validation=validation)
+        if self.use_sigmoid:
+            logits_weights = shrinked_shifted_sigmoid(weights, shrink=self.shrink, shift=self.shift) 
+            loss = task_loss * (1 - logits_weights) + dist_loss * logits_weights
+            return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), dist_loss.unsqueeze(0), weights.unsqueeze(0), logits_weights.unsqueeze(0))).detach()
 
         loss = task_loss * (1 - weights) + dist_loss * weights
 
         return loss, torch.cat((loss.unsqueeze(0), task_loss.unsqueeze(0), dist_loss.unsqueeze(0), weights.unsqueeze(0))).detach()
+
+
+class MergingDistillationLoss(ComposedLoss):
+    name = 'SAD'
+    def __init__(self, teacher_loss_fn, task_loss_fn, warm_up=500, smooth_steps=100, momentum=0.0, min_grad=0.0, use_sigmoid=False, shrink=40, shift=40, **kwargs):
+        super().__init__(warm_up, smooth_steps, momentum, min_grad, use_sigmoid, shrink, shift)
+        self.task_loss_fn = task_loss_fn
+        self.teacher_loss_fn = teacher_loss_fn
+
+    @property
+    def component_names(self):
+        """
+        Component names for logging during training.
+        These correspond to 2nd item in the tuple returned in self.forward(...).
+        See super_gradients.Trainer.train() docs for more info.
+        """
+        return [self.name,
+        self.teacher_loss_fn.__class__.__name__,
+        ]
+
+    def forward(self, kd_output, target, validation=False):
+        student = kd_output.student_output
+        teacher = kd_output.teacher_output
+        teacher_loss_map = self.teacher_loss_fn(teacher, target)
+        teacher_loss_map = teacher_loss_map / torch.max(teacher_loss_map)
+
+        soft_target = teacher * (1 - teacher_loss_map) *  + teacher_loss_map * target
+
+        teacher_loss = teacher_loss_map.mean()
+        
+        loss = self.task_loss_fn(student, soft_target)
+
+        return loss, torch.cat((loss.unsqueeze(0), teacher_loss.unsqueeze(0))).detach()

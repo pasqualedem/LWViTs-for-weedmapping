@@ -1,6 +1,6 @@
 experiment:
   name: WDRE
-  group: KD/AdaptiveLoss
+  group: KD/AdaptiveLoss/Sigmoid
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -84,11 +84,14 @@ parameters:
           name: [vis_kldiv_loss]
         warm_up: [500, 2000]
         smooth_steps: [100]
+        use_sigmoid: [True]
+        shrink: [0.025]
+        shift: [0.2]
 
   model:
     name: [lawin]
     params:
-      backbone: [MiT-LD, MiT-L0, MiT-L1]
+      backbone: [MiT-L0]
 
   dataset:
     root: ["dataset/0_rotations_processed_003_test/RedEdge"]
