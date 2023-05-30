@@ -34,6 +34,7 @@ class WeedMapDatasetInterface(DatasetInterface):
         'sequoia': SEQUOIA_STATS,
         'rededge': REDEDGE_STATS
     }
+    size = (5, 256, 256)
 
     def __init__(self, dataset_params, name=None):
         super(WeedMapDatasetInterface, self).__init__(dataset_params)
@@ -44,6 +45,7 @@ class WeedMapDatasetInterface(DatasetInterface):
             if name != os.path.basename(os.path.normpath(dataset_params.root)).lower():
                 raise ValueError(f'Warning! Dataset name should match the dataset, found: {name}, {dataset_params.root}')
         self.dataset_name = name
+        self.size = (len(channels), ) + self.size[1:]
 
         mean, std = self.get_mean_std(dataset_params['train_folders'], channels, name)
 
@@ -65,16 +67,14 @@ class WeedMapDatasetInterface(DatasetInterface):
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
+            FixValue(source=10000, target=1)
         ]
 
         target_transform = [
             transforms.PILToTensor(),
             squeeze0,
             ToLong(),
-            FixValue(source=10000, target=1),
-            SegOneHot(num_classes=len(WeedMapDataset.CLASS_LABELS.keys()))
+            FixValue(source=10000, target=1)
         ]
         period = 1
 

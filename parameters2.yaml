@@ -1,6 +1,6 @@
 experiment:
   name: weedmapping-rededge
-  group: SplitLawin
+  group: SplitLawinFineTune
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -24,12 +24,13 @@ parameters:
       name: [cross_entropy]
       params:
         weight: [[0.0638, 1.0, 1.6817]]
+    # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True]
+    freeze_pretrained: [False]
 
   early_stopping:
     patience: [10]
@@ -59,7 +60,7 @@ parameters:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [3]
-      fusion_type: [squeeze_excite]
+      fusion_type: [conv_sum]
       side_pretrained: ['G']
 
   dataset:
