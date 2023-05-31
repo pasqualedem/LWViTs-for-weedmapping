@@ -21,9 +21,9 @@ parameters:
     optimizer_params:
       weight_decay: [0]
     loss:
-      name: [cross_entropy]
+      name: [ focal ]
       params:
-        weight: [[0.0638, 1.0, 1.6817]]
+        gamma: [ 2.0 ]
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
@@ -87,9 +87,3 @@ parameters:
       batch_idxs: [[4, 16]]
 
 other_grids:
-  -
-    train_params:
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]
