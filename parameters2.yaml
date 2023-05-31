@@ -60,7 +60,7 @@ parameters:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [3]
-      fusion_type: [conv_sum]
+      fusion_type: [squeeze_excite]
       side_pretrained: ['G']
 
   dataset:
