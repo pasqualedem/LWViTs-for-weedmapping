@@ -31,7 +31,7 @@ class BaseLawin(BaseModel):
                 self.main_pretrained = [pretrained_channels] * input_channels
             else:
                 self.main_pretrained = pretrained_channels
-            self.backbone.init_pretrained_weights(self.main_pretrained)
+            self.backbone.init_pretrained_weights(channels_to_load=self.main_pretrained)
 
     def forward(self, x: Tensor) -> Tensor:
         y = self.backbone(x)
@@ -80,7 +80,7 @@ class BaseDoubleLawin(BaseLawin):
         if self.side_pretrained is not None:
             if isinstance(self.side_pretrained, str):
                 self.side_pretrained = [self.side_pretrained] * self.side_channels
-            self.side_backbone.init_pretrained_weights(self.side_pretrained)
+            self.side_backbone.init_pretrained_weights(channels_to_load=self.side_pretrained)
         p_local = get_param(arch_params, "p_local", None)
         p_glob = get_param(arch_params, "p_glob", None)
         fusion_type = get_param(arch_params, "fusion_type", None)
@@ -125,7 +125,7 @@ class BaseSplitLawin(BaseLawin):
         if self.side_pretrained is not None:
             if isinstance(self.side_pretrained, str):
                 self.side_pretrained = [self.side_pretrained] * self.side_channels
-            self.side_backbone.init_pretrained_weights(self.side_pretrained)
+            self.side_backbone.init_pretrained_weights(channels_to_load=self.side_pretrained)
         p_local = get_param(arch_params, "p_local", None)
         p_glob = get_param(arch_params, "p_glob", None)
         fusion_type = get_param(arch_params, "fusion_type", None)

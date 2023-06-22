@@ -1,7 +1,13 @@
 venv
+lightvenv
 dataset
 wandb
+checkpoints
 
+**/.pyc
+**/__pycache__
+
+.vscode
 .idea
 .stignore
 

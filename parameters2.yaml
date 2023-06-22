@@ -1,6 +1,6 @@
 experiment:
   name: weedmapping-rededge
-  group: SplitLawin
+  group: SplitLawinFineTune
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
@@ -24,12 +24,13 @@ parameters:
       name: [ focal ]
       params:
         gamma: [ 2.0 ]
+    # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True]
+    freeze_pretrained: [False]
 
   early_stopping:
     patience: [10]
