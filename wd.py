@@ -46,6 +46,9 @@ def cli():
         settings['experiment'] = update_collection(settings['experiment'], args.run, key='start_from_run')
         settings['experiment'] = update_collection(settings['experiment'], track_dir, key='tracking_dir')
         experiment(settings)
+    elif action == 'crosstest':
+        from wd.crosstest import crosstest
+        crosstest()
     else:
         raise ValueError("Action not recognized")
 
