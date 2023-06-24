@@ -1,10 +1,10 @@
 experiment:
-  name: weedmapping-sequoia
-  group: DoubleLawinFineTune
+  name: weedmapping-rededge
+  group: SplitLawin
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
-  tracking_dir: /experiments
+  tracking_dir: null
   logger: wandb
   entity: null
   excluded_files: "*.pth"
@@ -29,7 +29,7 @@ parameters:
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [False]
+    freeze_pretrained: [True]
 
   early_stopping:
     patience: [10]
@@ -54,21 +54,21 @@ parameters:
         ]]
 
   model:
-    name: [wd/models/doublelawin]
+    name: [wd/models/splitlawin]
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
-      main_channels: [2]
+      main_channels: [3]
       fusion_type: [conv_sum, conv_sum_drop, squeeze_excite]
-      side_pretrained: ['G']
+      side_pretrained: [null]
 
   dataset:
-    root: ["dataset/4_rotations_processed_005_test/Sequoia"]
-    train_folders: [['006', '007']]
-    test_folders: [['005']]
+    root: ["dataset/0_rotations_processed_003_test/RedEdge"]
+    train_folders: [['000', '001', '002', '004']]
+    test_folders: [['003']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
+    channels: [['R', 'G', 'B', 'NIR'], ['R', 'G', 'B', 'NDVI'], ['R', 'G', 'B', 'RE'], ['R', 'G', 'B', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]

@@ -1,10 +1,10 @@
 experiment:
   name: weedmapping-rededge
-  group: SplitLawinFineTune
+  group: DoubleLawinFineTune
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
-  tracking_dir: null
+  tracking_dir: /ext/pasquale/experiments
   logger: wandb
   entity: null
   excluded_files: "*.pth"
@@ -24,7 +24,6 @@ parameters:
       name: [ focal ]
       params:
         gamma: [ 2.0 ]
-    # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
@@ -55,12 +54,12 @@ parameters:
         ]]
 
   model:
-    name: [wd/models/splitlawin]
+    name: [wd/models/doublelawin]
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [3]
-      fusion_type: [squeeze_excite]
+      fusion_type: [conv_sum, conv_sum_drop, squeeze_excite]
       side_pretrained: ['G']
 
   dataset:
