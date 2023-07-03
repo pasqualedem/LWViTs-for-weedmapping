@@ -1,0 +1,53 @@
+Backbone,Loss,Used Weights,Strategy,Channels,F1,AUC
+MiT-B0,Cross Entropy,G,Fine-Tuning,NDVI,0.718,0.97
+MiT-B0,Cross Entropy,G,Freeze,NDVI,0.626,0.778
+MiT-B0,Cross Entropy,"G, G, R",Fine-Tuning,CIR,0.773,0.984
+MiT-B0,Cross Entropy,"G, G, R",Freeze,CIR,0.731,0.935
+MiT-B0,Cross Entropy,R,Fine-Tuning,NDVI,0.657,0.791
+MiT-B0,Cross Entropy,R,Freeze,NDVI,0.638,0.906
+MiT-B0,Cross Entropy,"R, G, B",Fine-Tuning,CIR,0.735,0.949
+MiT-B0,Cross Entropy,"R, G, B",Fine-Tuning,"R, G, B",0.748,0.964
+MiT-B0,Cross Entropy,"R, G, B",Fine-Tuning,"R, G, B, NIR, RE",0.743,0.988
+MiT-B0,Cross Entropy,"R, G, B",Freeze,CIR,0.731,0.968
+MiT-B0,Cross Entropy,"R, G, B",Freeze,"R, G, B",0.712,0.964
+MiT-B0,Cross Entropy,"R, G, B, G, G",Fine-Tuning,"R, G, B, NIR, RE",0.744,0.985
+MiT-B0,Cross Entropy,"R, G, B, G, G",Freeze,"R, G, B, NIR, RE",0.724,0.979
+MiT-B0,Focal,G,Fine-Tuning,NDVI,0.691,0.871
+MiT-B0,Focal,G,Freeze,NDVI,0.749,0.774
+MiT-B0,Focal,"G, G, R",Fine-Tuning,CIR,0.856,0.908
+MiT-B0,Focal,"G, G, R",Freeze,CIR,0.818,0.964
+MiT-B0,Focal,R,Fine-Tuning,NDVI,0.802,0.924
+MiT-B0,Focal,R,Freeze,NDVI,0.736,0.922
+MiT-B0,Focal,"R, G, B",Fine-Tuning,CIR,0.827,0.948
+MiT-B0,Focal,"R, G, B",Fine-Tuning,"R, G, B",0.851,0.964
+MiT-B0,Focal,"R, G, B",Fine-Tuning,"R, G, B, NIR, RE",0.753,0.974
+MiT-B0,Focal,"R, G, B",Freeze,CIR,0.822,0.924
+MiT-B0,Focal,"R, G, B",Freeze,"R, G, B",0.829,0.949
+MiT-B0,Focal,"R, G, B, G, G",Fine-Tuning,"R, G, B, NIR, RE",0.856,0.96
+MiT-B0,Focal,"R, G, B, G, G",Freeze,"R, G, B, NIR, RE",0.825,0.962
+MiT-B1,Cross Entropy,G,Fine-Tuning,NDVI,0.746,0.941
+MiT-B1,Cross Entropy,G,Freeze,NDVI,0.574,0.892
+MiT-B1,Cross Entropy,"G, G, R",Fine-Tuning,CIR,0.674,0.949
+MiT-B1,Cross Entropy,"G, G, R",Freeze,CIR,0.758,0.967
+MiT-B1,Cross Entropy,R,Fine-Tuning,NDVI,0.58,0.854
+MiT-B1,Cross Entropy,R,Freeze,NDVI,0.577,0.874
+MiT-B1,Cross Entropy,"R, G, B",Fine-Tuning,CIR,0.767,0.985
+MiT-B1,Cross Entropy,"R, G, B",Fine-Tuning,"R, G, B",0.722,0.977
+MiT-B1,Cross Entropy,"R, G, B",Fine-Tuning,"R, G, B, NIR, RE",0.748,0.99
+MiT-B1,Cross Entropy,"R, G, B",Freeze,CIR,0.73,0.97
+MiT-B1,Cross Entropy,"R, G, B",Freeze,"R, G, B",0.726,0.971
+MiT-B1,Cross Entropy,"R, G, B, G, G",Fine-Tuning,"R, G, B, NIR, RE",0.752,0.984
+MiT-B1,Cross Entropy,"R, G, B, G, G",Freeze,"R, G, B, NIR, RE",0.71,0.973
+MiT-B1,Focal,G,Fine-Tuning,NDVI,0.773,0.803
+MiT-B1,Focal,G,Freeze,NDVI,0.734,0.767
+MiT-B1,Focal,"G, G, R",Fine-Tuning,CIR,0.857,0.929
+MiT-B1,Focal,"G, G, R",Freeze,CIR,0.836,0.943
+MiT-B1,Focal,R,Fine-Tuning,NDVI,0.719,0.817
+MiT-B1,Focal,R,Freeze,NDVI,0.765,0.698
+MiT-B1,Focal,"R, G, B",Fine-Tuning,CIR,0.852,0.957
+MiT-B1,Focal,"R, G, B",Fine-Tuning,"R, G, B",0.849,0.949
+MiT-B1,Focal,"R, G, B",Fine-Tuning,"R, G, B, NIR, RE",0.767,0.94
+MiT-B1,Focal,"R, G, B",Freeze,CIR,0.838,0.954
+MiT-B1,Focal,"R, G, B",Freeze,"R, G, B",0.836,0.93
+MiT-B1,Focal,"R, G, B, G, G",Fine-Tuning,"R, G, B, NIR, RE",0.855,0.954
+MiT-B1,Focal,"R, G, B, G, G",Freeze,"R, G, B, NIR, RE",0.82,0.879

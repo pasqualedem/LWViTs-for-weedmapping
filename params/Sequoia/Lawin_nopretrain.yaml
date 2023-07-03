@@ -4,14 +4,13 @@ experiment:
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
-  tracking_dir: null
+  tracking_dir: /ext/pasquale/experiments
+  logger: wandb
   entity: null
   excluded_files: "*.pth"
 
 parameters:
   tags: [[rotation]]
-  # train, test, inference
-  # phases: [[run]]
   phases: [[train, test]]
   dataset_interface: [wd/data/WeedMapDatasetInterface]
 
@@ -25,47 +24,27 @@ parameters:
       name: [cross_entropy]
       params:
         weight: [[0.0273, 1.0, 4.3802]]
-    # ema: True
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
     greater_metric_to_watch_is_better: [False]
     metric_to_watch: [loss]
-    freeze_pretrained: [True, False]
+    freeze_pretrained: [False]
 
   early_stopping:
-    enabled: [True]
-    params:
-      patience: [10]
-      monitor: [loss]
-      mode: [min]
+    patience: [10]
+    monitor: [loss]
+    mode: [min]
 
   train_metrics:
-    jaccard:
-      num_classes: [3]
-    f1:
-      average: [macro]
-      num_classes: [3]
-      mdmc_average: [global]
+    f1: &metric_params
+      num_classes: &num_classes [3]
   test_metrics:
-    jaccard:
-      num_classes: [3]
-    auc:
-      num_classes: [3]
-    conf_mat:
-      num_classes: [3]
-    f1:
-      num_classes: [3]
-      average: [macro]
-      mdmc_average: [global]
-    precision:
-      average: [macro]
-      num_classes: [3]
-      mdmc_average: [global]
-    recall:
-      average: [macro]
-      num_classes: [3]
-      mdmc_average: [global]
+    jaccard: *metric_params
+    conf_mat: *metric_params
+    f1: *metric_params
+    precision: *metric_params
+    recall: *metric_params
     perclassauc:
       discriminator: # To discriminate between different classes
         [[
@@ -79,6 +58,7 @@ parameters:
     params:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
+      main_pretrained: [['R', 'G']]
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]
@@ -86,11 +66,7 @@ parameters:
     test_folders: [['005']]
     hor_flip: [True]
     ver_flip: [True]
-    # channels: ['CIR', ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G'], 'CIR', ['R', 'G', 'RE', 'NIR'], ['G', 'NDVI', 'NIR', 'R', 'RE']]
-    # channels: [['R', 'G', 'RE', 'NIR']]
-    # channels: [['R', 'G']]
-    channels: [['R', 'G'], ['NDVI'], 'CIR', ['R', 'G', 'NIR', 'RE']]
+    channels: [['R', 'G', 'NIR', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
@@ -100,16 +76,18 @@ parameters:
     size: [same]
     crop_size: [same]
 
-  run_params:
-    batch_size: [24]
-    run_folders: [["007"]]
-
+  test_callbacks:
+    PerExampleMetricCallback:
+      phase: [TEST_BATCH_END]
+    SegmentationVisualizationCallback:
+  val_callbacks: 
+    SegmentationVisualizationCallback: 
+      batch_idxs: [[4, 16]]
 
 other_grids:
   -
     tags: [[rotation]]
     train_params:
-      freeze_pretrained: [True, False]
       loss:
         name: [ focal ]
         params:

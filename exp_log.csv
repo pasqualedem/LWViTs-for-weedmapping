@@ -262,7 +262,7 @@ weedmapping-rededge,SplitLawin,1,5,False,27-05-2023T22:00:57,27-05-2023T23:18:15
 weedmapping-rededge,SplitLawin,1,6,False,27-05-2023T23:18:15,28-05-2023T00:24:12
 weedmapping-rededge,SplitLawin,1,7,False,28-05-2023T00:24:12,28-05-2023T01:44:47
 weedmapping-rededge,SplitLawinFineTune,0,3,False,30-05-2023T13:14:36,30-05-2023T14:04:02
-weedmapping-rededge,DLPretrainedDrop,0,0,False,29-05-2023T09:19:21,29-05-2023T09:57:25
+weedmapping-rededge,DLPretrainedDrop,0,0,True,03-07-2023T10:20:05,03-07-2023T10:20:24
 weedmapping-rededge,DLPretrainedDrop,0,1,False,29-05-2023T09:57:25,29-05-2023T10:48:33
 weedmapping-rededge,DLPretrainedDrop,0,2,False,29-05-2023T10:48:33,29-05-2023T11:34:49
 weedmapping-rededge,DLPretrainedDrop,0,3,False,29-05-2023T11:34:49,29-05-2023T12:22:29

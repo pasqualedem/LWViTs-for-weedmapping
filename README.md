@@ -1,7 +1,6 @@
 # ViTs for WeedMapping
 
-Different experiments for the adaptation of the Lawin transformer architecture
-for the Weed Mapping task, on the WeedMap dataset.
+Github repo for the paper "Lightweight Vision Transformers for Weed Mapping From Drones"
 
 ## Installation
 Recommended to create a Python virtual environment. Install the requirements
