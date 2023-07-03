@@ -1,4 +1,4 @@
-# ViTs for WeedMapping
+# Multispectral channel Fusion for WeedMapping using Vision Transformers
 
 Github repo for the paper "Weed Mapping in Multispectral Drone Imagery using Lightweight Vision Transformers"
 
