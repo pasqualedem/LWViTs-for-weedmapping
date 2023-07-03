@@ -1,6 +1,6 @@
 # ViTs for WeedMapping
 
-Github repo for the paper "Lightweight Vision Transformers for Weed Mapping From Drones"
+Github repo for the paper "Weed Mapping in Multispectral Drone Imagery using Lightweight Vision Transformers"
 
 ## Installation
 Recommended to create a Python virtual environment. Install the requirements
