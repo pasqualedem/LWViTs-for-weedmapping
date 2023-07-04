@@ -35,6 +35,6 @@ Directory tree should be like this:
 
 ### Training and Testing
 
-    python wd.py experiment --file params/RedEdge/SplitLawin.yaml
+    python wd.py experiment --file params/Rheinbach/SplitLawin.yaml
 
 Refer to the params folder for the different experiments made
