@@ -1,97 +1,73 @@
-Backbone,Fusion,Loss,Multispectral Pretraining,Strategy,Channels,F1,AUC
-MiT-B0,Conv,Cross Entropy,True,Freeze,"R, G, NDVI",0.548,0.996
-MiT-B0,Conv,Cross Entropy,True,Freeze,"R, G, NIR",0.519,0.97
-MiT-B0,Conv,Cross Entropy,True,Freeze,"R, G, NIR, RE",0.493,0.963
-MiT-B0,Conv,Cross Entropy,True,Freeze,"R, G, RE",0.56,0.974
-MiT-B0,Conv,Focal,True,Fine-Tuning,"R, G, NDVI",0.373,0.975
-MiT-B0,Conv,Focal,True,Fine-Tuning,"R, G, NIR",0.45,0.945
-MiT-B0,Conv,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.542,0.961
-MiT-B0,Conv,Focal,True,Fine-Tuning,"R, G, RE",0.476,0.936
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NDVI",0.597,0.97
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NDVI",0.601,0.973
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NIR",0.494,0.929
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NIR",0.428,0.886
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NIR, RE",0.453,0.946
-MiT-B0,Conv,Focal,True,Freeze,"R, G, NIR, RE",0.454,0.938
-MiT-B0,Conv,Focal,True,Freeze,"R, G, RE",0.478,0.952
-MiT-B0,Conv,Focal,True,Freeze,"R, G, RE",0.47,0.933
-MiT-B0,Conv,Focal,False,Freeze,"R, G, NDVI",0.34,0.941
-MiT-B0,Conv,Focal,False,Freeze,"R, G, NIR",0.495,0.851
-MiT-B0,Conv,Focal,False,Freeze,"R, G, NIR, RE",0.47,0.956
-MiT-B0,Conv,Focal,False,Freeze,"R, G, RE",0.436,0.915
-MiT-B0,Conv Drop,Cross Entropy,True,Freeze,"R, G, NDVI",0.504,0.984
-MiT-B0,Conv Drop,Cross Entropy,True,Freeze,"R, G, NIR",0.481,0.955
-MiT-B0,Conv Drop,Cross Entropy,True,Freeze,"R, G, NIR, RE",0.56,0.948
-MiT-B0,Conv Drop,Cross Entropy,True,Freeze,"R, G, RE",0.535,0.952
-MiT-B0,Conv Drop,Focal,True,Fine-Tuning,"R, G, NDVI",0.421,0.99
-MiT-B0,Conv Drop,Focal,True,Fine-Tuning,"R, G, NIR",0.468,0.93
-MiT-B0,Conv Drop,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.443,0.977
-MiT-B0,Conv Drop,Focal,True,Fine-Tuning,"R, G, RE",0.494,0.936
-MiT-B0,Conv Drop,Focal,True,Freeze,"R, G, NDVI",0.54,0.988
-MiT-B0,Conv Drop,Focal,True,Freeze,"R, G, NIR",0.404,0.903
-MiT-B0,Conv Drop,Focal,True,Freeze,"R, G, NIR, RE",0.43,0.957
-MiT-B0,Conv Drop,Focal,True,Freeze,"R, G, RE",0.458,0.932
-MiT-B0,Conv Drop,Focal,False,Freeze,"R, G, NDVI",0.365,0.941
-MiT-B0,Conv Drop,Focal,False,Freeze,"R, G, NIR",0.427,0.809
-MiT-B0,Conv Drop,Focal,False,Freeze,"R, G, NIR, RE",0.43,0.925
-MiT-B0,Conv Drop,Focal,False,Freeze,"R, G, RE",0.441,0.925
-MiT-B0,SE,Focal,True,Fine-Tuning,"R, G, NDVI",0.424,0.988
-MiT-B0,SE,Focal,True,Fine-Tuning,"R, G, NIR",0.419,0.936
-MiT-B0,SE,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.382,0.94
-MiT-B0,SE,Focal,True,Fine-Tuning,"R, G, RE",0.516,0.959
-MiT-B0,SE,Focal,True,Freeze,"R, G, NDVI",0.534,0.968
-MiT-B0,SE,Focal,True,Freeze,"R, G, NIR",0.44,0.95
-MiT-B0,SE,Focal,True,Freeze,"R, G, NIR, RE",0.48,0.94
-MiT-B0,SE,Focal,True,Freeze,"R, G, RE",0.464,0.961
-MiT-B0,SE,Focal,False,Freeze,"R, G, NDVI",0.342,0.974
-MiT-B0,SE,Focal,False,Freeze,"R, G, NIR",0.496,0.928
-MiT-B0,SE,Focal,False,Freeze,"R, G, NIR, RE",0.447,0.938
-MiT-B0,SE,Focal,False,Freeze,"R, G, RE",0.519,0.965
-MiT-B1,Conv,Cross Entropy,True,Freeze,"R, G, NDVI",0.555,0.992
-MiT-B1,Conv,Cross Entropy,True,Freeze,"R, G, NIR",0.472,0.961
-MiT-B1,Conv,Cross Entropy,True,Freeze,"R, G, NIR, RE",0.547,0.969
-MiT-B1,Conv,Cross Entropy,True,Freeze,"R, G, RE",0.566,0.974
-MiT-B1,Conv,Focal,True,Fine-Tuning,"R, G, NDVI",0.344,0.978
-MiT-B1,Conv,Focal,True,Fine-Tuning,"R, G, NIR",0.45,0.97
-MiT-B1,Conv,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.402,0.956
-MiT-B1,Conv,Focal,True,Fine-Tuning,"R, G, RE",0.427,0.963
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NDVI",0.511,0.988
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NDVI",0.499,0.985
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NIR",0.533,0.914
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NIR",0.472,0.923
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NIR, RE",0.426,0.969
-MiT-B1,Conv,Focal,True,Freeze,"R, G, NIR, RE",0.423,0.955
-MiT-B1,Conv,Focal,True,Freeze,"R, G, RE",0.471,0.95
-MiT-B1,Conv,Focal,True,Freeze,"R, G, RE",0.477,0.945
-MiT-B1,Conv,Focal,False,Freeze,"R, G, NDVI",0.354,0.97
-MiT-B1,Conv,Focal,False,Freeze,"R, G, NIR",0.422,0.935
-MiT-B1,Conv,Focal,False,Freeze,"R, G, NIR, RE",0.421,0.932
-MiT-B1,Conv,Focal,False,Freeze,"R, G, RE",0.459,0.927
-MiT-B1,Conv Drop,Cross Entropy,True,Freeze,"R, G, NDVI",0.595,0.995
-MiT-B1,Conv Drop,Cross Entropy,True,Freeze,"R, G, NIR",0.51,0.954
-MiT-B1,Conv Drop,Cross Entropy,True,Freeze,"R, G, NIR, RE",0.559,0.976
-MiT-B1,Conv Drop,Cross Entropy,True,Freeze,"R, G, RE",0.541,0.958
-MiT-B1,Conv Drop,Focal,True,Fine-Tuning,"R, G, NDVI",0.458,0.969
-MiT-B1,Conv Drop,Focal,True,Fine-Tuning,"R, G, NIR",0.449,0.952
-MiT-B1,Conv Drop,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.436,0.964
-MiT-B1,Conv Drop,Focal,True,Fine-Tuning,"R, G, RE",0.451,0.972
-MiT-B1,Conv Drop,Focal,True,Freeze,"R, G, NDVI",0.58,0.987
-MiT-B1,Conv Drop,Focal,True,Freeze,"R, G, NIR",0.482,0.941
-MiT-B1,Conv Drop,Focal,True,Freeze,"R, G, NIR, RE",0.406,0.949
-MiT-B1,Conv Drop,Focal,True,Freeze,"R, G, RE",0.433,0.956
-MiT-B1,Conv Drop,Focal,False,Freeze,"R, G, NDVI",0.541,0.969
-MiT-B1,Conv Drop,Focal,False,Freeze,"R, G, NIR",0.387,0.864
-MiT-B1,Conv Drop,Focal,False,Freeze,"R, G, NIR, RE",0.432,0.939
-MiT-B1,Conv Drop,Focal,False,Freeze,"R, G, RE",0.445,0.916
-MiT-B1,SE,Focal,True,Fine-Tuning,"R, G, NDVI",0.557,0.986
-MiT-B1,SE,Focal,True,Fine-Tuning,"R, G, NIR",0.431,0.924
-MiT-B1,SE,Focal,True,Fine-Tuning,"R, G, NIR, RE",0.424,0.957
-MiT-B1,SE,Focal,True,Fine-Tuning,"R, G, RE",0.489,0.962
-MiT-B1,SE,Focal,True,Freeze,"R, G, NDVI",0.54,0.98
-MiT-B1,SE,Focal,True,Freeze,"R, G, NIR",0.455,0.954
-MiT-B1,SE,Focal,True,Freeze,"R, G, NIR, RE",0.457,0.959
-MiT-B1,SE,Focal,True,Freeze,"R, G, RE",0.472,0.949
-MiT-B1,SE,Focal,False,Freeze,"R, G, NDVI",0.343,0.948
-MiT-B1,SE,Focal,False,Freeze,"R, G, NIR",0.484,0.926
-MiT-B1,SE,Focal,False,Freeze,"R, G, NIR, RE",0.45,0.933
-MiT-B1,SE,Focal,False,Freeze,"R, G, RE",0.52,0.935
+Backbone,Fusion,Used Weights,Strategy,Channels,F1,AUC
+MiT-B0,Conv,"R, G, G",Fine-Tuning,"R, G, NDVI",0.373,0.975
+MiT-B0,Conv,"R, G, G",Fine-Tuning,"R, G, NIR",0.45,0.945
+MiT-B0,Conv,"R, G, G",Fine-Tuning,"R, G, RE",0.476,0.936
+MiT-B0,Conv,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.542,0.961
+MiT-B0,Conv Drop,"R, G, G",Fine-Tuning,"R, G, NDVI",0.421,0.99
+MiT-B0,Conv Drop,"R, G, G",Fine-Tuning,"R, G, NIR",0.468,0.93
+MiT-B0,Conv Drop,"R, G, G",Fine-Tuning,"R, G, RE",0.494,0.936
+MiT-B0,Conv Drop,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.443,0.977
+MiT-B0,SE,"R, G, G",Fine-Tuning,"R, G, NDVI",0.424,0.988
+MiT-B0,SE,"R, G, G",Fine-Tuning,"R, G, NIR",0.419,0.936
+MiT-B0,SE,"R, G, G",Fine-Tuning,"R, G, RE",0.516,0.959
+MiT-B0,SE,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.382,0.94
+MiT-B0,Conv,"R, G, B",Freeze,"R, G, NDVI",0.34,0.941
+MiT-B0,Conv,"R, G, B",Freeze,"R, G, NIR",0.495,0.851
+MiT-B0,Conv,"R, G, B",Freeze,"R, G, NIR, RE",0.47,0.956
+MiT-B0,Conv,"R, G, B",Freeze,"R, G, RE",0.436,0.915
+MiT-B0,Conv,"R, G, G",Freeze,"R, G, NDVI",0.601,0.973
+MiT-B0,Conv,"R, G, G",Freeze,"R, G, NIR",0.428,0.886
+MiT-B0,Conv,"R, G, G",Freeze,"R, G, RE",0.47,0.933
+MiT-B0,Conv,"R, G, G, G",Freeze,"R, G, NIR, RE",0.454,0.938
+MiT-B0,Conv Drop,"R, G, B",Freeze,"R, G, NDVI",0.365,0.941
+MiT-B0,Conv Drop,"R, G, B",Freeze,"R, G, NIR",0.427,0.809
+MiT-B0,Conv Drop,"R, G, B",Freeze,"R, G, NIR, RE",0.43,0.925
+MiT-B0,Conv Drop,"R, G, B",Freeze,"R, G, RE",0.441,0.925
+MiT-B0,Conv Drop,"R, G, G",Freeze,"R, G, NDVI",0.54,0.988
+MiT-B0,Conv Drop,"R, G, G",Freeze,"R, G, NIR",0.404,0.903
+MiT-B0,Conv Drop,"R, G, G",Freeze,"R, G, RE",0.458,0.932
+MiT-B0,Conv Drop,"R, G, G, G",Freeze,"R, G, NIR, RE",0.43,0.957
+MiT-B0,SE,"R, G, B",Freeze,"R, G, NDVI",0.342,0.974
+MiT-B0,SE,"R, G, B",Freeze,"R, G, NIR",0.496,0.928
+MiT-B0,SE,"R, G, B",Freeze,"R, G, NIR, RE",0.447,0.938
+MiT-B0,SE,"R, G, B",Freeze,"R, G, RE",0.519,0.965
+MiT-B0,SE,"R, G, G",Freeze,"R, G, NDVI",0.534,0.968
+MiT-B0,SE,"R, G, G",Freeze,"R, G, NIR",0.44,0.95
+MiT-B0,SE,"R, G, G",Freeze,"R, G, RE",0.464,0.961
+MiT-B0,SE,"R, G, G, G",Freeze,"R, G, NIR, RE",0.48,0.94
+MiT-B1,Conv,"R, G, G",Fine-Tuning,"R, G, NDVI",0.344,0.978
+MiT-B1,Conv,"R, G, G",Fine-Tuning,"R, G, NIR",0.45,0.97
+MiT-B1,Conv,"R, G, G",Fine-Tuning,"R, G, RE",0.427,0.963
+MiT-B1,Conv,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.402,0.956
+MiT-B1,Conv Drop,"R, G, G",Fine-Tuning,"R, G, NDVI",0.458,0.969
+MiT-B1,Conv Drop,"R, G, G",Fine-Tuning,"R, G, NIR",0.449,0.952
+MiT-B1,Conv Drop,"R, G, G",Fine-Tuning,"R, G, RE",0.451,0.972
+MiT-B1,Conv Drop,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.436,0.964
+MiT-B1,SE,"R, G, G",Fine-Tuning,"R, G, NDVI",0.557,0.986
+MiT-B1,SE,"R, G, G",Fine-Tuning,"R, G, NIR",0.431,0.924
+MiT-B1,SE,"R, G, G",Fine-Tuning,"R, G, RE",0.489,0.962
+MiT-B1,SE,"R, G, G, G",Fine-Tuning,"R, G, NIR, RE",0.424,0.957
+MiT-B1,Conv,"R, G, B",Freeze,"R, G, NDVI",0.354,0.97
+MiT-B1,Conv,"R, G, B",Freeze,"R, G, NIR",0.422,0.935
+MiT-B1,Conv,"R, G, B",Freeze,"R, G, NIR, RE",0.421,0.932
+MiT-B1,Conv,"R, G, B",Freeze,"R, G, RE",0.459,0.927
+MiT-B1,Conv,"R, G, G",Freeze,"R, G, NDVI",0.499,0.985
+MiT-B1,Conv,"R, G, G",Freeze,"R, G, NIR",0.472,0.923
+MiT-B1,Conv,"R, G, G",Freeze,"R, G, RE",0.477,0.945
+MiT-B1,Conv,"R, G, G, G",Freeze,"R, G, NIR, RE",0.423,0.955
+MiT-B1,Conv Drop,"R, G, B",Freeze,"R, G, NDVI",0.541,0.969
+MiT-B1,Conv Drop,"R, G, B",Freeze,"R, G, NIR",0.387,0.864
+MiT-B1,Conv Drop,"R, G, B",Freeze,"R, G, NIR, RE",0.432,0.939
+MiT-B1,Conv Drop,"R, G, B",Freeze,"R, G, RE",0.445,0.916
+MiT-B1,Conv Drop,"R, G, G",Freeze,"R, G, NDVI",0.58,0.987
+MiT-B1,Conv Drop,"R, G, G",Freeze,"R, G, NIR",0.482,0.941
+MiT-B1,Conv Drop,"R, G, G",Freeze,"R, G, RE",0.433,0.956
+MiT-B1,Conv Drop,"R, G, G, G",Freeze,"R, G, NIR, RE",0.406,0.949
+MiT-B1,SE,"R, G, B",Freeze,"R, G, NDVI",0.343,0.948
+MiT-B1,SE,"R, G, B",Freeze,"R, G, NIR",0.484,0.926
+MiT-B1,SE,"R, G, B",Freeze,"R, G, NIR, RE",0.45,0.933
+MiT-B1,SE,"R, G, B",Freeze,"R, G, RE",0.52,0.935
+MiT-B1,SE,"R, G, G",Freeze,"R, G, NDVI",0.54,0.98
+MiT-B1,SE,"R, G, G",Freeze,"R, G, NIR",0.455,0.954
+MiT-B1,SE,"R, G, G",Freeze,"R, G, RE",0.472,0.949
+MiT-B1,SE,"R, G, G, G",Freeze,"R, G, NIR, RE",0.457,0.959
