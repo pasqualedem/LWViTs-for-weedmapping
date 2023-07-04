@@ -4,7 +4,7 @@ experiment:
   continue_with_errors: False
   start_from_grid: 0
   start_from_run: 0
-  tracking_dir: /ext/pasquale/experiments
+  tracking_dir: null
   logger: wandb
   entity: null
   excluded_files: "*.pth"
@@ -21,9 +21,10 @@ parameters:
     optimizer_params:
       weight_decay: [0]
     loss:
-      name: [cross_entropy]
+      name: [focal]
       params:
         weight: [[0.0638, 1.0, 1.6817]]
+        gamma: [2.0]
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
@@ -42,6 +43,7 @@ parameters:
   test_metrics:
     jaccard: *metric_params
     conf_mat: *metric_params
+    auc: *metric_params
     f1: *metric_params
     precision: *metric_params
     recall: *metric_params
@@ -85,10 +87,3 @@ parameters:
       batch_idxs: [[4, 16]]
 
 other_grids:
-  -
-    tags: [[rotation]]
-    train_params:
-      loss:
-        name: [ focal ]
-        params:
-          gamma: [ 2.0 ]

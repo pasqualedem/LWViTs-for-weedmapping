@@ -1,10 +1,10 @@
 experiment:
   name: weedmapping-sequoia
   group: SplitLawin
-  continue_with_errors: False
+  continue_with_errors: True
   start_from_grid: 0
   start_from_run: 0
-  tracking_dir: /experiments
+  tracking_dir: null
   logger: wandb
   entity: null
   excluded_files: "*.pth"
@@ -23,7 +23,8 @@ parameters:
     loss:
       name: [ focal ]
       params:
-        gamma: [ 2.0 ]
+        weight: [[0.0638, 1.0, 1.6817]]
+        gamma: [ 2.0]
     seed: [42]
     zero_weight_decay_on_bias_and_bn: [True]
     average_best_models: [False]
@@ -42,6 +43,7 @@ parameters:
   test_metrics:
     jaccard: *metric_params
     conf_mat: *metric_params
+    auc: *metric_params
     f1: *metric_params
     precision: *metric_params
     recall: *metric_params
@@ -59,8 +61,8 @@ parameters:
       backbone: [MiT-B0, MiT-B1]
       backbone_pretrained: [True]
       main_channels: [2]
-      fusion_type: [conv_sum, conv_sum_drop, squeeze_excite]
-      side_pretrained: [null]
+      fusion_type: ['conv_sum', 'conv_sum_drop', 'squeeze_excite']
+      side_pretrained: ['G']
 
   dataset:
     root: ["dataset/4_rotations_processed_005_test/Sequoia"]
@@ -68,7 +70,7 @@ parameters:
     test_folders: [['005']]
     hor_flip: [True]
     ver_flip: [True]
-    channels: [['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE'], ['R', 'G', 'NIR', 'RE']]
+    channels: [['R', 'G', 'NIR', 'RE'], ['R', 'G', 'NIR'], ['R', 'G', 'NDVI'], ['R', 'G', 'RE']]
     batch_size: [6]
     val_batch_size: [12]
     test_batch_size: [12]
